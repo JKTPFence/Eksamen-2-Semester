@@ -1,7 +1,7 @@
 <Solution>
   <Project Path="Domain.Common/FysioEnterprise.Domain.csproj" Id="a41da25f-e953-44fb-8876-5db90bfca8e7" />
   <Project Path="Facade/FysioEnterprise.Presentation.csproj" Id="d66f081f-e1cb-40b2-a6b9-b38620c467ef" />
-  <Project Path="FysioEnterprise.Application/FysioEnterprise.Application.csproj" Id="597c9f84-5a08-47b0-aa22-82530b92b87e" />
+  <Project Path="FysioEnterprise.Application/FysioEnterprise.UseCase.csproj" Id="597c9f84-5a08-47b0-aa22-82530b92b87e" />
   <Project Path="FysioEnterprise.Facade/FysioEnterprise.Facade.csproj" Id="83fcc905-e349-4c66-9e28-b5e857704d8a" />
   <Project Path="FysioEnterprise.Infrastructure/FysioEnterprise.Infrastructure.csproj" Id="cfd2c89a-4dfd-4dc2-b3b8-f46c6479f56f" />
 </Solution>

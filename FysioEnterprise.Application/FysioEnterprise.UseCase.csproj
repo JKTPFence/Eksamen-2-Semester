@@ -7,7 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Queries\" />
+    <Folder Include="Commands\" />
+    <Folder Include="Repository\Classes\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Domain.Common\FysioEnterprise.Domain.csproj" />
   </ItemGroup>
 
 </Project>
