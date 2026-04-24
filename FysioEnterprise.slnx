@@ -4,4 +4,6 @@
   <Project Path="FysioEnterprise.Application/FysioEnterprise.UseCase.csproj" Id="597c9f84-5a08-47b0-aa22-82530b92b87e" />
   <Project Path="FysioEnterprise.Facade/FysioEnterprise.Facade.csproj" Id="83fcc905-e349-4c66-9e28-b5e857704d8a" />
   <Project Path="FysioEnterprise.Infrastructure/FysioEnterprise.Infrastructure.csproj" Id="cfd2c89a-4dfd-4dc2-b3b8-f46c6479f56f" />
+  <Project Path="FysioEnterprise.Port.Driven/FysioEnterprise.Port.Driven.csproj" Id="701fe6a0-4c08-47f9-a2ec-67620a4a1c9b" />
+  <Project Path="FysioEnterprise.Port.Driving/FysioEnterprise.Port.Driving.csproj" Id="ae02eba0-26b4-4674-affb-a9cdd16311a1" />
 </Solution>

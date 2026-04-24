@@ -1,10 +1,14 @@
+using FysioEnterprise.Port.Driving.Commands.SessionComands;
 using FysioEnterprise.Presentation.Components;
+using FysioEnterprise.UseCase.Commands;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddScoped<SessionCommandHandler>();
 
 var app = builder.Build();
 
@@ -17,6 +21,10 @@ if (!app.Environment.IsDevelopment())
 }
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
+//builder.Services.AddDomainServices();
+//builder.Services.AddApplicationServices();
+//builder.Services.AddInfrastructureServices(builder.Configuration);
+
 
 app.UseAntiforgery();
 

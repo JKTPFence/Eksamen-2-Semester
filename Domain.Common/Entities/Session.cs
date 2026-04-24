@@ -23,7 +23,7 @@ namespace FysioEnterprise.Domain.Entities
             
         }
 
-        public Session(Client client, Staff staff, SessionType sessionType, Room room, DateTime startTime, DateTime endTime, int? totalPrice, SessionStatusEnum status, Promotion? promotion, IBookingOverlap bookingOverlap, ITimeNow timeNow)
+        public Session(Client client, Staff staff, SessionType sessionType, Room room, DateTime startTime, DateTime endTime, int? totalPrice, SessionStatusEnum status, Promotion? promotion, ISessionOverlap bookingOverlap, ITimeNow timeNow)
         {
             if(client == null) throw new ArgumentNullException(nameof(client));
             if(staff == null) throw new ArgumentNullException(nameof(staff));
@@ -44,7 +44,7 @@ namespace FysioEnterprise.Domain.Entities
             SessionPromotion = promotion;
         }
 
-        public void UpdateSessionTime(Client client, DateTime newStartTime, DateTime newEndTime, ITimeNow timeNow, IBookingOverlap bookingOverlap)
+        public void UpdateSessionTime(Client client, DateTime newStartTime, DateTime newEndTime, ITimeNow timeNow, ISessionOverlap bookingOverlap)
         {
             if (SessionStatus is not SessionStatusEnum.Active)
                 throw new InvalidOperationException($"Cannot update time of a {SessionStatus} session.");
@@ -55,7 +55,7 @@ namespace FysioEnterprise.Domain.Entities
             SessionEndTime = newEndTime;
         }
 
-        private void OverlapCheck(IBookingOverlap overlapCheck, Client client, DateTime start, DateTime end, int? excludeBookingId = null)
+        private void OverlapCheck(ISessionOverlap overlapCheck, Client client, DateTime start, DateTime end, int? excludeBookingId = null)
         {
             if (overlapCheck.HasOverlap(client.ClientID, start, end, excludeBookingId))
                 throw new ValidationException("The booking overlaps an existing booking.");
@@ -69,7 +69,12 @@ namespace FysioEnterprise.Domain.Entities
                 throw new ArgumentException("Session start time cannot be in the past.");
         }
 
-
+        public void CancelSession()
+        {
+            if (SessionStatus is not SessionStatusEnum.Active)
+                throw new InvalidOperationException($"Cannot cancel a non active session.");
+            SessionStatus = SessionStatusEnum.Cancelled;
+        }
 
             
     }
