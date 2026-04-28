@@ -4,7 +4,7 @@ using System.Text;
 
 namespace FysioEnterprise.Domain.Service
 {
-    public interface IBookingOverlap
+    public interface ISessionOverlap
     {
         bool HasOverlap(Guid clientId, DateTime startTime, DateTime endTime, int? excludeBookingId = null);
     }

@@ -7,4 +7,10 @@
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\FysioEnterprise.Application\FysioEnterprise.UseCase.csproj" />
+    <ProjectReference Include="..\FysioEnterprise.Infrastructure\FysioEnterprise.Infrastructure.csproj" />
+    <ProjectReference Include="..\FysioEnterprise.Port.Driving\FysioEnterprise.Port.Driving.csproj" />
+  </ItemGroup>
+
 </Project>

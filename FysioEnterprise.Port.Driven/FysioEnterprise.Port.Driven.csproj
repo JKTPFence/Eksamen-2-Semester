@@ -7,8 +7,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Interfaces\IClinicRepository.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Mapper\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Interfaces\IClinicRepository.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Domain.Common\FysioEnterprise.Domain.csproj" />
-    <ProjectReference Include="..\FysioEnterprise.Port.Driving\FysioEnterprise.Port.Driving.csproj" />
   </ItemGroup>
 
 </Project>
