@@ -8,7 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Domain.Common\FysioEnterprise.Domain.csproj" />
-    <ProjectReference Include="..\FysioEnterprise.Port.Driving\FysioEnterprise.Port.Driving.csproj" />
+    <ProjectReference Include="..\FysioEnterprise.Port.Driven\FysioEnterprise.Port.Driven.csproj" />
   </ItemGroup>
 
 </Project>
