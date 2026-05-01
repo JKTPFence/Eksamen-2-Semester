@@ -7,15 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Interfaces\IClinicRepository.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Folder Include="Mapper\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="Interfaces\IClinicRepository.cs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,11 +1,13 @@
-﻿namespace FysioEnterprise.Application.Repository.Interfaces
+﻿using FysioEnterprise.Domain.Entities;
+
+namespace FysioEnterprise.Application.Repository.Interfaces
 {
     public interface ISessionRepository
     {
-        Task CreateSessionAsync(Domain.Entities.Session session);
-        Task<Domain.Entities.Session> GetSessionAsync(Guid ID);
-        Task UpdateSessionAsync(Domain.Entities.Session session);
-        Task<Domain.Entities.Session> DeleteSessionAsync(Guid ID);
-
+        Task CreateSessionAsync(Session session);
+        Task<Session> GetSessionAsync(Guid ID);
+        Task UpdateSessionAsync(Session session);
+        Task<Session> DeleteSessionAsync(Guid ID);
+        Task<List<Session>> GetSessionsByClientIdAsync(Guid clientId);
     }
 }
