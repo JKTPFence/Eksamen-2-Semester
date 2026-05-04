@@ -17,7 +17,6 @@ namespace FysioEnterprise.UseCase.Commands
         private readonly IRoomRepository _roomRepository;
         private readonly IPromotionRepository _promotionRepository;
         private readonly ISessionRepository _sessionRepository;
-        private readonly ISessionOverlap _overlapCheck;
         private readonly ITimeNow _now;
 
         public SessionCommandHandler(
@@ -26,7 +25,6 @@ namespace FysioEnterprise.UseCase.Commands
             IRoomRepository roomRepository,
             IPromotionRepository promotionRepository,
             ISessionRepository sessionRepository,
-            ISessionOverlap overlapCheck,
             ITimeNow now)
         {
             _clientRepository = clientRepository;
@@ -34,7 +32,6 @@ namespace FysioEnterprise.UseCase.Commands
             _roomRepository = roomRepository;
             _promotionRepository = promotionRepository;
             _sessionRepository = sessionRepository;
-            _overlapCheck = overlapCheck;
             _now = now;
         }
 

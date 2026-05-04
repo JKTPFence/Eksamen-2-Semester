@@ -39,7 +39,6 @@ namespace FysioEnterprise.Domain.Entities
             if (staff == null) throw new ArgumentNullException(nameof(staff));
             if (sessionType == null) throw new ArgumentNullException(nameof(sessionType));
             if (room == null) throw new ArgumentNullException(nameof(room));
-            OverlapCheck(bookingOverlap, client, startTime, endTime);
 
             ValidateSessionTime(startTime, endTime);
             ValidateOverlap(existingClientSessions, startTime, endTime, "Client");
