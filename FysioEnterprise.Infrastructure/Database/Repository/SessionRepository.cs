@@ -14,31 +14,23 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
             _context = context;
         }
 
-        public async Task<Result> CreateSessionAsync(Session session)
+        public async Task CreateSessionAsync(Session session)
         {
-            try
-            {
                 await _context.Sessions.AddAsync(session);
                 await _context.SaveChangesAsync();
-                return Result.Ok();
-            }
-            catch (DbUpdateException ex)
-            {
-                return Result.Fail($"Could not save session: {ex.Message}");
-            }
         }
 
         //Bruger ikke fluent result her, grundet komplikation med Deletemetode og andre metoder der bruger "GetSessionAsync"
-        public async Task<Session> GetSessionAsync(Guid sessionId)
+        public async Task<Result<Session>> GetSessionAsync(Guid sessionId)
         {
             var session = await _context.Sessions
                 .Include(s => s.SessionPromotion)
                 .FirstOrDefaultAsync(s => s.SessionID == sessionId);
 
             if (session == null)
-                throw new KeyNotFoundException($"Session with ID {sessionId} was not found.");
+                return Result.Fail($"Session with ID {sessionId} was not found.");
 
-            return session;
+            return Result.Ok(session);
         }
 
         public async Task<List<Session>> GetSessionsByClientAsync(Guid clientId)
@@ -72,9 +64,9 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
         public async Task<Session> DeleteSessionAsync(Guid sessionId)
         {
             var session = await GetSessionAsync(sessionId);
-            _context.Sessions.Remove(session);
+            _context.Sessions.Remove(session.Value);
             await _context.SaveChangesAsync();
-            return session;
+            return session.Value;
         }
     }
 }

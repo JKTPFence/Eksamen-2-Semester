@@ -6,8 +6,8 @@ namespace FysioEnterprise.Application.Repository.Interfaces
 {
     public interface ISessionRepository
     {
-        Task<Result> CreateSessionAsync(Session session);
-        Task<Session> GetSessionAsync(Guid ID);
+        Task CreateSessionAsync(Session session);
+        Task<Result<Session>> GetSessionAsync(Guid ID);
         Task UpdateSessionAsync(Session session);
         Task<Session> DeleteSessionAsync(Guid ID);
         Task<List<Session>> GetSessionsByClientAsync(Guid clientId);

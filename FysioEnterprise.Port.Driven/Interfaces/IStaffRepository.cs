@@ -1,11 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using FluentResults;
+using FysioEnterprise.Domain.Entities;
 
 namespace FysioEnterprise.UseCase.Repository.Interfaces
 {
     public interface IStaffRepository
     {
-        Task<Domain.Entities.Staff> GetStaffAsync(Guid ID);
+        Task<Result<Staff>> GetStaffAsync(Guid ID);
     }
 }

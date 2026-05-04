@@ -38,23 +38,27 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
             }
         }
 
-        public async Task<Client> GetClientAsync(Guid clientId)
+        public async Task<Result<Client>> GetClientAsync(Guid clientId)
         {
             var client = await _context.Clients
                 .FirstOrDefaultAsync(c => c.ClientID == clientId);
 
             if (client == null)
-                throw new KeyNotFoundException($"Client with ID {clientId} was not found.");
+                return Result.Fail($"Client with ID {clientId} was not found.");
 
-            return client;
+            return Result.Ok(client);
         }
 
-        public async Task<List<Client>> GetAllClientsAsync()
+        public async Task<Result<List<Client>>> GetAllClientsAsync()
         {
             var clients = await _context.Clients
                 .AsNoTracking()
                 .ToListAsync();
-            return clients;
+
+            if(clients.Any())
+                return Result.Ok(clients);
+
+            return Result.Fail("Operation failed, Could not get any clients");
         }
 
         public async Task<Result> UpdateClientAsync(Client client)
@@ -78,12 +82,16 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
             return Result.Ok();
         }
         
-        public async Task<Client> DeleteClientAsync(Guid clientId)
+        public async Task<Result> DeleteClientAsync(Guid clientId)
         {
             var client = await GetClientAsync(clientId);
-            _context.Clients.Remove(client);
+
+            if (client == null)
+                return Result.Fail($"Client with ID {clientId} was not found.");
+
+            _context.Clients.Remove(client.Value);
             await _context.SaveChangesAsync();
-            return client;
+            return Result.Ok();
         }
     }
 }

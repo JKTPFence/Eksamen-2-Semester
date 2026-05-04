@@ -19,15 +19,19 @@ namespace FysioEnterprise.Domain.Entities
         {
 
         }
-        public Client(string clientFirstName, string? clientLastName, string clientEmail, string clientPhoneNumber, DateOnly clientBirthDate, string clientAddress, string? clientNote, Staff clientPrefferedStaffID, LoyaltyLevel clientLoyaltyLevel)
+        public Client(string clientFirstName, string? clientLastName, string clientEmail, string clientPhoneNumber, DateOnly clientBirthDate, string clientAddress, string? clientNote, Staff clientPrefferedStaff, LoyaltyLevel clientLoyaltyLevel)
         {
-            if (string.IsNullOrWhiteSpace(clientFirstName)) throw new ArgumentNullException(nameof(clientFirstName));
-            if (string.IsNullOrWhiteSpace(clientEmail)) throw new ArgumentNullException(nameof(clientEmail));
-            if (string.IsNullOrWhiteSpace(clientPhoneNumber)) throw new ArgumentNullException(nameof(clientPhoneNumber));
-            if (string.IsNullOrWhiteSpace(clientAddress)) throw new ArgumentNullException(nameof(clientAddress));
+            if (string.IsNullOrWhiteSpace(clientFirstName)) 
+                throw new ArgumentNullException("First name cannot be empty.", nameof(clientFirstName));
+            if (string.IsNullOrWhiteSpace(clientEmail)) 
+                throw new ArgumentNullException("Email cannot be empty.", nameof(clientEmail));
+            if (string.IsNullOrWhiteSpace(clientPhoneNumber)) 
+                throw new ArgumentNullException("Phone number cannot be empty.", nameof(clientPhoneNumber));
+            if (string.IsNullOrWhiteSpace(clientAddress)) 
+                throw new ArgumentNullException("Address cannot be empty.", nameof(clientAddress));
 
             ClientID = Guid.NewGuid();
-            ClientPrefferedStaffID = clientPrefferedStaffID.StaffID;
+            ClientPrefferedStaffID = clientPrefferedStaff.StaffID;
             ClientFirstName = clientFirstName;
             ClientLastName = clientLastName;
             ClientEmail = clientEmail;
@@ -37,32 +41,47 @@ namespace FysioEnterprise.Domain.Entities
             ClientNote = clientNote;
             ClientLoyaltyLevel = clientLoyaltyLevel;
         }
-
-        public Boolean IsBirthdayMonth(Client client)
+        public bool IsBirthdayMonth()
         {
-            try
-            {
-                if (client == null) throw new ArgumentNullException(nameof(client));
-
-                if (DateOnly.FromDateTime(DateTime.Now).Month == client.ClientBirthDate.Month)
-                    return true;
-                else return false;
-
-            }
-            catch (ArgumentNullException ex)
-            {
-                Console.WriteLine($"Error: {ex.Message}");
-                return false;
-            }
+            return DateOnly.FromDateTime(DateTime.Now).Month == ClientBirthDate.Month;
         }
-        public void UpdateClient(string clientFirstName, string clientLastName, string clientEmail, string clientPhoneNumber, DateTime clientBirthDate, string clientAddress, string clientNote)
-        {
-            throw new NotImplementedException();
+        public void UpdateClient(
+            string clientFirstName,
+            string? clientLastName,
+            string clientEmail,
+            string clientPhoneNumber,
+            DateOnly clientBirthDate,
+            string clientAddress
+            )
+            {
+            if (string.IsNullOrWhiteSpace(clientFirstName))
+                throw new ArgumentException("First name cannot be empty.", nameof(clientFirstName));
+            if (string.IsNullOrWhiteSpace(clientEmail))
+                throw new ArgumentException("Email cannot be empty.", nameof(clientEmail));
+            if (string.IsNullOrWhiteSpace(clientPhoneNumber))
+                throw new ArgumentException("Phone number cannot be empty.", nameof(clientPhoneNumber));
+            if (string.IsNullOrWhiteSpace(clientAddress))
+                throw new ArgumentException("Address cannot be empty.", nameof(clientAddress));
+
+            ClientFirstName = clientFirstName;
+            ClientLastName = clientLastName;
+            ClientEmail = clientEmail;
+            ClientPhoneNumber = clientPhoneNumber;
+            ClientBirthDate = clientBirthDate;
+            ClientAddress = clientAddress;
         }
-        public void DeleteClient()
+
+        public void UpdateStaff(Staff clientpreferredStaff)
         {
-            // This method can be used to mark the client as deleted in the database, if soft deletion is implemented.
-            // For example, you could add a boolean property like "IsDeleted" and set it to true here.
+            if (clientpreferredStaff == null)
+                throw new ArgumentNullException(nameof(clientpreferredStaff));
+
+            ClientPrefferedStaffID = clientpreferredStaff.StaffID;
+        }
+
+        public void UpdateClientNote(string? clientNote)
+        {
+            ClientNote = clientNote;
         }
     }
 }

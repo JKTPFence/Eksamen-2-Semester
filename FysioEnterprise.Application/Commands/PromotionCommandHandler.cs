@@ -1,13 +1,6 @@
 ﻿using FysioEnterprise.UseCase.Repository.Interfaces;
 using FysioEnterprise.Domain.Entities;
-using FysioEnterprise.Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using FysioEnterprise.Domain.ValueObjects;
 using FysioEnterprise.Port.Driving.Commands.PromotionCommands;
-using System.Security.Cryptography.X509Certificates;
-
 namespace FysioEnterprise.UseCase.Commands
 {
     public class PromotionCommandHandler : ICreatePromotionCommand, IUpdatePromotionCommand, IDeletePromotionCommand
@@ -31,17 +24,14 @@ namespace FysioEnterprise.UseCase.Commands
                     throw new ArgumentException("End date must be a valid date.", nameof(command));
                 if (command.PromotionEndDate <= command.PromotionStartDate)
                     throw new ArgumentException("End date must be after start date.", nameof(command));
-                // Load
                 var promotion = await _promotionRepository.GetPromotionAsync(command.PromotionID);
-                // Do
                 promotion = new Promotion(
                     command.PromotionName,
                     command.PromotionDiscountPercentage,
                     command.PromotionStartDate,
                     command.PromotionEndDate,
                     command.TimeNow);
-                // Save
-                await _promotionRepository.AddPromotionAsync(promotion);
+                await _promotionRepository.CreatePromotionAsync(promotion);
             }
             catch (Exception ex)
             {
@@ -64,15 +54,12 @@ namespace FysioEnterprise.UseCase.Commands
                     throw new ArgumentException("End date must be a valid date.", nameof(command));
                 if (command.PromotionEndDate <= command.PromotionStartDate)
                     throw new ArgumentException("End date must be after start date.", nameof(command));
-                // Load
                 var promotion = await _promotionRepository.GetPromotionAsync(command.PromotionID) ?? throw new Exception("Promotion not found.");
-                // Do
                 promotion.UpdatePromotion(
                     command.PromotionName,
                     command.PromotionDiscountPercentage,
                     command.PromotionStartDate,
                     command.PromotionEndDate);
-                // Save
                 await _promotionRepository.UpdatePromotionAsync(promotion);
             }
             catch (Exception ex)
@@ -86,9 +73,7 @@ namespace FysioEnterprise.UseCase.Commands
             {
                 if (command.PromotionID == Guid.Empty)
                     throw new ArgumentException("Promotion ID cannot be empty.", nameof(command));
-                // Load
                 var promotion = await _promotionRepository.GetPromotionAsync(command.PromotionID) ?? throw new Exception("Promotion not found.");
-                // Do
                 await _promotionRepository.DeletePromotionAsync(command.PromotionID);
             }
             catch (Exception ex)

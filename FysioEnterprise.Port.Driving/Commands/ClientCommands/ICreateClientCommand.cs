@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using FysioEnterprise.Domain.Enums;
+﻿using FluentResults;
 using FysioEnterprise.Domain.ValueObjects;
 
 namespace FysioEnterprise.Port.Driving.Commands.ClientCommands
 {
     public interface ICreateClientCommand
     {
-        Task CreateClientAsync(CreateClientCommand command);
+        Task<Result> CreateClientAsync(CreateClientCommand command);
 
         public record CreateClientCommand(
             Guid ClientID,

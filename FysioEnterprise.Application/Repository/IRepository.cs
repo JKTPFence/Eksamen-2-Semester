@@ -1,22 +1,17 @@
-﻿using FysioEnterprise.UseCase.Repository.Interfaces;
-using FysioEnterprise.Domain.Entities;
-using FysioEnterprise.Domain.Enums;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using FysioEnterprise.Domain.Entities;
 using FysioEnterprise.Domain.ValueObjects;
 
 namespace FysioEnterprise.UseCase.Repository
 {
-    public interface IRepository
+    public interface ISessionRepository
     {
         Task<Session?> GetSessionAsync(Guid id);
         Task<IReadOnlyList<Session>> GetAllSessionsByClientAsync(Guid ClientID);
         Task<IReadOnlyList<Session>> GetAllSessionsByStaffAsync(Guid StaffID);
         Task AddAsync(Session session);
         Task SaveAsync();
-        Task GetClientbookningsByClientIDAsync(object clientID);
-        Task GetStaffbookningsByStaffIDAsync(object staffID);
+        Task GetClientSessionsByClientIDAsync(object clientID);
+        Task GetStaffSessionsByStaffIDAsync(object staffID);
     }
 
     public interface ISessionTypeRepository
