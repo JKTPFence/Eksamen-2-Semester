@@ -30,7 +30,6 @@ namespace FysioEnterprise.Domain.Entities
             if(sessionType == null) throw new ArgumentNullException(nameof(sessionType));
             if(room == null) throw new ArgumentNullException(nameof(room));
             ValidateSessionTime(startTime, endTime, timeNow);
-
             SessionID = Guid.NewGuid();
             SessionClientID = client.ClientID;
             SessionStaffID = staff.StaffID;
@@ -42,7 +41,6 @@ namespace FysioEnterprise.Domain.Entities
             SessionInstanceType = sessionType;
             SessionPromotion = promotion;
         }
-
         private static void ValidateSessionTime(DateTime sessionStartTime, DateTime sessionEndTime, ITimeNow timeNow)
         {
             if (sessionStartTime >= sessionEndTime) 
