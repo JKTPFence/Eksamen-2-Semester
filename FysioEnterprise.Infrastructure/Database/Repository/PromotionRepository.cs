@@ -1,6 +1,8 @@
-﻿using FysioEnterprise.Domain.Entities;
+﻿using FluentResults;
+using FysioEnterprise.Domain.Entities;
 using FysioEnterprise.UseCase.Repository.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -16,10 +18,18 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
             _context = context;
         }
 
-        public async Task CreatePromotionAsync(Promotion promotion)
+        public async Task<Result> CreatePromotionAsync(Promotion promotion)
         {
+            var exists = await _context.Promotions
+                .AnyAsync(p => p.PromotionName == promotion.PromotionName);
+
+            if (exists)
+                return Result.Fail($"Promotion with name {promotion.PromotionName} already exists");
+
             await _context.Promotions.AddAsync(promotion);
             await _context.SaveChangesAsync();
+
+            return Result.Ok();
         }
 
         public async Task<Promotion> GetPromotionAsync(Guid promotionId)
@@ -33,10 +43,19 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
             return promotion;
         }
 
-        public async Task UpdatePromotionAsync(Promotion promotion)
+        public async Task<Result> UpdatePromotionAsync(Promotion promotion)
         {
+            var exists = await _context.Promotions
+                .AnyAsync(p => p.PromotionName == promotion.PromotionName
+                            && p.PromotionID != promotion.PromotionID);
+
+            if (exists)
+                return Result.Fail($"Promotion with name {promotion.PromotionName} already exists");
+
             _context.Promotions.Update(promotion);
             await _context.SaveChangesAsync();
+
+            return Result.Ok();
         }
 
         public async Task<Promotion> DeletePromotionAsync(Guid promotionId)

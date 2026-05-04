@@ -1,4 +1,5 @@
-﻿using FysioEnterprise.Application.Repository.Interfaces;
+﻿using FluentResults;
+using FysioEnterprise.Application.Repository.Interfaces;
 using FysioEnterprise.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,12 +14,21 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
             _context = context;
         }
 
-        public async Task CreateSessionAsync(Session session)
+        public async Task<Result> CreateSessionAsync(Session session)
         {
-            await _context.Sessions.AddAsync(session);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.Sessions.AddAsync(session);
+                await _context.SaveChangesAsync();
+                return Result.Ok();
+            }
+            catch (DbUpdateException ex)
+            {
+                return Result.Fail($"Could not save session: {ex.Message}");
+            }
         }
 
+        //Bruger ikke fluent result her, grundet komplikation med Deletemetode og andre metoder der bruger "GetSessionAsync"
         public async Task<Session> GetSessionAsync(Guid sessionId)
         {
             var session = await _context.Sessions
@@ -31,12 +41,23 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
             return session;
         }
 
-        public async Task<List<Session>> GetSessionsByClientIdAsync(Guid clientId)
+        public async Task<List<Session>> GetSessionsByClientAsync(Guid clientId)
         {
             var sessions = await _context.Sessions
                 .AsNoTracking()
                 .Include(s => s.SessionPromotion)
                 .Where(s => s.SessionClientID == clientId)
+                .ToListAsync();
+
+            return sessions;
+        }
+
+        public async Task<List<Session>> GetSessionsByStaffAsync(Guid staffId)
+        {
+            var sessions = await _context.Sessions
+                .AsNoTracking()
+                .Include(s => s.SessionPromotion)
+                .Where(s => s.SessionStaffID == staffId)
                 .ToListAsync();
 
             return sessions;
