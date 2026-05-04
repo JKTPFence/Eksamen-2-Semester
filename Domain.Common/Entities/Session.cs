@@ -30,7 +30,6 @@ namespace FysioEnterprise.Domain.Entities
             if(sessionType == null) throw new ArgumentNullException(nameof(sessionType));
             if(room == null) throw new ArgumentNullException(nameof(room));
             ValidateSessionTime(startTime, endTime, timeNow);
-            OverlapCheck(bookingOverlap, client, startTime, endTime);
 
             SessionID = Guid.NewGuid();
             SessionClientID = client.ClientID;
@@ -42,23 +41,6 @@ namespace FysioEnterprise.Domain.Entities
             SessionStatus = status;
             SessionInstanceType = sessionType;
             SessionPromotion = promotion;
-        }
-
-        public void UpdateSessionTime(Client client, DateTime newStartTime, DateTime newEndTime, ITimeNow timeNow, ISessionOverlap bookingOverlap)
-        {
-            if (SessionStatus is not SessionStatusEnum.Active)
-                throw new InvalidOperationException($"Cannot update time of a {SessionStatus} session.");
-            
-            ValidateSessionTime(newStartTime, newEndTime, timeNow);
-            OverlapCheck(bookingOverlap, client, newStartTime, newEndTime);
-            SessionStartTime = newStartTime;
-            SessionEndTime = newEndTime;
-        }
-
-        private void OverlapCheck(ISessionOverlap overlapCheck, Client client, DateTime start, DateTime end, int? excludeBookingId = null)
-        {
-            if (overlapCheck.HasOverlap(client.ClientID, start, end, excludeBookingId))
-                throw new ValidationException("The booking overlaps an existing booking.");
         }
 
         private static void ValidateSessionTime(DateTime sessionStartTime, DateTime sessionEndTime, ITimeNow timeNow)
