@@ -1,10 +1,13 @@
-﻿namespace FysioEnterprise.UseCase.Repository.Interfaces
+﻿using FluentResults;
+using FysioEnterprise.Domain.Entities;
+
+namespace FysioEnterprise.UseCase.Repository.Interfaces
 {
     public interface IPromotionRepository
     {
-            Task CreatePromotionAsync(Domain.Entities.Promotion promotion);
-            Task<Domain.Entities.Promotion> GetPromotionAsync(Guid ID);
-            Task UpdatePromotionAsync(Domain.Entities.Promotion promotion);
-            Task<Domain.Entities.Promotion> DeletePromotionAsync(Guid ID);
+            Task<Result> CreatePromotionAsync(Promotion promotion);
+            Task<Promotion> GetPromotionAsync(Guid ID);
+            Task<Result> UpdatePromotionAsync(Promotion promotion);
+            Task<Promotion> DeletePromotionAsync(Guid ID);
     }
 }

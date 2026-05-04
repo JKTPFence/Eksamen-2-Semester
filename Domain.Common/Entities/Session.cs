@@ -1,8 +1,9 @@
-﻿using FysioEnterprise.Domain.Enums;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Net.NetworkInformation;
+using FysioEnterprise.Domain.Enums;
 using FysioEnterprise.Domain.Exceptions;
 using FysioEnterprise.Domain.Service;
 using FysioEnterprise.Domain.ValueObjects;
-using System.ComponentModel.DataAnnotations;
 
 namespace FysioEnterprise.Domain.Entities
 {
@@ -66,7 +67,7 @@ namespace FysioEnterprise.Domain.Entities
             IEnumerable<Session> existingStaffSessions)
         {
             if (!IsActive)
-                throw new InvalidOperationException($"Cannot update time of a {SessionStatus} session.");
+                throw new InvalidOperationException($"Cannot update time of an inactive session.");
 
             ValidateSessionTime(newStartTime, newEndTime);
             ValidateOverlap(existingClientSessions, newStartTime, newEndTime, "Client");
@@ -74,6 +75,14 @@ namespace FysioEnterprise.Domain.Entities
 
             SessionStartTime = newStartTime;
             SessionEndTime = newEndTime;
+        }
+
+        public void CompletedSession()
+        {
+            if (!IsActive)
+                throw new InvalidOperationException($"Cannot complete a non active session.");
+
+            SessionStatus = SessionStatusEnum.Completed;
         }
 
         public void CancelSession()

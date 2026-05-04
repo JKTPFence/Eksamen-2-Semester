@@ -17,17 +17,21 @@ namespace FysioEnterprise.Domain.Entities
         public LoyaltyLevel ClientLoyaltyLevel { get; private set; }
         public Client() // Empty constructor for EF Core
         {
-            
-        }
-        public Client (string clientFirstName, string? clientLastName, string clientEmail, string clientPhoneNumber, DateOnly clientBirthDate, string clientAddress, string? clientNote, Staff clientPrefferedStaffID, LoyaltyLevel clientLoyaltyLevel)
-        {
-            if (string.IsNullOrWhiteSpace(clientFirstName)) throw new ArgumentNullException(nameof(clientFirstName));
-            if (string.IsNullOrWhiteSpace(clientEmail)) throw new ArgumentNullException(nameof(clientEmail));
-            if (string.IsNullOrWhiteSpace(clientPhoneNumber)) throw new ArgumentNullException(nameof(clientPhoneNumber));
-            if (string.IsNullOrWhiteSpace(clientAddress)) throw new ArgumentNullException(nameof(clientAddress));
 
-            ClientID = Guid.NewGuid ();
-            ClientPrefferedStaffID = clientPrefferedStaffID.StaffID;
+        }
+        public Client(string clientFirstName, string? clientLastName, string clientEmail, string clientPhoneNumber, DateOnly clientBirthDate, string clientAddress, string? clientNote, Staff clientPrefferedStaff, LoyaltyLevel clientLoyaltyLevel)
+        {
+            if (string.IsNullOrWhiteSpace(clientFirstName)) 
+                throw new ArgumentNullException("First name cannot be empty.", nameof(clientFirstName));
+            if (string.IsNullOrWhiteSpace(clientEmail)) 
+                throw new ArgumentNullException("Email cannot be empty.", nameof(clientEmail));
+            if (string.IsNullOrWhiteSpace(clientPhoneNumber)) 
+                throw new ArgumentNullException("Phone number cannot be empty.", nameof(clientPhoneNumber));
+            if (string.IsNullOrWhiteSpace(clientAddress)) 
+                throw new ArgumentNullException("Address cannot be empty.", nameof(clientAddress));
+
+            ClientID = Guid.NewGuid();
+            ClientPrefferedStaffID = clientPrefferedStaff.StaffID;
             ClientFirstName = clientFirstName;
             ClientLastName = clientLastName;
             ClientEmail = clientEmail;
@@ -37,24 +41,47 @@ namespace FysioEnterprise.Domain.Entities
             ClientNote = clientNote;
             ClientLoyaltyLevel = clientLoyaltyLevel;
         }
-
-        public Boolean IsBirthdayMonth(Client client)
+        public bool IsBirthdayMonth()
         {
-            try
+            return DateOnly.FromDateTime(DateTime.Now).Month == ClientBirthDate.Month;
+        }
+        public void UpdateClient(
+            string clientFirstName,
+            string? clientLastName,
+            string clientEmail,
+            string clientPhoneNumber,
+            DateOnly clientBirthDate,
+            string clientAddress
+            )
             {
-                if (client == null) throw new ArgumentNullException(nameof(client));
+            if (string.IsNullOrWhiteSpace(clientFirstName))
+                throw new ArgumentException("First name cannot be empty.", nameof(clientFirstName));
+            if (string.IsNullOrWhiteSpace(clientEmail))
+                throw new ArgumentException("Email cannot be empty.", nameof(clientEmail));
+            if (string.IsNullOrWhiteSpace(clientPhoneNumber))
+                throw new ArgumentException("Phone number cannot be empty.", nameof(clientPhoneNumber));
+            if (string.IsNullOrWhiteSpace(clientAddress))
+                throw new ArgumentException("Address cannot be empty.", nameof(clientAddress));
 
-                if (DateOnly.FromDateTime(DateTime.Now).Month == client.ClientBirthDate.Month)
-                    return true;
-                else return false;
-
-            }
-            catch (ArgumentNullException ex)
-            {
-                Console.WriteLine($"Error: {ex.Message}");
-                return false; 
-            }
+            ClientFirstName = clientFirstName;
+            ClientLastName = clientLastName;
+            ClientEmail = clientEmail;
+            ClientPhoneNumber = clientPhoneNumber;
+            ClientBirthDate = clientBirthDate;
+            ClientAddress = clientAddress;
         }
 
+        public void UpdateStaff(Staff clientpreferredStaff)
+        {
+            if (clientpreferredStaff == null)
+                throw new ArgumentNullException(nameof(clientpreferredStaff));
+
+            ClientPrefferedStaffID = clientpreferredStaff.StaffID;
+        }
+
+        public void UpdateClientNote(string? clientNote)
+        {
+            ClientNote = clientNote;
+        }
     }
 }

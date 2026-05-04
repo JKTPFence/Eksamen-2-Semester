@@ -8,6 +8,11 @@
 
   <ItemGroup>
     <Folder Include="Commands\" />
+    <Folder Include="DTOs\ResponseDTO\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Domain.Common\FysioEnterprise.Domain.csproj" />
   </ItemGroup>
 
 </Project>
