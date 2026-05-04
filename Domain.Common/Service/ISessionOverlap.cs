@@ -6,6 +6,6 @@ namespace FysioEnterprise.Domain.Service
 {
     public interface ISessionOverlap
     {
-        bool HasOverlap(Guid clientId, DateTime startTime, DateTime endTime, int? excludeBookingId = null);
+        bool HasOverlap(Guid staffId, Guid clientId, DateTime startTime, DateTime endTime, int? excludeBookingId = null);
     }
 }
