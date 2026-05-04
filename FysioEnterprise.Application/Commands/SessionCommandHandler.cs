@@ -14,7 +14,7 @@ namespace FysioEnterprise.UseCase.Commands
     {
         private readonly IClientRepository _clientRepository;
         private readonly IStaffRepository _staffRepository;
-        private readonly IRoomRepository _roomRepository;   
+        private readonly IRoomRepository _roomRepository;
         private readonly IPromotionRepository _promotionRepository;
         private readonly ISessionRepository _sessionRepository;
         private readonly ISessionOverlap _overlapCheck;
@@ -40,78 +40,56 @@ namespace FysioEnterprise.UseCase.Commands
 
         public async Task CreateSessionAsync(CreateSessionCommand command)
         {
-            try
-            {
-                if (command.ClientId == Guid.Empty)
-                    throw new ArgumentException("Client ID cannot be empty.");
-                if (command.StaffId == Guid.Empty)
-                    throw new ArgumentException("Staff ID cannot be empty.");
-                if (command.SessionRoom == Guid.Empty)
-                    throw new ArgumentException("Session room ID cannot be empty.");
-                
-                // Load
-                var client = await _clientRepository.GetClientAsync(command.ClientId);
-                var staff = await _staffRepository.GetStaffAsync(command.StaffId);
-                var room = await _roomRepository.GetRoomAsync(command.SessionRoom);
-                var promotion = command.PromotionID != Guid.Empty ? await _promotionRepository.GetPromotionAsync(command.PromotionID) : null;
+            var client = await _clientRepository.GetClientAsync(command.ClientId);
+            var staff = await _staffRepository.GetStaffAsync(command.StaffId);
+            var room = await _roomRepository.GetRoomAsync(command.SessionRoom);
+            var promotion = command.PromotionID != Guid.Empty
+                ? await _promotionRepository.GetPromotionAsync(command.PromotionID)
+                : null;
 
-                // Do
-                var session = new Session(
-                    client,
-                    staff,
-                    command.SessionType,
-                    room,
-                    command.StartTime,
-                    command.EndTime,
-                    command.SessionTotalPrice,
-                    command.SessionStatus,
-                    promotion,
-                    _overlapCheck,
-                    _now
-                );
-                // Save
-                await _sessionRepository.CreateSessionAsync(session);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"An error occurred while creating the session: {ex.Message}", ex);
-            }
+            // Load existing sessions for overlap check
+            var existingClientSessions = await _sessionRepository.GetSessionsByClientAsync(command.ClientId);
+            var existingStaffSessions = await _sessionRepository.GetSessionsByStaffAsync(command.StaffId);
+
+            var session = Session.Create(
+                client, staff, command.SessionType, room,
+                command.StartTime, command.EndTime,
+                command.SessionTotalPrice, promotion,
+                existingClientSessions,
+                existingStaffSessions
+            );
+
+            await _sessionRepository.CreateSessionAsync(session);
         }
 
         public async Task UpdateSessionAsync(UpdateSessionCommand command)
         {
-            try
-            {
-                var session = await _sessionRepository.GetSessionAsync(command.SessionId);
-                var client = await _clientRepository.GetClientAsync(command.ClientId);
-                var staff = await _staffRepository.GetStaffAsync(command.StaffId);
-                var room = await _roomRepository.GetRoomAsync(command.SessionRoom);
-                var promotion = command.PromotionID != Guid.Empty ? await _promotionRepository.GetPromotionAsync(command.PromotionID) : null;
-                if (command.ClientId != session.SessionClientID)
-                    throw new OwnershipException("Session does not belong to the specified customer.");
-
-                // Do
-                var updatedSession = new Session(
-                    client,
-                    staff,
-                    command.SessionType,
-                    room,
-                    command.StartTime,
-                    command.EndTime,
-                    command.SessionTotalPrice,
-                    command.SessionStatus,
-                    promotion,
-                    _overlapCheck,
-                    _now
-                );
-                // Save
-                await _sessionRepository.UpdateSessionAsync(updatedSession);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"An error occurred while updating the session: {ex.Message}", ex);
-            }
             // Load
+            var session = await _sessionRepository.GetSessionAsync(command.SessionId);
+            var client = await _clientRepository.GetClientAsync(command.ClientId);
+            var staff = await _staffRepository.GetStaffAsync(command.StaffId);
+            var room = await _roomRepository.GetRoomAsync(command.SessionRoom);
+            var promotion = command.PromotionID != Guid.Empty
+                ? await _promotionRepository.GetPromotionAsync(command.PromotionID)
+                : null;
+
+            if (command.ClientId != session.SessionClientID)
+                throw new OwnershipException("Session does not belong to the specified client.");
+
+            // Load existing sessions for overlap check
+            var existingClientSessions = await _sessionRepository.GetSessionsByClientAsync(command.ClientId);
+            var existingStaffSessions = await _sessionRepository.GetSessionsByStaffAsync(command.StaffId);
+
+            // Do
+            session.UpdateSessionTime(
+                command.StartTime,
+                command.EndTime,
+                existingClientSessions.Where(s => s.SessionID != session.SessionID),
+                existingStaffSessions.Where(s => s.SessionID != session.SessionID)
+            );
+
+            // Save
+            await _sessionRepository.UpdateSessionAsync(session);
         }
 
         public async Task DeleteSessionAsync(DeleteSessionCommand command)
