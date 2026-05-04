@@ -1,4 +1,6 @@
-using FysioEnterprise.Port.Driving.Commands.SessionComands;
+using FysioEnterprise.Application.Repository.Interfaces;
+using FysioEnterprise.Facade.UseCase;
+using FysioEnterprise.Infrastructure.Database.Repository;
 using FysioEnterprise.Presentation.Components;
 using FysioEnterprise.UseCase.Commands;
 
@@ -8,7 +10,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddScoped<SessionCommandHandler>();
+builder.Services.AddScoped<ICreateSessionUseCase, SessionCommandHandler>();
+builder.Services.AddScoped<ISessionRepository, SessionRepository>();
 
 var app = builder.Build();
 

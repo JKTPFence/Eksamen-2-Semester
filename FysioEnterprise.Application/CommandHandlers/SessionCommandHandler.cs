@@ -9,7 +9,7 @@ using static FysioEnterprise.Port.Driving.Commands.SessionComands.IUpdateSession
 using static FysioEnterprise.Port.Driving.Commands.SessionComands.IDeleteSessionCommand;
 using FluentResults;
 
-namespace FysioEnterprise.UseCase.Commands
+namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
 {
     public class SessionCommandHandler : ICreateSessionCommand, IUpdateSessionCommand, IDeleteSessionCommand
     {

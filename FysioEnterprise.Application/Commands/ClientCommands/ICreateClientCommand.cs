@@ -5,8 +5,6 @@ namespace FysioEnterprise.Port.Driving.Commands.ClientCommands
 {
     public interface ICreateClientCommand
     {
-        Task<Result> CreateClientAsync(CreateClientCommand command);
-
         public record CreateClientCommand(
             Guid ClientID,
             Guid ClientPrefferedStaffID,

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using FluentResults;
+﻿using FluentResults;
 
 namespace FysioEnterprise.Port.Driving.Commands.ClientCommands
 {

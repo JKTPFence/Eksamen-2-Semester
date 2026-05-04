@@ -1,7 +1,7 @@
 ﻿using FysioEnterprise.UseCase.Repository.Interfaces;
 using FysioEnterprise.Domain.Entities;
 using FysioEnterprise.Port.Driving.Commands.PromotionCommands;
-namespace FysioEnterprise.UseCase.Commands
+namespace FysioEnterprise.UseCase.CommandHandlers.PromotionCommands
 {
     public class PromotionCommandHandler : ICreatePromotionCommand, IUpdatePromotionCommand, IDeletePromotionCommand
     {

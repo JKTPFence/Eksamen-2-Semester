@@ -8,16 +8,6 @@ using System.Text;
 
 namespace FysioEnterprise.Facade.DTOs
 {
-    public record CreateSessionRequest(
-        Guid ClientID,
-        Guid StaffID,
-        DateTime StartTime,
-        DateTime EndTime);
-    public record EndSessionRequest(
-        Guid SessionId, string Note);
-    public record CancelSessionRequest(
-        Guid SessionId);
-
     public record SessionDTO(
         Guid SessionID,
         Guid SessionClientID,

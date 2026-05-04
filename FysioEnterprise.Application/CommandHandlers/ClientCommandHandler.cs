@@ -12,7 +12,7 @@ using static FysioEnterprise.Port.Driving.Commands.ClientCommands.ICreateClientC
 using static FysioEnterprise.Port.Driving.Commands.ClientCommands.IDeleteClientCommand;
 using static FysioEnterprise.Port.Driving.Commands.ClientCommands.IUpdateClientCommand;
 
-namespace FysioEnterprise.UseCase.Commands
+namespace FysioEnterprise.UseCase.CommandHandler.ClientCommands
 {
     public class ClientCommandHandler : ICreateClientCommand, IDeleteClientCommand, IUpdateClientCommand
     {
