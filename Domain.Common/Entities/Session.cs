@@ -23,14 +23,13 @@ namespace FysioEnterprise.Domain.Entities
             
         }
 
-        public Session(Client client, Staff staff, SessionType sessionType, Room room, DateTime startTime, DateTime endTime, int? totalPrice, SessionStatusEnum status, Promotion? promotion, ISessionOverlap bookingOverlap, ITimeNow timeNow)
+        public Session(Client client, Staff staff, SessionType sessionType, Room room, DateTime startTime, DateTime endTime, int? totalPrice, SessionStatusEnum status, Promotion? promotion, ITimeNow timeNow)
         {
             if(client == null) throw new ArgumentNullException(nameof(client));
             if(staff == null) throw new ArgumentNullException(nameof(staff));
             if(sessionType == null) throw new ArgumentNullException(nameof(sessionType));
             if(room == null) throw new ArgumentNullException(nameof(room));
             ValidateSessionTime(startTime, endTime, timeNow);
-            OverlapCheck(bookingOverlap, client, startTime, endTime);
 
             SessionID = Guid.NewGuid();
             SessionClientID = client.ClientID;
@@ -42,23 +41,6 @@ namespace FysioEnterprise.Domain.Entities
             SessionStatus = status;
             SessionInstanceType = sessionType;
             SessionPromotion = promotion;
-        }
-
-        public void UpdateSessionTime(Client client, DateTime newStartTime, DateTime newEndTime, ITimeNow timeNow, ISessionOverlap bookingOverlap)
-        {
-            if (SessionStatus is not SessionStatusEnum.Active)
-                throw new InvalidOperationException($"Cannot update time of a {SessionStatus} session.");
-            
-            ValidateSessionTime(newStartTime, newEndTime, timeNow);
-            OverlapCheck(bookingOverlap, client, newStartTime, newEndTime);
-            SessionStartTime = newStartTime;
-            SessionEndTime = newEndTime;
-        }
-
-        private void OverlapCheck(ISessionOverlap overlapCheck, Client client, DateTime start, DateTime end, int? excludeBookingId = null)
-        {
-            if (overlapCheck.HasOverlap(client.ClientID, start, end, excludeBookingId))
-                throw new ValidationException("The booking overlaps an existing booking.");
         }
 
         private static void ValidateSessionTime(DateTime sessionStartTime, DateTime sessionEndTime, ITimeNow timeNow)
