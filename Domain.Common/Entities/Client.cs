@@ -17,16 +17,16 @@ namespace FysioEnterprise.Domain.Entities
         public LoyaltyLevel ClientLoyaltyLevel { get; private set; }
         public Client() // Empty constructor for EF Core
         {
-            
+
         }
-        public Client (string clientFirstName, string? clientLastName, string clientEmail, string clientPhoneNumber, DateOnly clientBirthDate, string clientAddress, string? clientNote, Staff clientPrefferedStaffID, LoyaltyLevel clientLoyaltyLevel)
+        public Client(string clientFirstName, string? clientLastName, string clientEmail, string clientPhoneNumber, DateOnly clientBirthDate, string clientAddress, string? clientNote, Staff clientPrefferedStaffID, LoyaltyLevel clientLoyaltyLevel)
         {
             if (string.IsNullOrWhiteSpace(clientFirstName)) throw new ArgumentNullException(nameof(clientFirstName));
             if (string.IsNullOrWhiteSpace(clientEmail)) throw new ArgumentNullException(nameof(clientEmail));
             if (string.IsNullOrWhiteSpace(clientPhoneNumber)) throw new ArgumentNullException(nameof(clientPhoneNumber));
             if (string.IsNullOrWhiteSpace(clientAddress)) throw new ArgumentNullException(nameof(clientAddress));
 
-            ClientID = Guid.NewGuid ();
+            ClientID = Guid.NewGuid();
             ClientPrefferedStaffID = clientPrefferedStaffID.StaffID;
             ClientFirstName = clientFirstName;
             ClientLastName = clientLastName;
@@ -52,9 +52,17 @@ namespace FysioEnterprise.Domain.Entities
             catch (ArgumentNullException ex)
             {
                 Console.WriteLine($"Error: {ex.Message}");
-                return false; 
+                return false;
             }
         }
-
+        public void UpdateClient(string clientFirstName, string clientLastName, string clientEmail, string clientPhoneNumber, DateTime clientBirthDate, string clientAddress, string clientNote)
+        {
+            throw new NotImplementedException();
+        }
+        public void DeleteClient()
+        {
+            // This method can be used to mark the client as deleted in the database, if soft deletion is implemented.
+            // For example, you could add a boolean property like "IsDeleted" and set it to true here.
+        }
     }
 }

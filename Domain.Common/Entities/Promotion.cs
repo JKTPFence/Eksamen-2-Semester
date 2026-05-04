@@ -7,13 +7,13 @@ namespace FysioEnterprise.Domain.Entities
     {
         public Guid PromotionID { get; private set; }
         public string PromotionName { get; private set; }
-        public int PromotionDiscountPercent { get; private set; }
+        public decimal PromotionDiscountPercent { get; private set; }
         public DateTime PromotionStartTime { get; private set; }
         public DateTime PromotionEndTime { get; private set; }
         public ITimeNow TimeNow { get; private set; }
         public bool IsActive => IsPromotionActive(this);
 
-        public Promotion(string promotionName, int promotionDiscountPercent, DateTime promotionStartTime, DateTime promotionEndTime, ITimeNow timeNow)
+        public Promotion(string promotionName, decimal promotionDiscountPercent, DateTime promotionStartTime, DateTime promotionEndTime, ITimeNow timeNow)
         {
             ValidatePromotionTime(promotionStartTime, promotionEndTime, timeNow);
 
@@ -46,6 +46,14 @@ namespace FysioEnterprise.Domain.Entities
                 return true;
             }
             return false;
+        }
+        public void UpdatePromotion(string promotionName, decimal promotionDiscountPercent, DateTime promotionStartTime, DateTime promotionEndTime)
+        {
+            ValidatePromotionTime(promotionStartTime, promotionEndTime, TimeNow);
+            PromotionName = promotionName;
+            PromotionDiscountPercent = promotionDiscountPercent;
+            PromotionStartTime = promotionStartTime;
+            PromotionEndTime = promotionEndTime;
         }
     }
 }
