@@ -1,6 +1,6 @@
 ﻿using static FysioEnterprise.Facade.RequestModels.SessionRequests;
 
-namespace FysioEnterprise.Facade.UseCase
+namespace FysioEnterprise.Facade.UseCase.SessionCommands
 {
     public interface ICancelSessionUseCase
     {
