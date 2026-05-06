@@ -48,18 +48,16 @@ namespace FysioEnterprise.Port.Driving.Queries
         Task<ClinicDTO?> GetClinicByIdAsync(Guid clinicId);
 
         /// <summary>
-        ///     Som receptionist vil jeg kunne se alle sessioner for en given kunde, så jeg kan få et overblik over kundens bookinger.
+        ///     Som receptionist vil jeg gerne kunne se alle BooKRights klinikker, så bookingsprocessen bliver hurtigere.
         /// </summary>
-        /// <param name="clientId"></param>
         /// <returns></returns>
-        /// 
+        Task<List<ClinicDTO>> GetAllClinicsAsync();
 
         /// <summary>
-        ///     Som receptionist vil jeg kunne se alle sessioner for en given kunde, så jeg kan få et overblik over kundens bookinger.
+        ///     Som receptionist vil jeg kunne se alle sessionstyper, så jeg ikke behøver huske dem alle i hovedet.
         /// </summary>
-        /// <param name="clientId"></param>
         /// <returns></returns>
-        /// 
+        Task<List<SessionTypeDTO>> GetAllSessionTypesAsync();
 
 
     }
