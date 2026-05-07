@@ -1,7 +1,10 @@
-﻿namespace FysioEnterprise.UseCase.Repository.Interfaces
+﻿using FluentResults;
+using FysioEnterprise.Domain.Entities;
+
+namespace FysioEnterprise.UseCase.Repository.Interfaces
 {
     public interface IRoomRepository
     {
-        Task<Domain.Entities.Room> GetRoomAsync(Guid ID);
+        Task<Result<Room>> GetRoomAsync(Guid ID);
     }
 }

@@ -1,7 +1,9 @@
-﻿using FysioEnterprise.Domain.ValueObjects;
-using FysioEnterprise.Domain.Service;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using System.Net.NetworkInformation;
 using FysioEnterprise.Domain.Enums;
+using FysioEnterprise.Domain.Exceptions;
+using FysioEnterprise.Domain.Service;
+using FysioEnterprise.Domain.ValueObjects;
 
 namespace FysioEnterprise.Domain.Entities
 {
@@ -11,71 +13,111 @@ namespace FysioEnterprise.Domain.Entities
         public Guid SessionClientID { get; private set; }
         public Guid SessionStaffID { get; private set; }
         public Guid SessionRoomID { get; private set; }
-        public SessionType SessionInstanceType{ get; private set; }
+        public SessionType SessionInstanceType { get; private set; }
         public Promotion? SessionPromotion { get; private set; }
         public DateTime SessionStartTime { get; private set; }
         public DateTime? SessionEndTime { get; private set; }
         public int? SessionTotalPrice { get; private set; }
         public SessionStatusEnum SessionStatus { get; private set; }
-        
-        public Session() // Empty constructor for EF Core
+
+        public bool IsActive => SessionStatus == SessionStatusEnum.Active;
+
+        private Session() { } // EF Core
+
+        public static Session Create(
+            Client client,
+            Staff staff,
+            SessionType sessionType,
+            Room room,
+            DateTime startTime,
+            DateTime endTime,
+            int? totalPrice,
+            Promotion? promotion,
+            IEnumerable<Session> existingClientSessions,
+            IEnumerable<Session> existingStaffSessions)
         {
-            
+            if (client == null) throw new ArgumentNullException(nameof(client));
+            if (staff == null) throw new ArgumentNullException(nameof(staff));
+            if (sessionType == null) throw new ArgumentNullException(nameof(sessionType));
+            if (room == null) throw new ArgumentNullException(nameof(room));
+
+            ValidateSessionTime(startTime, endTime);
+            ValidateOverlap(existingClientSessions, startTime, endTime, "Client");
+            ValidateOverlap(existingStaffSessions, startTime, endTime, "Staff");
+
+            return new Session
+            {
+                SessionID = Guid.NewGuid(),
+                SessionClientID = client.ClientID,
+                SessionStaffID = staff.StaffID,
+                SessionRoomID = room.RoomID,
+                SessionStartTime = startTime,
+                SessionEndTime = endTime,
+                SessionTotalPrice = totalPrice,
+                SessionStatus = SessionStatusEnum.Active,
+                SessionInstanceType = sessionType,
+                SessionPromotion = promotion
+            };
         }
 
-        public Session(Client client, Staff staff, SessionType sessionType, Room room, DateTime startTime, DateTime endTime, int? totalPrice, SessionStatusEnum status, Promotion? promotion, ISessionOverlap bookingOverlap, ITimeNow timeNow)
+        public void UpdateSessionTime(
+            DateTime newStartTime,
+            DateTime newEndTime,
+            IEnumerable<Session> existingClientSessions,
+            IEnumerable<Session> existingStaffSessions)
         {
-            if(client == null) throw new ArgumentNullException(nameof(client));
-            if(staff == null) throw new ArgumentNullException(nameof(staff));
-            if(sessionType == null) throw new ArgumentNullException(nameof(sessionType));
-            if(room == null) throw new ArgumentNullException(nameof(room));
-            ValidateSessionTime(startTime, endTime, timeNow);
-            OverlapCheck(bookingOverlap, client, startTime, endTime);
+            if (!IsActive)
+                throw new InvalidOperationException($"Cannot update time of an inactive session.");
 
-            SessionID = Guid.NewGuid();
-            SessionClientID = client.ClientID;
-            SessionStaffID = staff.StaffID;
-            SessionRoomID = room.RoomID;
-            SessionStartTime = startTime;
-            SessionEndTime = endTime;
-            SessionTotalPrice = totalPrice;
-            SessionStatus = status;
-            SessionInstanceType = sessionType;
-            SessionPromotion = promotion;
-        }
+            ValidateSessionTime(newStartTime, newEndTime);
+            ValidateOverlap(existingClientSessions, newStartTime, newEndTime, "Client");
+            ValidateOverlap(existingStaffSessions, newStartTime, newEndTime, "Staff");
 
-        public void UpdateSessionTime(Client client, DateTime newStartTime, DateTime newEndTime, ITimeNow timeNow, ISessionOverlap bookingOverlap)
-        {
-            if (SessionStatus is not SessionStatusEnum.Active)
-                throw new InvalidOperationException($"Cannot update time of a {SessionStatus} session.");
-            
-            ValidateSessionTime(newStartTime, newEndTime, timeNow);
-            OverlapCheck(bookingOverlap, client, newStartTime, newEndTime);
             SessionStartTime = newStartTime;
             SessionEndTime = newEndTime;
         }
 
-        private void OverlapCheck(ISessionOverlap overlapCheck, Client client, DateTime start, DateTime end, int? excludeBookingId = null)
+        public void CompletedSession()
         {
-            if (overlapCheck.HasOverlap(client.ClientID, start, end, excludeBookingId))
-                throw new ValidationException("The booking overlaps an existing booking.");
-        }
+            if (!IsActive)
+                throw new InvalidOperationException($"Cannot complete a non active session.");
 
-        private static void ValidateSessionTime(DateTime sessionStartTime, DateTime sessionEndTime, ITimeNow timeNow)
-        {
-            if (sessionStartTime >= sessionEndTime) 
-                throw new ArgumentException("Session start time must be before end time.");
-            if (sessionStartTime < timeNow.Now()) 
-                throw new ArgumentException("Session start time cannot be in the past.");
+            SessionStatus = SessionStatusEnum.Completed;
         }
 
         public void CancelSession()
         {
-            if (SessionStatus is not SessionStatusEnum.Active)
+            if (!IsActive)
                 throw new InvalidOperationException($"Cannot cancel a non active session.");
             SessionStatus = SessionStatusEnum.Cancelled;
         }
 
-            
+        private static void ValidateSessionTime(DateTime startTime, DateTime endTime)
+        {
+            if (startTime >= endTime)
+                throw new DomainException("Session start time must be before end time.");
+            if (startTime < DateTime.UtcNow)
+                throw new DomainException("Session start time cannot be in the past.");
+        }
+
+        private static void ValidateOverlap(
+            IEnumerable<Session> existingSessions,
+            DateTime startTime,
+            DateTime endTime,
+            string ownerType)
+        {
+            var overlap = existingSessions
+                .Where(s => s.IsActive)
+                .FirstOrDefault(s =>
+                    startTime < s.SessionEndTime &&
+                    endTime > s.SessionStartTime);
+
+            if (overlap != null)
+                throw new DomainException(
+                    $"{ownerType} already has a session " +
+                    $"({overlap.SessionStartTime:HH:mm}-{overlap.SessionEndTime:HH:mm}) " +
+                    $"that overlaps with the requested time.");
+        }
     }
+
 }

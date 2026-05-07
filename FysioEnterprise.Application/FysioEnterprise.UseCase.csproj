@@ -8,7 +8,16 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Domain.Common\FysioEnterprise.Domain.csproj" />
-    <ProjectReference Include="..\FysioEnterprise.Port.Driving\FysioEnterprise.Port.Driving.csproj" />
+    <ProjectReference Include="..\FysioEnterprise.Facade\FysioEnterprise.Facade.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Repository\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentResults" Version="4.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.7" />
   </ItemGroup>
 
 </Project>
