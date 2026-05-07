@@ -1,6 +1,6 @@
 ﻿using FluentResults;
 using FysioEnterprise.Domain.Entities;
-using FysioEnterprise.UseCase.Repository.Interfaces;
+using FysioEnterprise.UseCase.IRepositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace FysioEnterprise.Infrastructure.Database.Repository

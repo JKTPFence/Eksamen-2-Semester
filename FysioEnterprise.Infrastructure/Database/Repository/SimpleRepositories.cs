@@ -1,6 +1,6 @@
 ﻿using FluentResults;
 using FysioEnterprise.Domain.Entities;
-using FysioEnterprise.UseCase.Repository.Interfaces;
+using FysioEnterprise.UseCase.IRepositories;
 namespace FysioEnterprise.Infrastructure.Database.Repository
 {
     public class StaffRepository : IStaffRepository

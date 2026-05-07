@@ -8,7 +8,11 @@
 
   <ItemGroup>
     <Folder Include="Commands\" />
-    <Folder Include="DTOs\ResponseDTO\" />
+    <Folder Include="ResponseModels\ResponseDTO\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentResults" Version="4.0.0" />
   </ItemGroup>
 
   <ItemGroup>

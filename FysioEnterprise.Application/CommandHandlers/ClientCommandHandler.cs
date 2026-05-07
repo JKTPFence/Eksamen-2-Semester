@@ -1,20 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using FluentResults;
-using FysioEnterprise.Application.Repository.Interfaces;
+﻿using FluentResults;
+using FysioEnterprise.UseCase.IRepositories;
 using FysioEnterprise.Domain.Entities;
-using FysioEnterprise.Domain.Exceptions;
-using FysioEnterprise.Domain.Service;
-using FysioEnterprise.Port.Driving.Commands.ClientCommands;
-using FysioEnterprise.UseCase.Repository.Interfaces;
-using static FysioEnterprise.Port.Driving.Commands.ClientCommands.ICreateClientCommand;
-using static FysioEnterprise.Port.Driving.Commands.ClientCommands.IDeleteClientCommand;
-using static FysioEnterprise.Port.Driving.Commands.ClientCommands.IUpdateClientCommand;
+using static FysioEnterprise.Facade.RequestModels.ClientRequests;
+using FysioEnterprise.Facade.UseCase.ClientUseCase;
 
 namespace FysioEnterprise.UseCase.CommandHandler.ClientCommands
 {
-    public class ClientCommandHandler : ICreateClientCommand, IDeleteClientCommand, IUpdateClientCommand
+    public class ClientCommandHandler : ICreateClientUseCase, IDeleteClientUseCase, IUpdateClientUseCase, IUpdateClientPrefferedStaffUseCase, IUpdateClientNoteUseCase
     {
         private readonly IClientRepository _clientRepository;
         private readonly IStaffRepository _staffRepository;
@@ -24,66 +16,105 @@ namespace FysioEnterprise.UseCase.CommandHandler.ClientCommands
             _clientRepository = clientRepository;
             _staffRepository = staffRepository;
         }
-        public async Task<Result> CreateClientAsync(CreateClientCommand command)
+        public async Task<Result> CreateClientAsync(CreateClientRequest request)
         {
-            if (command == null)
-                return Result.Fail("Command cannot be null.");
-            if (string.IsNullOrWhiteSpace(command.ClientFirstName))
+            if (request == null)
+                return Result.Fail("Request cannot be null.");
+            if (string.IsNullOrWhiteSpace(request.FirstName))
                 return Result.Fail("First name cannot be empty.");
-            if (string.IsNullOrWhiteSpace(command.ClientEmail))
+            if (string.IsNullOrWhiteSpace(request.Email))
                 return Result.Fail("Email cannot be empty.");
-            if (string.IsNullOrWhiteSpace(command.ClientPhoneNumber))
+            if (string.IsNullOrWhiteSpace(request.PhoneNumber))
                 return Result.Fail("Phone number cannot be empty.");
-            if (string.IsNullOrWhiteSpace(command.ClientAddress))
+            if (string.IsNullOrWhiteSpace(request.Address))
                 return Result.Fail("Address cannot be empty.");
 
-            var preferredStaff = await _staffRepository.GetStaffAsync(command.ClientPrefferedStaffID);
+            var preferredStaff = await _staffRepository.GetStaffAsync(request.StaffID);
             if (preferredStaff.IsFailed)
                 return Result.Fail("Preferred staff not found.");
 
             var client = new Client(
-                command.ClientFirstName,
-                command.ClientLastName,
-                command.ClientEmail,
-                command.ClientPhoneNumber,
-                DateOnly.FromDateTime(command.ClientBirthDate),
-                command.ClientAddress,
-                command.ClientNote,
+                request.FirstName,
+                request.LastName,
+                request.Email,
+                request.PhoneNumber,
+                request.DateOfBirth,
+                request.Address,
+                request.Note,
                 preferredStaff.Value,
-                command.ClientLoyaltyLevel);
+                request.LoyaltyLevel);
 
             return await _clientRepository.CreateClientAsync(client);
         }
 
-        public async Task<Result> DeleteClientAsync(DeleteClientCommand command)
+        public async Task<Result> DeleteClientAsync(DeleteClientRequest request)
         {
-            if (command.ClientID == Guid.Empty)
+            if (request.ClientID == Guid.Empty)
                 return Result.Fail("Client ID cannot be empty.");
 
-            return await _clientRepository.DeleteClientAsync(command.ClientID);
+            return await _clientRepository.DeleteClientAsync(request.ClientID);
         }
-        public async Task<Result> UpdateClientAsync(UpdateClientCommand command)
+        public async Task<Result> UpdateClientAsync(UpdateClientRequest request)
         {
-            if (command.ClientID == Guid.Empty)
+            if (request.ClientID == Guid.Empty)
                 return Result.Fail("Client ID cannot be empty.");
 
-            var clientResult = await _clientRepository.GetClientAsync(command.ClientID);
+            var clientResult = await _clientRepository.GetClientAsync(request.ClientID);
             if (clientResult.IsFailed)
-                return Result.Fail($"Client with ID {command.ClientID} was not found.");
+                return Result.Fail($"Client with ID {request.ClientID} was not found.");
 
             var client = clientResult.Value;
 
             client.UpdateClient(
-                command.ClientFirstName,
-                command.ClientLastName,
-                command.ClientEmail,
-                command.ClientPhoneNumber,
-                command.ClientBirthDate,
-                command.ClientAddress);
+                request.FirstName,
+                request.LastName,
+                request.Email,
+                request.PhoneNumber,
+                request.DateOfBirth,
+                request.Address);
 
             var updateResult = await _clientRepository.UpdateClientAsync(client);
             if (updateResult.IsFailed)
                 return Result.Fail("An error occurred while updating the client.");
+
+            return Result.Ok();
+        }
+        public async Task<Result> UpdateClientPrefferedStaffAsync(UpdateClientStaffRequest request)
+        {
+            if (request.ClientID == Guid.Empty)
+                return Result.Fail("Client ID cannot be empty.");
+            
+            var clientResult = await _clientRepository.GetClientAsync(request.ClientID);
+            if (clientResult.IsFailed)
+                return Result.Fail($"Client with ID {request.ClientID} was not found.");
+            
+            var client = clientResult.Value;
+
+            var staffResult = await _staffRepository.GetStaffAsync(request.StaffID);
+            if (staffResult.IsFailed)
+                return Result.Fail($"Staff with ID {request.StaffID} was not found.");
+
+            var staff = staffResult.Value;
+            
+            client.UpdateStaff(staff);
+
+            return Result.Ok();
+        }
+        public async Task<Result> UpdateClientNoteAsync(UpdateClientNoteRequest request)
+        {
+            if (request.ClientID == Guid.Empty)
+                return Result.Fail("Client ID cannot be empty.");
+            
+            var clientResult = await _clientRepository.GetClientAsync(request.ClientID);
+            if (clientResult.IsFailed)
+                return Result.Fail($"Client with ID {request.ClientID} was not found.");
+            
+            var client = clientResult.Value;
+            client.UpdateClientNote(request.Note);
+            
+            var updateResult = await _clientRepository.UpdateClientAsync(client);
+            if (updateResult.IsFailed)
+                return Result.Fail("An error occurred while updating the client's note.");
 
             return Result.Ok();
         }

@@ -1,5 +1,5 @@
 ﻿using FluentResults;
-using FysioEnterprise.Application.Repository.Interfaces;
+using FysioEnterprise.UseCase.IRepositories;
 using FysioEnterprise.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 

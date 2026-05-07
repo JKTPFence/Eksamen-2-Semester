@@ -1,17 +1,14 @@
-﻿using FysioEnterprise.Application.Repository.Interfaces;
-using FysioEnterprise.Domain.Entities;
+﻿using FysioEnterprise.Domain.Entities;
 using FysioEnterprise.Domain.Exceptions;
 using FysioEnterprise.Domain.Service;
-using FysioEnterprise.UseCase.Repository.Interfaces;
-using FysioEnterprise.Port.Driving.Commands.SessionComands;
-using static FysioEnterprise.Port.Driving.Commands.SessionComands.ICreateSessionCommand;
-using static FysioEnterprise.Port.Driving.Commands.SessionComands.IUpdateSessionCommand;
-using static FysioEnterprise.Port.Driving.Commands.SessionComands.IDeleteSessionCommand;
+using FysioEnterprise.UseCase.IRepositories;
 using FluentResults;
+using FysioEnterprise.Facade.UseCase.SessionUseCase;
+using static FysioEnterprise.Facade.RequestModels.SessionRequests;
 
 namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
 {
-    public class SessionCommandHandler : ICreateSessionCommand, IUpdateSessionCommand, IDeleteSessionCommand
+    public class SessionCommandHandler : ICreateSessionUseCase, IUpdateSessionUseCase, IDeleteSessionUseCase
     {
         private readonly IClientRepository _clientRepository;
         private readonly IStaffRepository _staffRepository;
@@ -36,41 +33,41 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
             _now = now;
         }
 
-        public async Task<Result> CreateSessionAsync(CreateSessionCommand command)
+        public async Task<Result> CreateSessionAsync(CreateSessionRequest request)
         {
-            var clientResult = await _clientRepository.GetClientAsync(command.ClientId);
+            var clientResult = await _clientRepository.GetClientAsync(request.ClientID);
             if (clientResult.IsFailed)
                 return Result.Fail("Client not found.");
 
-            var staffResult = await _staffRepository.GetStaffAsync(command.StaffId);
+            var staffResult = await _staffRepository.GetStaffAsync(request.StaffID);
             if (staffResult.IsFailed)
                 return Result.Fail("Staff not found.");
 
-            var roomResult = await _roomRepository.GetRoomAsync(command.SessionRoom);
+            var roomResult = await _roomRepository.GetRoomAsync(request.SessionRoomID);
             if (roomResult.IsFailed)
                 return Result.Fail("Room not found.");
 
             Result<Promotion> promotionResult = null;
-            if (command.PromotionID != Guid.Empty)
+            if (request.PromotionID != Guid.Empty)
             {
-                promotionResult = await _promotionRepository.GetPromotionAsync(command.PromotionID);
+                promotionResult = await _promotionRepository.GetPromotionAsync(request.PromotionID);
                 if (promotionResult.IsFailed)
                     return Result.Fail("Promotion not found.");
             }
 
-            var existingClientSessions = await _sessionRepository.GetSessionsByClientAsync(command.ClientId);
-            var existingStaffSessions = await _sessionRepository.GetSessionsByStaffAsync(command.StaffId);
+            var existingClientSessions = await _sessionRepository.GetSessionsByClientAsync(request.ClientID);
+            var existingStaffSessions = await _sessionRepository.GetSessionsByStaffAsync(request.StaffID);
 
             try
             {
                 var session = Session.Create(
                     clientResult.Value,
                     staffResult.Value,
-                    command.SessionType,
+                    request.SessionInstanceType,
                     roomResult.Value,
-                    command.StartTime,
-                    command.EndTime,
-                    command.SessionTotalPrice,
+                    request.StartTime,
+                    request.EndTime,
+                    request.SessionTotalPrice,
                     promotionResult?.Value,
                     existingClientSessions,
                     existingStaffSessions);
@@ -83,25 +80,25 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
             return Result.Ok();
         }
 
-        public async Task<Result> UpdateSessionAsync(UpdateSessionCommand command)
+        public async Task<Result> UpdateSessionAsync(UpdateSessionRequest request)
         {
-            var sessionResult = await _sessionRepository.GetSessionAsync(command.SessionId);
+            var sessionResult = await _sessionRepository.GetSessionAsync(request.SessionID);
             if (sessionResult.IsFailed)
                 return Result.Fail("Session not found.");
 
             var session = sessionResult.Value;
 
-            if (command.ClientId != session.SessionClientID)
+            if (request.ClientID != session.SessionClientID)
                 return Result.Fail("Session does not belong to the specified client.");
 
-            var existingClientSessions = await _sessionRepository.GetSessionsByClientAsync(command.ClientId);
-            var existingStaffSessions = await _sessionRepository.GetSessionsByStaffAsync(command.StaffId);
+            var existingClientSessions = await _sessionRepository.GetSessionsByClientAsync(request.ClientID);
+            var existingStaffSessions = await _sessionRepository.GetSessionsByStaffAsync(request.StaffID);
 
             try
             {
                   session.UpdateSessionTime(
-                    command.StartTime,
-                    command.EndTime,
+                    request.StartTime,
+                    request.EndTime,
                     existingClientSessions.Where(s => s.SessionID != session.SessionID),
                     existingStaffSessions.Where(s => s.SessionID != session.SessionID)
                     );
@@ -117,9 +114,9 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
             return Result.Ok();
         }
 
-        public async Task<Result> DeleteSessionAsync(DeleteSessionCommand command)
+        public async Task<Result> DeleteSessionAsync(DeleteSessionRequest request)
         {
-            var sessionResult = await _sessionRepository.GetSessionAsync(command.SessionId);
+            var sessionResult = await _sessionRepository.GetSessionAsync(request.SessionID);
             if (sessionResult.IsFailed)
                 return Result.Fail("Session not found.");
 

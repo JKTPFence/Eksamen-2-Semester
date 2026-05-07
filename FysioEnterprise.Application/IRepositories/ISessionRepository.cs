@@ -1,7 +1,7 @@
 ﻿using FluentResults;
 using FysioEnterprise.Domain.Entities;
 
-namespace FysioEnterprise.Application.Repository.Interfaces
+namespace FysioEnterprise.UseCase.IRepositories
 {
     public interface ISessionRepository
     {

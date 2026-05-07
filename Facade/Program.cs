@@ -1,17 +1,11 @@
-using FysioEnterprise.Application.Repository.Interfaces;
-using FysioEnterprise.Facade.UseCase;
-using FysioEnterprise.Infrastructure.Database.Repository;
+using FysioEnterprise.UseCase.IRepositories;
 using FysioEnterprise.Presentation.Components;
-using FysioEnterprise.UseCase.Commands;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
-
-builder.Services.AddScoped<ICreateSessionUseCase, SessionCommandHandler>();
-builder.Services.AddScoped<ISessionRepository, SessionRepository>();
 
 var app = builder.Build();
 
