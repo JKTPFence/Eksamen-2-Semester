@@ -1,7 +1,7 @@
 ﻿using FluentResults;
 using static FysioEnterprise.Facade.RequestModels.SessionRequests;
 
-namespace FysioEnterprise.Port.Driving.Commands.SessionComands
+namespace FysioEnterprise.Port.Driving.UseCase.SessionCommands
 {
     public interface IDeleteSessionUseCase
     {

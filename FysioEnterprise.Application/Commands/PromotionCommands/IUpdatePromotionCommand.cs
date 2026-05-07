@@ -1,4 +1,5 @@
-﻿using FysioEnterprise.Domain.Service;
+﻿using FluentResults;
+using FysioEnterprise.Domain.Service;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -7,7 +8,7 @@ namespace FysioEnterprise.Port.Driving.Commands.PromotionCommands
 {
     public interface IUpdatePromotionCommand
     {
-        Task UpdatePromotionAsync(UpdatePromotionCommand command);
+        Task<Result> UpdatePromotionAsync(UpdatePromotionCommand command);
         public record UpdatePromotionCommand(
             Guid PromotionID,
             string PromotionName,

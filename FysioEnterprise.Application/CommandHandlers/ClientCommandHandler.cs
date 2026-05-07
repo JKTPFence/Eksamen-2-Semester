@@ -11,10 +11,12 @@ using FysioEnterprise.UseCase.Repository.Interfaces;
 using static FysioEnterprise.Port.Driving.Commands.ClientCommands.ICreateClientCommand;
 using static FysioEnterprise.Port.Driving.Commands.ClientCommands.IDeleteClientCommand;
 using static FysioEnterprise.Port.Driving.Commands.ClientCommands.IUpdateClientCommand;
+using static FysioEnterprise.Port.Driving.Commands.ClientCommands.IUpdateStaffCommand;
+using static FysioEnterprise.Port.Driving.Commands.ClientCommands.IUpdateNoteCommand;
 
 namespace FysioEnterprise.UseCase.CommandHandler.ClientCommands
 {
-    public class ClientCommandHandler : ICreateClientCommand, IDeleteClientCommand, IUpdateClientCommand
+    public class ClientCommandHandler : ICreateClientCommand, IDeleteClientCommand, IUpdateClientCommand, IUpdateStaffCommand, IUpdateNoteCommand
     {
         private readonly IClientRepository _clientRepository;
         private readonly IStaffRepository _staffRepository;
@@ -84,6 +86,45 @@ namespace FysioEnterprise.UseCase.CommandHandler.ClientCommands
             var updateResult = await _clientRepository.UpdateClientAsync(client);
             if (updateResult.IsFailed)
                 return Result.Fail("An error occurred while updating the client.");
+
+            return Result.Ok();
+        }
+        public async Task<Result> UpdateStaffAsync(UpdateStaffCommand command)
+        {
+            if (command.ClientID == Guid.Empty)
+                return Result.Fail("Client ID cannot be empty.");
+            
+            var clientResult = await _clientRepository.GetClientAsync(command.ClientID);
+            if (clientResult.IsFailed)
+                return Result.Fail($"Client with ID {command.ClientID} was not found.");
+            
+            var client = clientResult.Value;
+
+            var staffResult = await _staffRepository.GetStaffAsync(command.ClientPrefferedStaffID);
+            if (staffResult.IsFailed)
+                return Result.Fail($"Staff with ID {command.ClientPrefferedStaffID} was not found.");
+
+            var staff = staffResult.Value;
+            
+            client.UpdateStaff(staff);
+
+            return Result.Ok();
+        }
+        public async Task<Result> UpdateNoteAsync(UpdateNoteCommand command)
+        {
+            if (command.ClientID == Guid.Empty)
+                return Result.Fail("Client ID cannot be empty.");
+            
+            var clientResult = await _clientRepository.GetClientAsync(command.ClientID);
+            if (clientResult.IsFailed)
+                return Result.Fail($"Client with ID {command.ClientID} was not found.");
+            
+            var client = clientResult.Value;
+            client.UpdateClientNote(command.ClientNote);
+            
+            var updateResult = await _clientRepository.UpdateClientAsync(client);
+            if (updateResult.IsFailed)
+                return Result.Fail("An error occurred while updating the client's note.");
 
             return Result.Ok();
         }
