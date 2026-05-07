@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using FysioEnterprise.Domain.ValueObjects;
 
 namespace FysioEnterprise.Facade.RequestModels
 {
@@ -12,19 +10,28 @@ namespace FysioEnterprise.Facade.RequestModels
             string LastName,
             string Email,
             string PhoneNumber,
-            DateTime DateOfBirth,
+            DateOnly DateOfBirth,
             string Address,
-            string Note);
+            string Note,
+            LoyaltyLevel LoyaltyLevel,
+            Guid StaffID);
         public record UpdateClientRequest(
             Guid ClientID,
             string FirstName,
             string LastName,
             string Email,
             string PhoneNumber,
-            DateTime DateOfBirth,
+            DateOnly DateOfBirth,
             string Address,
             string Note);
         public record DeleteClientRequest(
             Guid ClientID);
+
+        public record UpdateClientStaffRequest(
+            Guid ClientID,
+            Guid StaffID);
+        public record UpdateClientNoteRequest(
+            Guid ClientID,
+            string Note);
     }
 }

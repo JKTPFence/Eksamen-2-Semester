@@ -1,10 +1,16 @@
-﻿namespace FysioEnterprise.Facade.RequestModels
+﻿using FysioEnterprise.Domain.ValueObjects;
+
+namespace FysioEnterprise.Facade.RequestModels
 {
     public class SessionRequests
     {
         public record CreateSessionRequest(
         Guid ClientID,
         Guid StaffID,
+        Guid PromotionID,
+        Guid SessionRoomID,
+        SessionType SessionInstanceType,
+        int SessionTotalPrice,
         DateTime StartTime,
         DateTime EndTime);
 
@@ -20,6 +26,15 @@
             Guid SessionId, string Note);
         public record CancelSessionRequest(
             Guid SessionId);
+
+        public record SearchSessionRequest(
+     Guid SessionID,
+     Guid ClientID,
+     Guid StaffID,
+     DateTime StartTime,
+     DateTime EndTime);
+
+      public record GetSessionRequest(Guid SessionID);
 
     }
 }

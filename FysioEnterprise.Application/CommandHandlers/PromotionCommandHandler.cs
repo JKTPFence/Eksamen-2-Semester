@@ -1,86 +1,88 @@
-﻿using FysioEnterprise.UseCase.Repository.Interfaces;
+﻿using FysioEnterprise.UseCase.IRepositories;
 using FysioEnterprise.Domain.Entities;
-using FysioEnterprise.Port.Driving.Commands.PromotionCommands;
 using FluentResults;
+using FysioEnterprise.Facade.UseCase.PromotionUseCase;
+using static FysioEnterprise.Facade.RequestModels.PromotionRequests;
+using FysioEnterprise.Domain.Service;
 namespace FysioEnterprise.UseCase.CommandHandlers.PromotionCommands
 {
-    public class PromotionCommandHandler : ICreatePromotionCommand, IUpdatePromotionCommand, IDeletePromotionCommand
+    public class PromotionCommandHandler : ICreatePromotionUseCase, IUpdatePromotionUseCase, IDeletePromotionUseCase
     {
         private readonly IPromotionRepository _promotionRepository;
         public PromotionCommandHandler(IPromotionRepository promotionRepository)
         {
             _promotionRepository = promotionRepository;
         }
-        public async Task<Result> CreatePromotionAsync(ICreatePromotionCommand.CreatePromotionCommand command)
+        public async Task<Result> CreatePromotionAsync(CreatePromotionRequest request)
         {
-            if (command == null)
-                return Result.Fail("Command cannot be null.");
-            if (command.PromotionName == null)
+            if (request == null)
+                return Result.Fail("Request cannot be null.");
+            if (request.Name == null)
                 return Result.Fail("Promotion name cannot be null.");
-            if (command.PromotionDiscountPercentage <= 0)
+            if (request.DiscountPercentage <= 0)
                 return Result.Fail("Discount percentage must be greater than zero.");
-            if (command.PromotionStartDate == default)
+            if (request.StartDate == default)
                 return Result.Fail("Start date must be a valid date.");
-            if (command.PromotionEndDate == default)
+            if (request.EndDate == default)
                 return Result.Fail("End date must be a valid date.");
-            if (command.PromotionEndDate <= command.PromotionStartDate)
+            if (request.EndDate <= request.StartDate)
                 return Result.Fail("End date must be after start date.");
             
-            var promotion = await _promotionRepository.GetPromotionAsync(command.PromotionID);
+            var promotion = await _promotionRepository.GetPromotionAsync(request.PromotionID);
             if (promotion != null)
                 return Result.Fail("Promotion with the same ID already exists.");
 
             promotion = new Promotion(
-                    command.PromotionName,
-                    command.PromotionDiscountPercentage,
-                    command.PromotionStartDate,
-                    command.PromotionEndDate,
-                    command.TimeNow);
+                    request.Name,
+                    request.DiscountPercentage,
+                    request.StartDate,
+                    request.EndDate,
+                    new CurrentDateTime());
 
             return await _promotionRepository.CreatePromotionAsync(promotion);
         }
-        public async Task<Result> UpdatePromotionAsync(IUpdatePromotionCommand.UpdatePromotionCommand command)
+        public async Task<Result> UpdatePromotionAsync(UpdatePromotionRequest request)
         {
-            if (command == null)
-                return Result.Fail("Command cannot be null.");
-            if (command.PromotionID == Guid.Empty)
+            if (request == null)
+                return Result.Fail("Request cannot be null.");
+            if (request.PromotionID == Guid.Empty)
                 return Result.Fail("Promotion ID cannot be empty.");
-            if (command.PromotionName == null)
+            if (request.Name == null)
                 return Result.Fail("Promotion name cannot be null.");
-            if (command.PromotionDiscountPercentage <= 0)
+            if (request.DiscountPercentage <= 0)
                 return Result.Fail("Discount percentage must be greater than zero.");
-            if (command.PromotionStartDate == default)
+            if (request.StartDate == default)
                 return Result.Fail("Start date must be a valid date.");
-            if (command.PromotionEndDate == default)
+            if (request.EndDate == default)
                 return Result.Fail("End date must be a valid date.");
-            if (command.PromotionEndDate <= command.PromotionStartDate)
+            if (request.EndDate <= request.StartDate)
                 return Result.Fail("End date must be after start date.");
 
-            var promotion = await _promotionRepository.GetPromotionAsync(command.PromotionID);
+            var promotion = await _promotionRepository.GetPromotionAsync(request.PromotionID);
             if (promotion == null)
                 return Result.Fail("Promotion not found.");
                 
             promotion.UpdatePromotion(
-                    command.PromotionName,
-                    command.PromotionDiscountPercentage,
-                    command.PromotionStartDate,
-                    command.PromotionEndDate);
+                    request.Name,
+                    request.DiscountPercentage,
+                    request.StartDate,
+                    request.EndDate);
                 
             await _promotionRepository.UpdatePromotionAsync(promotion);
             return Result.Ok();
         }
-        public async Task<Result> DeletePromotionAsync(IDeletePromotionCommand.DeletePromotionCommand command)
+        public async Task<Result> DeletePromotionAsync(DeletePromotionRequest request)
         {
-            if (command == null)
+            if (request == null)
                 return Result.Fail("Command cannot be null.");
-            if (command.PromotionID == Guid.Empty)
+            if (request.PromotionID == Guid.Empty)
                 return Result.Fail("Promotion ID cannot be empty.");
                 
-            var promotion = await _promotionRepository.GetPromotionAsync(command.PromotionID);
+            var promotion = await _promotionRepository.GetPromotionAsync(request.PromotionID);
             if(promotion == null)
                 return Result.Fail("Promotion not found.");
 
-            await _promotionRepository.DeletePromotionAsync(command.PromotionID);
+            await _promotionRepository.DeletePromotionAsync(request.PromotionID);
             return Result.Ok();
         }
     }

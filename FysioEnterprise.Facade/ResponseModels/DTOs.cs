@@ -18,7 +18,7 @@ namespace FysioEnterprise.Facade.DTOs
         SessionType SessionInstanceType,
         string? PromotionName,
         DateTime SessionStartTime,
-        DateTime SessionEndTime, 
+        DateTime SessionEndTime,
         int SessionTotalPrice,
         string SessionStatus);
 
@@ -68,13 +68,5 @@ namespace FysioEnterprise.Facade.DTOs
         int SessionTypePrice,
         int SessionTypeMaxAmount,
         TimeOnly SessionTypeTimeSpan);
-
-    public record GetSessionRequest(Guid SessionID);
-
-    public record SearchSessionRequest(
-        Guid SessionID,
-        Guid ClientID,
-        Guid StaffID,
-        DateTime StartTime,
-        DateTime EndTime);
 }
+
