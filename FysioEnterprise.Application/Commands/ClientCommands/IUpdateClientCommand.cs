@@ -21,4 +21,14 @@ namespace FysioEnterprise.Port.Driving.Commands.ClientCommands
             string ClientNote,
             LoyaltyLevel ClientLoyaltyLevel);
     }
+    public interface IUpdateStaffCommand
+    {
+        Task<Result> UpdateStaffAsync(UpdateStaffCommand command);
+        public record UpdateStaffCommand(Guid ClientID, Guid ClientPrefferedStaffID);
+    }
+    public interface IUpdateNoteCommand
+    {
+        Task<Result> UpdateNoteAsync(UpdateNoteCommand command);
+        public record UpdateNoteCommand(Guid ClientID, string ClientNote);
+    }
 }
