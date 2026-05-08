@@ -1,5 +1,5 @@
-﻿using FysioEnterprise.Domain.Service;
-using FysioEnterprise.Domain.Exceptions;
+﻿using FysioEnterprise.Domain.Exceptions;
+using FysioEnterprise.Domain.Service;
 
 namespace FysioEnterprise.Domain.Entities
 {
@@ -10,35 +10,33 @@ namespace FysioEnterprise.Domain.Entities
         public decimal PromotionDiscountPercent { get; private set; }
         public DateTime PromotionStartTime { get; private set; }
         public DateTime PromotionEndTime { get; private set; }
-        public ITimeNow TimeNow { get; private set; }
         public bool IsActive => IsPromotionActive(this);
 
-        public Promotion(string promotionName, decimal promotionDiscountPercent, DateTime promotionStartTime, DateTime promotionEndTime, ITimeNow timeNow)
-        {
-            ValidatePromotionTime(promotionStartTime, promotionEndTime, timeNow);
+        public static Promotion Create(
+            string promotionName, 
+            decimal promotionDiscountPercent, 
+            DateTime promotionStartTime, 
+            DateTime promotionEndTime)
+        { 
+            if (string.IsNullOrWhiteSpace(promotionName))
+                throw new DomainException($"Promotion name cannot be empty: {promotionName}");
+            if (promotionDiscountPercent <= 0)
+                throw new DomainException($"Discount percentage must be greater than zero: {promotionDiscountPercent}");
 
-            PromotionID = Guid.NewGuid();
-            PromotionName = promotionName;
-            PromotionDiscountPercent = promotionDiscountPercent;
-            PromotionStartTime = promotionStartTime;
-            PromotionEndTime = promotionEndTime;
-            TimeNow = timeNow;
+            return new Promotion
+            {
+                PromotionID = Guid.NewGuid(),
+                PromotionName = promotionName,
+                PromotionDiscountPercent = promotionDiscountPercent,
+                PromotionStartTime = promotionStartTime,
+                PromotionEndTime = promotionEndTime,
+            };
         }
-
-        private static void ValidatePromotionTime(DateTime sessionStartTime, DateTime sessionEndTime, ITimeNow timeNow)
-        {
-            if (sessionStartTime >= sessionEndTime)
-                throw new ArgumentException("Session must start before it ends.");
-            if (sessionStartTime < timeNow.Now())
-                throw new ArgumentException("Session start cannot be in the past.");
-        }
-
         private static Boolean IsPromotionActive(Promotion promotion)
         {
-            ValidatePromotionTime(promotion.PromotionStartTime, promotion.PromotionEndTime, promotion.TimeNow);
             if (string.IsNullOrEmpty(promotion.PromotionName) || promotion.PromotionDiscountPercent <= 0)
             {
-                throw new ArgumentNullException("Promotion needs to have a name and a discount");
+                throw new DomainException("Promotion needs to have a name and a discount");
             }
             
             if (DateTime.Now >= promotion.PromotionStartTime && DateTime.Now < promotion.PromotionEndTime)
@@ -49,7 +47,6 @@ namespace FysioEnterprise.Domain.Entities
         }
         public void UpdatePromotion(string promotionName, decimal promotionDiscountPercent, DateTime promotionStartTime, DateTime promotionEndTime)
         {
-            ValidatePromotionTime(promotionStartTime, promotionEndTime, TimeNow);
             PromotionName = promotionName;
             PromotionDiscountPercent = promotionDiscountPercent;
             PromotionStartTime = promotionStartTime;

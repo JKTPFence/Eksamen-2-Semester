@@ -1,8 +1,9 @@
 ﻿using FluentResults;
-using FysioEnterprise.UseCase.IRepositories;
 using FysioEnterprise.Domain.Entities;
-using static FysioEnterprise.Facade.RequestModels.ClientRequests;
+using FysioEnterprise.Domain.Exceptions;
 using FysioEnterprise.Facade.UseCase.ClientUseCase;
+using FysioEnterprise.UseCase.IRepositories;
+using static FysioEnterprise.Facade.RequestModels.ClientRequests;
 
 namespace FysioEnterprise.UseCase.CommandHandler.ClientCommands
 {
@@ -20,20 +21,14 @@ namespace FysioEnterprise.UseCase.CommandHandler.ClientCommands
         {
             if (request == null)
                 return Result.Fail("Request cannot be null.");
-            if (string.IsNullOrWhiteSpace(request.FirstName))
-                return Result.Fail("First name cannot be empty.");
-            if (string.IsNullOrWhiteSpace(request.Email))
-                return Result.Fail("Email cannot be empty.");
-            if (string.IsNullOrWhiteSpace(request.PhoneNumber))
-                return Result.Fail("Phone number cannot be empty.");
-            if (string.IsNullOrWhiteSpace(request.Address))
-                return Result.Fail("Address cannot be empty.");
 
             var preferredStaff = await _staffRepository.GetStaffAsync(request.StaffID);
             if (preferredStaff.IsFailed)
                 return Result.Fail("Preferred staff not found.");
 
-            var client = new Client(
+            try
+            { 
+            var client = Client.Create(
                 request.FirstName,
                 request.LastName,
                 request.Email,
@@ -45,6 +40,11 @@ namespace FysioEnterprise.UseCase.CommandHandler.ClientCommands
                 request.LoyaltyLevel);
 
             return await _clientRepository.CreateClientAsync(client);
+            }
+            catch (DomainException ex)
+            {
+                return Result.Fail(ex.Message);
+            }
         }
 
         public async Task<Result> DeleteClientAsync(DeleteClientRequest request)

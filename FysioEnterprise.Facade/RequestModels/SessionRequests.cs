@@ -9,7 +9,7 @@ namespace FysioEnterprise.Facade.RequestModels
         Guid StaffID,
         Guid PromotionID,
         Guid SessionRoomID,
-        SessionType SessionInstanceType,
+        Guid SessionInstanceTypeID,
         int SessionTotalPrice,
         DateTime StartTime,
         DateTime EndTime);

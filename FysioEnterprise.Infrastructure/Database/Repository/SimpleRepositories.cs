@@ -53,4 +53,20 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
             return Result.Ok(clinicResult);
         }
     }
+    public class SessionTypeRepository : ISessionTypeRepository
+    {
+        private readonly AppDBContext _context;
+        public SessionTypeRepository(AppDBContext context) => _context = context;
+
+        public async Task<Result<SessionType>> GetSessionTypeAsync(Guid sessionTypeId)
+        {
+            var sessionTypeResult = await _context.SessionTypes.FindAsync(sessionTypeId);
+
+            if (sessionTypeResult == null)
+            {
+                return Result.Fail<SessionType>("Session type not found.");
+            }
+            return Result.Ok(sessionTypeResult);
+        }
+    }
 }

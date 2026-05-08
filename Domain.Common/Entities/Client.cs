@@ -23,27 +23,39 @@ namespace FysioEnterprise.Domain.Entities
         {
 
         }
-        public Client(string clientFirstName, string? clientLastName, string clientEmail, string clientPhoneNumber, DateOnly clientBirthDate, string clientAddress, string? clientNote, Staff clientPrefferedStaff, LoyaltyLevel clientLoyaltyLevel)
+        public static Client Create(
+            string clientFirstName, 
+            string? clientLastName, 
+            string clientEmail, 
+            string clientPhoneNumber, 
+            DateOnly clientBirthDate, 
+            string clientAddress, 
+            string? clientNote, 
+            Staff clientPrefferedStaff, 
+            LoyaltyLevel clientLoyaltyLevel)
         {
             if (string.IsNullOrWhiteSpace(clientFirstName)) 
-                throw new ArgumentNullException("First name cannot be empty.", nameof(clientFirstName));
+                throw new DomainException($"First name cannot be empty: {clientFirstName}");
             if (string.IsNullOrWhiteSpace(clientEmail)) 
-                throw new ArgumentNullException("Email cannot be empty.", nameof(clientEmail));
+                throw new DomainException($"Email cannot be empty: {clientEmail}");
             if (string.IsNullOrWhiteSpace(clientPhoneNumber)) 
-                throw new ArgumentNullException("Phone number cannot be empty.", nameof(clientPhoneNumber));
+                throw new DomainException($"Phone number cannot be empty: {clientPhoneNumber}");
             if (string.IsNullOrWhiteSpace(clientAddress)) 
-                throw new ArgumentNullException("Address cannot be empty.", nameof(clientAddress));
+                throw new DomainException($"Address cannot be empty: {clientAddress}");
 
-            ClientID = Guid.NewGuid();
-            ClientPrefferedStaffID = clientPrefferedStaff.StaffID;
-            ClientFirstName = clientFirstName;
-            ClientLastName = clientLastName;
-            ClientEmail = clientEmail;
-            ClientPhoneNumber = clientPhoneNumber;
-            ClientBirthDate = clientBirthDate;
-            ClientAddress = clientAddress;
-            ClientNote = clientNote;
-            ClientLoyaltyLevel = clientLoyaltyLevel;
+            return new Client
+            {
+                ClientID = Guid.NewGuid(),
+                ClientPrefferedStaffID = clientPrefferedStaff.StaffID,
+                ClientFirstName = clientFirstName,
+                ClientLastName = clientLastName,
+                ClientEmail = clientEmail,
+                ClientPhoneNumber = clientPhoneNumber,
+                ClientBirthDate = clientBirthDate,
+                ClientAddress = clientAddress,
+                ClientNote = clientNote,
+                ClientLoyaltyLevel = clientLoyaltyLevel,
+            };
         }
         public bool IsBirthdayMonth(DateOnly date)
         {
@@ -69,14 +81,13 @@ namespace FysioEnterprise.Domain.Entities
             )
             {
             if (string.IsNullOrWhiteSpace(clientFirstName))
-                throw new ArgumentException("First name cannot be empty.", nameof(clientFirstName));
+                throw new DomainException($"First name cannot be empty: {clientFirstName}");
             if (string.IsNullOrWhiteSpace(clientEmail))
-                throw new ArgumentException("Email cannot be empty.", nameof(clientEmail));
+                throw new DomainException($"Email cannot be empty: {clientEmail}");
             if (string.IsNullOrWhiteSpace(clientPhoneNumber))
-                throw new ArgumentException("Phone number cannot be empty.", nameof(clientPhoneNumber));
+                throw new DomainException($"Phone number cannot be empty: {clientPhoneNumber}");
             if (string.IsNullOrWhiteSpace(clientAddress))
-                throw new ArgumentException("Address cannot be empty.", nameof(clientAddress));
-
+                throw new DomainException($"Address cannot be empty: {clientAddress}");
             ClientFirstName = clientFirstName;
             ClientLastName = clientLastName;
             ClientEmail = clientEmail;
@@ -88,7 +99,7 @@ namespace FysioEnterprise.Domain.Entities
         public void UpdateStaff(Staff clientpreferredStaff)
         {
             if (clientpreferredStaff == null)
-                throw new ArgumentNullException(nameof(clientpreferredStaff));
+                throw new DomainException($"No staff member with name: {clientpreferredStaff.StaffFirstName} could be found");
 
             ClientPrefferedStaffID = clientpreferredStaff.StaffID;
         }
