@@ -1,4 +1,4 @@
-﻿using FysioEnterprise.Domain.ValueObjects;
+﻿using FysioEnterprise.Domain.Entities;
 
 namespace FysioEnterprise.Facade.RequestModels
 {

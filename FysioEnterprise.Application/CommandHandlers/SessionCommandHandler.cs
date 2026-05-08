@@ -1,9 +1,12 @@
-﻿using FysioEnterprise.Domain.Entities;
+﻿using FluentResults;
+using FysioEnterprise.Domain.Entities;
 using FysioEnterprise.Domain.Exceptions;
 using FysioEnterprise.Domain.Service;
-using FysioEnterprise.UseCase.IRepositories;
-using FluentResults;
+using FysioEnterprise.Domain.Service.PricingService;
+using FysioEnterprise.Domain.Service.PricingService.Strategies;
+using FysioEnterprise.Domain.Service.PricingService.Strategies.PricingMethods;
 using FysioEnterprise.Facade.UseCase.SessionUseCase;
+using FysioEnterprise.UseCase.IRepositories;
 using static FysioEnterprise.Facade.RequestModels.SessionRequests;
 
 namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
@@ -57,6 +60,32 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
 
             var existingClientSessions = await _sessionRepository.GetSessionsByClientAsync(request.ClientID);
             var existingStaffSessions = await _sessionRepository.GetSessionsByStaffAsync(request.StaffID);
+            var strategies = new List<IPricingStrategy>
+{
+            new LoyaltyPricingStrategy(clientResult.Value.ClientLoyaltyLevel)
+};
+
+            bool birthdayEligible = clientResult.Value.IsBirthdayMonth(DateOnly.FromDateTime(request.StartTime)) && !clientResult.Value.HasUsedBirthdayDiscountThisYear;
+
+            if (birthdayEligible)
+                strategies.Add(new BirthdayPricingStrategy());
+
+            if (promotionResult != null)
+                strategies.Add(new PromotionPricingStrategy(promotionResult.Value.PromotionDiscountPercent));
+
+            var winningPrice = strategies
+                .Select(s => s.Apply(request.SessionInstanceType.SessionTypePrice))
+                .Min();
+
+            if (birthdayEligible && new BirthdayPricingStrategy().Apply(request.SessionInstanceType.SessionTypePrice) == winningPrice)
+            {
+                clientResult.Value.MarkBirthdayDiscountUsed(DateOnly.FromDateTime(request.StartTime));
+                await _clientRepository.UpdateClientAsync(clientResult.Value);
+            }
+
+            var totalPrice = winningPrice;
+            var calculator = new PriceCalculator(strategies);
+            totalPrice = calculator.Calculate(request.SessionInstanceType.SessionTypePrice);
 
             try
             {
@@ -67,7 +96,7 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
                     roomResult.Value,
                     request.StartTime,
                     request.EndTime,
-                    request.SessionTotalPrice,
+                    totalPrice,
                     promotionResult?.Value,
                     existingClientSessions,
                     existingStaffSessions);
