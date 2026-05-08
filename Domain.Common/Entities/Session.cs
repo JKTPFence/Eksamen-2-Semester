@@ -3,7 +3,6 @@ using System.Net.NetworkInformation;
 using FysioEnterprise.Domain.Enums;
 using FysioEnterprise.Domain.Exceptions;
 using FysioEnterprise.Domain.Service;
-using FysioEnterprise.Domain.ValueObjects;
 
 namespace FysioEnterprise.Domain.Entities
 {
@@ -13,11 +12,11 @@ namespace FysioEnterprise.Domain.Entities
         public Guid SessionClientID { get; private set; }
         public Guid SessionStaffID { get; private set; }
         public Guid SessionRoomID { get; private set; }
-        public SessionType SessionInstanceType { get; private set; }
+        public Guid SessionInstanceTypeID { get; private set; }
         public Promotion? SessionPromotion { get; private set; }
         public DateTime SessionStartTime { get; private set; }
         public DateTime? SessionEndTime { get; private set; }
-        public int? SessionTotalPrice { get; private set; }
+        public decimal? SessionTotalPrice { get; private set; }
         public SessionStatusEnum SessionStatus { get; private set; }
 
         public bool IsActive => SessionStatus == SessionStatusEnum.Active;
@@ -31,7 +30,7 @@ namespace FysioEnterprise.Domain.Entities
             Room room,
             DateTime startTime,
             DateTime endTime,
-            int? totalPrice,
+            decimal totalPrice,
             Promotion? promotion,
             IEnumerable<Session> existingClientSessions,
             IEnumerable<Session> existingStaffSessions)
@@ -55,7 +54,7 @@ namespace FysioEnterprise.Domain.Entities
                 SessionEndTime = endTime,
                 SessionTotalPrice = totalPrice,
                 SessionStatus = SessionStatusEnum.Active,
-                SessionInstanceType = sessionType,
+                SessionInstanceTypeID = sessionType.SessionTypeId,
                 SessionPromotion = promotion
             };
         }

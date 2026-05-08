@@ -1,4 +1,5 @@
-﻿using FysioEnterprise.Domain.ValueObjects;
+﻿using FysioEnterprise.Domain.Exceptions;
+using FysioEnterprise.Domain.ValueObjects;
 
 namespace FysioEnterprise.Domain.Entities
 {
@@ -15,6 +16,9 @@ namespace FysioEnterprise.Domain.Entities
         public string ClientAddress { get; private set; }
         public string? ClientNote { get; private set; }
         public LoyaltyLevel ClientLoyaltyLevel { get; private set; }
+        public int? BirthdayDiscountUsedYear { get; private set; }
+        public bool HasUsedBirthdayDiscountThisYear =>
+            BirthdayDiscountUsedYear == DateTime.Now.Year;
         public Client() // Empty constructor for EF Core
         {
 
@@ -41,9 +45,19 @@ namespace FysioEnterprise.Domain.Entities
             ClientNote = clientNote;
             ClientLoyaltyLevel = clientLoyaltyLevel;
         }
-        public bool IsBirthdayMonth()
+        public bool IsBirthdayMonth(DateOnly date)
         {
-            return DateOnly.FromDateTime(DateTime.Now).Month == ClientBirthDate.Month;
+            return date.Month == ClientBirthDate.Month;
+        }
+
+        public void MarkBirthdayDiscountUsed(DateOnly date)
+        {
+            if (!IsBirthdayMonth(date))
+                throw new DomainException("Cannot mark birthday discount outside of birthday month.");
+            if (HasUsedBirthdayDiscountThisYear)
+                throw new DomainException("Birthday discount already used this year.");
+
+            BirthdayDiscountUsedYear = DateTime.Now.Year;
         }
         public void UpdateClient(
             string clientFirstName,

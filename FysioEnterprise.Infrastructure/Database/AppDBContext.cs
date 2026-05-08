@@ -1,5 +1,6 @@
 ﻿using FysioEnterprise.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using static FysioEnterprise.Infrastructure.Database.SeedData;
 using Entity = FysioEnterprise.Domain.Entities;
 
 namespace FysioEnterprise.Infrastructure.Database
@@ -17,8 +18,7 @@ namespace FysioEnterprise.Infrastructure.Database
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<Entity.Session>()
-                .OwnsOne(s => s.SessionInstanceType);
+            modelBuilder.Entity<SessionType>().HasData(SessionTypeSeed.GetSeedData());
 
             modelBuilder.Entity<Entity.Session>()
                 .Property(s => s.SessionStatus)
