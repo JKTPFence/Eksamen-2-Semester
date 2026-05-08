@@ -1,10 +1,12 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using FysioEnterprise.Domain.Service.PricingService;
 using FysioEnterprise.Facade.UseCase.ClientUseCase;
-using FysioEnterprise.UseCase.CommandHandler.ClientCommands;
 using FysioEnterprise.Facade.UseCase.PromotionUseCase;
-using FysioEnterprise.UseCase.CommandHandlers.PromotionCommands;
 using FysioEnterprise.Facade.UseCase.SessionUseCase;
+using FysioEnterprise.UseCase.CommandHandler.ClientCommands;
+using FysioEnterprise.UseCase.CommandHandlers.PromotionCommands;
 using FysioEnterprise.UseCase.CommandHandlers.SessionCommands;
+using FysioEnterprise.UseCase.Service;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace FysioEnterprise.UseCase.DependencyInjection
 {
@@ -32,6 +34,9 @@ namespace FysioEnterprise.UseCase.DependencyInjection
             //Need to implement EndSession og CancelSession
             services.AddScoped<ICreateSessionUseCase, SessionCommandHandler>();
             services.AddScoped<ICreateSessionUseCase, SessionCommandHandler>();
+
+            services.AddScoped<IPricingStrategyFactory, PricingStrategyFactoryService>();
+            services.AddScoped<PriceCalculator>();
 
             return services;
         }

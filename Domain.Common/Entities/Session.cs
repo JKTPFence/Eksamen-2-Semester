@@ -13,7 +13,7 @@ namespace FysioEnterprise.Domain.Entities
         public Guid SessionStaffID { get; private set; }
         public Guid SessionRoomID { get; private set; }
         public Guid SessionInstanceTypeID { get; private set; }
-        public Promotion? SessionPromotion { get; private set; }
+        public Guid? SessionPromotion { get; private set; }
         public DateTime SessionStartTime { get; private set; }
         public DateTime? SessionEndTime { get; private set; }
         public decimal? SessionTotalPrice { get; private set; }
@@ -24,21 +24,21 @@ namespace FysioEnterprise.Domain.Entities
         private Session() { } // EF Core
 
         public static Session Create(
-            Client client,
-            Staff staff,
-            SessionType sessionType,
-            Room room,
+            Guid clientId,
+            Guid staffId,
+            Guid sessionTypeId,
+            Guid roomId,
             DateTime startTime,
             DateTime endTime,
             decimal totalPrice,
-            Promotion? promotion,
+            Guid? promotionId,
             IEnumerable<Session> existingClientSessions,
             IEnumerable<Session> existingStaffSessions)
         {
-            if (client == null) throw new ArgumentNullException(nameof(client));
-            if (staff == null) throw new ArgumentNullException(nameof(staff));
-            if (sessionType == null) throw new ArgumentNullException(nameof(sessionType));
-            if (room == null) throw new ArgumentNullException(nameof(room));
+            if (clientId == Guid.Empty) throw new ArgumentNullException(nameof(clientId));
+            if (staffId == Guid.Empty) throw new ArgumentNullException(nameof(staffId));
+            if (sessionTypeId == Guid.Empty) throw new ArgumentNullException(nameof(sessionTypeId));
+            if (roomId == Guid.Empty) throw new ArgumentNullException(nameof(roomId));
 
             ValidateSessionTime(startTime, endTime);
             ValidateOverlap(existingClientSessions, startTime, endTime, "Client");
@@ -47,15 +47,15 @@ namespace FysioEnterprise.Domain.Entities
             return new Session
             {
                 SessionID = Guid.NewGuid(),
-                SessionClientID = client.ClientID,
-                SessionStaffID = staff.StaffID,
-                SessionRoomID = room.RoomID,
+                SessionClientID = clientId,
+                SessionStaffID = staffId,
+                SessionRoomID = roomId,
                 SessionStartTime = startTime,
                 SessionEndTime = endTime,
                 SessionTotalPrice = totalPrice,
                 SessionStatus = SessionStatusEnum.Active,
-                SessionInstanceTypeID = sessionType.SessionTypeId,
-                SessionPromotion = promotion
+                SessionInstanceTypeID = sessionTypeId,
+                SessionPromotion = promotionId
             };
         }
 

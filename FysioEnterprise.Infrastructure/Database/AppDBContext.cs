@@ -15,6 +15,7 @@ namespace FysioEnterprise.Infrastructure.Database
         public DbSet<Entity.Promotion> Promotions { get; set; }
         public DbSet<Entity.Clinic> Clinics { get; set; }
         public DbSet<Entity.Room> Rooms { get; set; }
+        public DbSet<Entity.SessionType> SessionTypes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

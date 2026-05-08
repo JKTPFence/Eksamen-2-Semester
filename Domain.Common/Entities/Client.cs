@@ -23,7 +23,16 @@ namespace FysioEnterprise.Domain.Entities
         {
 
         }
-        public Client(string clientFirstName, string? clientLastName, string clientEmail, string clientPhoneNumber, DateOnly clientBirthDate, string clientAddress, string? clientNote, Staff clientPrefferedStaff, LoyaltyLevel clientLoyaltyLevel)
+        public static Client Create(
+            string clientFirstName, 
+            string? clientLastName, 
+            string clientEmail, 
+            string clientPhoneNumber, 
+            DateOnly clientBirthDate, 
+            string clientAddress, 
+            string? clientNote, 
+            Staff clientPrefferedStaff, 
+            LoyaltyLevel clientLoyaltyLevel)
         {
             if (string.IsNullOrWhiteSpace(clientFirstName)) 
                 throw new ArgumentNullException("First name cannot be empty.", nameof(clientFirstName));
@@ -34,16 +43,19 @@ namespace FysioEnterprise.Domain.Entities
             if (string.IsNullOrWhiteSpace(clientAddress)) 
                 throw new ArgumentNullException("Address cannot be empty.", nameof(clientAddress));
 
-            ClientID = Guid.NewGuid();
-            ClientPrefferedStaffID = clientPrefferedStaff.StaffID;
-            ClientFirstName = clientFirstName;
-            ClientLastName = clientLastName;
-            ClientEmail = clientEmail;
-            ClientPhoneNumber = clientPhoneNumber;
-            ClientBirthDate = clientBirthDate;
-            ClientAddress = clientAddress;
-            ClientNote = clientNote;
-            ClientLoyaltyLevel = clientLoyaltyLevel;
+            return new Client
+            {
+                ClientID = Guid.NewGuid(),
+                ClientPrefferedStaffID = clientPrefferedStaff.StaffID,
+                ClientFirstName = clientFirstName,
+                ClientLastName = clientLastName,
+                ClientEmail = clientEmail,
+                ClientPhoneNumber = clientPhoneNumber,
+                ClientBirthDate = clientBirthDate,
+                ClientAddress = clientAddress,
+                ClientNote = clientNote,
+                ClientLoyaltyLevel = clientLoyaltyLevel,
+            };
         }
         public bool IsBirthdayMonth(DateOnly date)
         {

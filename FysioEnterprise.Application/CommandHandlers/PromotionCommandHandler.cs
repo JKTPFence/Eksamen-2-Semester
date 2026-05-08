@@ -9,9 +9,11 @@ namespace FysioEnterprise.UseCase.CommandHandlers.PromotionCommands
     public class PromotionCommandHandler : ICreatePromotionUseCase, IUpdatePromotionUseCase, IDeletePromotionUseCase
     {
         private readonly IPromotionRepository _promotionRepository;
-        public PromotionCommandHandler(IPromotionRepository promotionRepository)
+        private readonly ITimeNow _timeNow;
+        public PromotionCommandHandler(IPromotionRepository promotionRepository, ITimeNow timeNow)
         {
             _promotionRepository = promotionRepository;
+            _timeNow = timeNow;
         }
         public async Task<Result> CreatePromotionAsync(CreatePromotionRequest request)
         {
@@ -21,23 +23,24 @@ namespace FysioEnterprise.UseCase.CommandHandlers.PromotionCommands
                 return Result.Fail("Promotion name cannot be null.");
             if (request.DiscountPercentage <= 0)
                 return Result.Fail("Discount percentage must be greater than zero.");
-            if (request.StartDate == default)
-                return Result.Fail("Start date must be a valid date.");
-            if (request.EndDate == default)
-                return Result.Fail("End date must be a valid date.");
-            if (request.EndDate <= request.StartDate)
-                return Result.Fail("End date must be after start date.");
             
             var promotion = await _promotionRepository.GetPromotionAsync(request.PromotionID);
             if (promotion != null)
                 return Result.Fail("Promotion with the same ID already exists.");
+            
+            var validationResult = TimeValidationService.ValidateTime(
+                request.Name,
+                request.StartDate,
+                request.EndDate,
+                _timeNow);
+            if (validationResult.IsFailed)
+                return validationResult;
 
-            promotion = new Promotion(
+            promotion = Promotion.Create(
                     request.Name,
                     request.DiscountPercentage,
                     request.StartDate,
-                    request.EndDate,
-                    new CurrentDateTime());
+                    request.EndDate);
 
             return await _promotionRepository.CreatePromotionAsync(promotion);
         }
@@ -51,12 +54,14 @@ namespace FysioEnterprise.UseCase.CommandHandlers.PromotionCommands
                 return Result.Fail("Promotion name cannot be null.");
             if (request.DiscountPercentage <= 0)
                 return Result.Fail("Discount percentage must be greater than zero.");
-            if (request.StartDate == default)
-                return Result.Fail("Start date must be a valid date.");
-            if (request.EndDate == default)
-                return Result.Fail("End date must be a valid date.");
-            if (request.EndDate <= request.StartDate)
-                return Result.Fail("End date must be after start date.");
+           
+            var validationResult = TimeValidationService.ValidateTime(
+                           request.Name,
+                           request.StartDate,
+                           request.EndDate,
+                           _timeNow);
+            if (validationResult.IsFailed)
+                return validationResult;
 
             var promotion = await _promotionRepository.GetPromotionAsync(request.PromotionID);
             if (promotion == null)

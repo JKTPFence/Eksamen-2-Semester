@@ -9,12 +9,12 @@ namespace FysioEnterprise.Testing.Domain
     public class PriceCalculatorTests
     {
         private const decimal BasePrice = 100m;
+        private readonly PriceCalculator _calculator = new PriceCalculator();
 
         [Fact]
         public void Calculate_NoStrategies_ReturnsBasePrice()
         {
-            var calculator = new PriceCalculator(new List<IPricingStrategy>());
-            var result = calculator.Calculate(BasePrice);
+            var result = _calculator.Calculate(BasePrice, new List<IPricingStrategy>());
             Assert.Equal(BasePrice, result);
         }
 
@@ -26,7 +26,7 @@ namespace FysioEnterprise.Testing.Domain
             new LoyaltyPricingStrategy(LoyaltyLevel.Gold) 
         };
 
-            var result = new PriceCalculator(strategies).Calculate(BasePrice);
+            var result = _calculator.Calculate(BasePrice, strategies);
 
             Assert.Equal(85m, result);
         }
@@ -37,10 +37,10 @@ namespace FysioEnterprise.Testing.Domain
             var strategies = new List<IPricingStrategy>
         {
             new LoyaltyPricingStrategy(LoyaltyLevel.Bronze), 
-            new BirthdayPricingStrategy()                     
+            new BirthdayPricingStrategy()                    
         };
 
-            var result = new PriceCalculator(strategies).Calculate(BasePrice);
+            var result = _calculator.Calculate(BasePrice, strategies);
 
             Assert.Equal(75m, result);
         }
@@ -55,7 +55,7 @@ namespace FysioEnterprise.Testing.Domain
             new PromotionPricingStrategy(40m)               
         };
 
-            var result = new PriceCalculator(strategies).Calculate(BasePrice);
+            var result = _calculator.Calculate(BasePrice, strategies);
 
             Assert.Equal(60m, result);
         }
@@ -66,12 +66,12 @@ namespace FysioEnterprise.Testing.Domain
             var strategies = new List<IPricingStrategy>
         {
             new LoyaltyPricingStrategy(LoyaltyLevel.Silver), 
-            new PromotionPricingStrategy(5m)                  
+            new PromotionPricingStrategy(5m)                
         };
 
-            var result = new PriceCalculator(strategies).Calculate(BasePrice);
+            var result = _calculator.Calculate(BasePrice, strategies);
 
-            Assert.Equal(90m, result); // Silver loyalty wins
+            Assert.Equal(90m, result);
         }
 
         [Fact]
@@ -82,7 +82,7 @@ namespace FysioEnterprise.Testing.Domain
             new PromotionPricingStrategy(0m)
         };
 
-            var result = new PriceCalculator(strategies).Calculate(BasePrice);
+            var result = _calculator.Calculate(BasePrice, strategies);
 
             Assert.Equal(BasePrice, result);
         }

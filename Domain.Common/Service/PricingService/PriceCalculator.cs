@@ -7,21 +7,14 @@ namespace FysioEnterprise.Domain.Service.PricingService
 {
     public class PriceCalculator
     {
-        private readonly IEnumerable<IPricingStrategy> _strategies;
-
-        public PriceCalculator(IEnumerable<IPricingStrategy> strategies)
+        public decimal Calculate(decimal basePrice, IEnumerable<IPricingStrategy> strategies)
         {
-            _strategies = strategies;
-        }
-
-        public decimal Calculate(decimal basePrice)
-        {
-            if (!_strategies.Any())
+            if (!strategies.Any())
                 return basePrice;
 
-            return _strategies
-                .Select(strategy => strategy.Apply(basePrice))
-                .Min(); 
+            return strategies
+                .Select(s => s.Apply(basePrice))
+                .Min();
         }
     }
 }

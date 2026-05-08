@@ -33,7 +33,7 @@ namespace FysioEnterprise.UseCase.CommandHandler.ClientCommands
             if (preferredStaff.IsFailed)
                 return Result.Fail("Preferred staff not found.");
 
-            var client = new Client(
+            var client = Client.Create(
                 request.FirstName,
                 request.LastName,
                 request.Email,
