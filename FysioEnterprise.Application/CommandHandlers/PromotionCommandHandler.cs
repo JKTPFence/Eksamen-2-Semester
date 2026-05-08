@@ -4,6 +4,7 @@ using FluentResults;
 using FysioEnterprise.Facade.UseCase.PromotionUseCase;
 using static FysioEnterprise.Facade.RequestModels.PromotionRequests;
 using FysioEnterprise.Domain.Service;
+using FysioEnterprise.Domain.Exceptions;
 namespace FysioEnterprise.UseCase.CommandHandlers.PromotionCommands
 {
     public class PromotionCommandHandler : ICreatePromotionUseCase, IUpdatePromotionUseCase, IDeletePromotionUseCase
@@ -19,10 +20,6 @@ namespace FysioEnterprise.UseCase.CommandHandlers.PromotionCommands
         {
             if (request == null)
                 return Result.Fail("Request cannot be null.");
-            if (request.Name == null)
-                return Result.Fail("Promotion name cannot be null.");
-            if (request.DiscountPercentage <= 0)
-                return Result.Fail("Discount percentage must be greater than zero.");
             
             var promotion = await _promotionRepository.GetPromotionAsync(request.PromotionID);
             if (promotion != null)
@@ -36,13 +33,20 @@ namespace FysioEnterprise.UseCase.CommandHandlers.PromotionCommands
             if (validationResult.IsFailed)
                 return validationResult;
 
-            promotion = Promotion.Create(
-                    request.Name,
-                    request.DiscountPercentage,
-                    request.StartDate,
-                    request.EndDate);
+            try
+            {
+                promotion = Promotion.Create(
+                        request.Name,
+                        request.DiscountPercentage,
+                        request.StartDate,
+                        request.EndDate);
 
-            return await _promotionRepository.CreatePromotionAsync(promotion);
+                return await _promotionRepository.CreatePromotionAsync(promotion);
+            }
+            catch (DomainException ex)
+            {
+                return Result.Fail(ex.Message);
+            }
         }
         public async Task<Result> UpdatePromotionAsync(UpdatePromotionRequest request)
         {

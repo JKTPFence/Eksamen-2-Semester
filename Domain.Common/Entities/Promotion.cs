@@ -1,4 +1,5 @@
-﻿using FysioEnterprise.Domain.Service;
+﻿using FysioEnterprise.Domain.Exceptions;
+using FysioEnterprise.Domain.Service;
 
 namespace FysioEnterprise.Domain.Entities
 {
@@ -16,7 +17,12 @@ namespace FysioEnterprise.Domain.Entities
             decimal promotionDiscountPercent, 
             DateTime promotionStartTime, 
             DateTime promotionEndTime)
-        {
+        { 
+            if (string.IsNullOrWhiteSpace(promotionName))
+                throw new DomainException($"Promotion name cannot be empty: {promotionName}");
+            if (promotionDiscountPercent <= 0)
+                throw new DomainException($"Discount percentage must be greater than zero: {promotionDiscountPercent}");
+
             return new Promotion
             {
                 PromotionID = Guid.NewGuid(),
@@ -30,7 +36,7 @@ namespace FysioEnterprise.Domain.Entities
         {
             if (string.IsNullOrEmpty(promotion.PromotionName) || promotion.PromotionDiscountPercent <= 0)
             {
-                throw new ArgumentNullException("Promotion needs to have a name and a discount");
+                throw new DomainException("Promotion needs to have a name and a discount");
             }
             
             if (DateTime.Now >= promotion.PromotionStartTime && DateTime.Now < promotion.PromotionEndTime)
