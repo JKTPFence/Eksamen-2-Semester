@@ -19,6 +19,7 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
         private readonly IPromotionRepository _promotionRepository;
         private readonly ISessionRepository _sessionRepository;
         private readonly ITimeNow _now;
+        private static readonly SemaphoreSlim _birthdayLock = new(1, 1);
 
         public SessionCommandHandler(
             IClientRepository clientRepository,
@@ -60,53 +61,57 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
 
             var existingClientSessions = await _sessionRepository.GetSessionsByClientAsync(request.ClientID);
             var existingStaffSessions = await _sessionRepository.GetSessionsByStaffAsync(request.StaffID);
-            var strategies = new List<IPricingStrategy>
-{
-            new LoyaltyPricingStrategy(clientResult.Value.ClientLoyaltyLevel)
-};
 
-            bool birthdayEligible = clientResult.Value.IsBirthdayMonth(DateOnly.FromDateTime(request.StartTime)) && !clientResult.Value.HasUsedBirthdayDiscountThisYear;
-
-            if (birthdayEligible)
-                strategies.Add(new BirthdayPricingStrategy());
-
-            if (promotionResult != null)
-                strategies.Add(new PromotionPricingStrategy(promotionResult.Value.PromotionDiscountPercent));
-
-            var winningPrice = strategies
-                .Select(s => s.Apply(request.SessionInstanceType.SessionTypePrice))
-                .Min();
-
-            if (birthdayEligible && new BirthdayPricingStrategy().Apply(request.SessionInstanceType.SessionTypePrice) == winningPrice)
-            {
-                clientResult.Value.MarkBirthdayDiscountUsed(DateOnly.FromDateTime(request.StartTime));
-                await _clientRepository.UpdateClientAsync(clientResult.Value);
-            }
-
-            var totalPrice = winningPrice;
-            var calculator = new PriceCalculator(strategies);
-            totalPrice = calculator.Calculate(request.SessionInstanceType.SessionTypePrice);
-
+            await _birthdayLock.WaitAsync();
             try
             {
-                var session = Session.Create(
-                    clientResult.Value,
-                    staffResult.Value,
-                    request.SessionInstanceType,
-                    roomResult.Value,
-                    request.StartTime,
-                    request.EndTime,
-                    totalPrice,
-                    promotionResult?.Value,
-                    existingClientSessions,
-                    existingStaffSessions);
-                await _sessionRepository.CreateSessionAsync(session);
+                var strategies = new List<IPricingStrategy>
+                {
+                    new LoyaltyPricingStrategy(clientResult.Value.ClientLoyaltyLevel)
+                };
+
+                bool birthdayEligible = clientResult.Value.IsBirthdayMonth(DateOnly.FromDateTime(request.StartTime)) && !clientResult.Value.HasUsedBirthdayDiscountThisYear;
+
+                if (birthdayEligible)
+                    strategies.Add(new BirthdayPricingStrategy());
+
+                if (promotionResult != null)
+                    strategies.Add(new PromotionPricingStrategy(promotionResult.Value.PromotionDiscountPercent));
+
+
+                var calculator = new PriceCalculator(strategies);
+                var totalPrice = calculator.Calculate(request.SessionInstanceType.SessionTypePrice);
+
+                if (birthdayEligible && new BirthdayPricingStrategy().Apply(request.SessionInstanceType.SessionTypePrice) == totalPrice)
+                {
+                    clientResult.Value.MarkBirthdayDiscountUsed(DateOnly.FromDateTime(request.StartTime));
+                    await _clientRepository.UpdateClientAsync(clientResult.Value);
+                }
+                try
+                {
+                    var session = Session.Create(
+                        clientResult.Value,
+                        staffResult.Value,
+                        request.SessionInstanceType,
+                        roomResult.Value,
+                        request.StartTime,
+                        request.EndTime,
+                        totalPrice,
+                        promotionResult?.Value,
+                        existingClientSessions,
+                        existingStaffSessions);
+                    await _sessionRepository.CreateSessionAsync(session);
+                }
+                catch (DomainException ex)
+                {
+                    return Result.Fail(ex.Message);
+                }
+                return Result.Ok();
             }
-            catch (DomainException ex)
+            finally
             {
-                return Result.Fail(ex.Message);
+                _birthdayLock.Release();
             }
-            return Result.Ok();
         }
 
         public async Task<Result> UpdateSessionAsync(UpdateSessionRequest request)
