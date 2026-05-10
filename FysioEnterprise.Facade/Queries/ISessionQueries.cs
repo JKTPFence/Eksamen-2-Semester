@@ -2,7 +2,7 @@
 
 namespace FysioEnterprise.Port.Driving.Queries
 {
-    public interface ISessionQuery
+    public interface ISessionQueries
     {
         /// <summary>
         ///     Som receptionist vil jeg kunne se alle sessioner for en given kunde, så jeg kan få et overblik over kundens bookinger.

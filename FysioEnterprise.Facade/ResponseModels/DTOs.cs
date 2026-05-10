@@ -14,12 +14,12 @@ namespace FysioEnterprise.Facade.DTOs
         string ClientLastName,
         string StaffFirstName,
         string StaffLastname,
-        int RoomNumber,
-        SessionType SessionInstanceType,
+        int? RoomNumber,
+        string SessionTypeName,
         string? PromotionName,
         DateTime SessionStartTime,
-        DateTime SessionEndTime,
-        int SessionTotalPrice,
+        DateTime? SessionEndTime,
+        decimal? SessionTotalPrice,
         string SessionStatus);
 
     public record ClientDTO(
@@ -31,9 +31,10 @@ namespace FysioEnterprise.Facade.DTOs
         DateOnly ClientBirthDate,
         string ClientAddress,
         string? ClientNote,
-        Guid StaffID,
+        Guid ClientPrefferedStaffID,
         string PreferredStaffName,
-        LoyaltyLevel ClientLoyaltyLevel);
+        LoyaltyLevel ClientLoyaltyLevel,
+        bool HasUsedBirthdayDiscountThisYear);
 
     public record StaffDTO(
         Guid StaffID,
@@ -48,12 +49,12 @@ namespace FysioEnterprise.Facade.DTOs
         Guid ClinicID,
         string ClinicAddress,
         DateTime ClinicOpeningHours,
-        List<int> ClinicRooms);
+        List<int?> ClinicRooms);
 
     public record PromotionDTO(
         Guid PromotionID,
         string PromotionName,
-        int PromotionDiscountPercent,
+        decimal PromotionDiscountPercent,
         DateTime PromotionStartTime,
         DateTime PromotionEndTime,
         bool IsActive);
@@ -65,7 +66,7 @@ namespace FysioEnterprise.Facade.DTOs
 
     public record SessionTypeDTO(
         string SessionTypeName,
-        int SessionTypePrice,
+        decimal SessionTypePrice,
         int SessionTypeMaxAmount,
         TimeOnly SessionTypeTimeSpan);
 }
