@@ -24,5 +24,12 @@ namespace FysioEnterprise.Port.Driving.Queries
         /// </summary>
         /// <returns></returns>
         Task<List<PromotionDTO>> GetAllInActivePromotionsAsync();
+
+        /// <summary>
+        ///     Som receptionist vil jeg kunne se alle sessioner for en given kunde, så jeg kan få et overblik over kundens bookinger.
+        /// </summary>
+        /// <param name="promotionId"></param>
+        /// <returns></returns>
+        Task<PromotionDTO?> GetPromotionByIdAsync(Guid promotionId);
     }
 }

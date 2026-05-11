@@ -57,5 +57,20 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     p.IsActive))
                 .ToListAsync();
         }
+
+        public async Task<PromotionDTO?> GetPromotionByIdAsync(Guid promotionId)
+        {
+            return await _context.Promotions
+                .AsNoTracking()
+                .Where(p => p.PromotionID == promotionId)
+                .Select(p => new PromotionDTO(
+                    p.PromotionID,
+                    p.PromotionName,
+                    p.PromotionDiscountPercent,
+                    p.PromotionStartTime,
+                    p.PromotionEndTime,
+                    p.IsActive))
+                .FirstOrDefaultAsync();
+        }
     }
 }
