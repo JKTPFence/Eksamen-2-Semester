@@ -50,7 +50,6 @@ namespace FysioEnterprise.Infrastructure
             services.AddScoped<IClientRepository, ClientRepository>();
             services.AddScoped<IPromotionRepository, PromotionRepository>();
             services.AddScoped<IStaffRepository, StaffRepository>();
-            services.AddScoped<IRoomRepository, RoomRepository>();
             services.AddScoped<IClinicRepository, ClinicRepository>();
 
             //Query Handlers
