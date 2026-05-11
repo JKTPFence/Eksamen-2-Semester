@@ -29,16 +29,21 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
             IClinicRepository clinicRepository,
             IPromotionRepository promotionRepository,
             ISessionRepository sessionRepository,
+            ISessionTypeRepository sessionTypeRepository,
             ITimeNow now,
             IPricingStrategyFactory strategyFactory,
             PriceCalculator calculator)
         {
             _clientRepository = clientRepository;
             _staffRepository = staffRepository;
+            _sessionRepository = sessionRepository;
+            _sessionTypeRepository = sessionTypeRepository;
             _clinicRepository = clinicRepository;
             _promotionRepository = promotionRepository;
             _sessionRepository = sessionRepository;
             _now = now;
+            _strategyFactory = strategyFactory;
+            _calculator = calculator;
         }
 
         public async Task<Result> CreateSessionAsync(CreateSessionRequest request)
