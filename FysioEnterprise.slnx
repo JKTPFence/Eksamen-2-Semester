@@ -4,5 +4,7 @@
   <Project Path="FysioEnterprise.Application/FysioEnterprise.UseCase.csproj" Id="597c9f84-5a08-47b0-aa22-82530b92b87e" />
   <Project Path="FysioEnterprise.Facade/FysioEnterprise.Facade.csproj" Id="83fcc905-e349-4c66-9e28-b5e857704d8a" />
   <Project Path="FysioEnterprise.Infrastructure/FysioEnterprise.Infrastructure.csproj" Id="cfd2c89a-4dfd-4dc2-b3b8-f46c6479f56f" />
-  <Project Path="FysioEnterprise.Testing/FysioEnterprise.Testing.csproj" Id="1adaba6b-7566-4dda-bbaf-f39261c4d986" />
+  <Project Path="FysioEnterprise.Testing/FysioEnterprise.Testing.csproj" Id="1adaba6b-7566-4dda-bbaf-f39261c4d986">
+    <Build Solution="Debug|*" Project="false" />
+  </Project>
 </Solution>

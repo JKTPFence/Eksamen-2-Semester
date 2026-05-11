@@ -36,7 +36,7 @@ namespace FysioEnterprise.UseCase.CommandHandler.ClientCommands
                 request.DateOfBirth,
                 request.Address,
                 request.Note,
-                preferredStaff.Value,
+                preferredStaff.Value.Id,
                 request.LoyaltyLevel);
 
             return await _clientRepository.CreateClientAsync(client);
@@ -94,7 +94,7 @@ namespace FysioEnterprise.UseCase.CommandHandler.ClientCommands
             if (staffResult.IsFailed)
                 return Result.Fail($"Staff with ID {request.StaffID} was not found.");
 
-            var staff = staffResult.Value;
+            var staff = staffResult.Value.Id;
             
             client.UpdateStaff(staff);
 

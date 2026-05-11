@@ -25,7 +25,7 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
 
                 Assert.Equal(SessionStatusEnum.Active, session.SessionStatus);
                 Assert.True(session.IsActive);
-                Assert.NotEqual(Guid.Empty, session.SessionID);
+                Assert.NotEqual(Guid.Empty, session.Id);
             }
 
             [Theory]

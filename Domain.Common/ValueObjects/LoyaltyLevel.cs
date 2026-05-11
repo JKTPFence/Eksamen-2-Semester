@@ -4,7 +4,7 @@ using System.Text;
 
 namespace FysioEnterprise.Domain.ValueObjects
 {
-    public class LoyaltyLevel
+    public class LoyaltyLevel : ValueObject
     {
         public string LoyaltyLevelName { get; }
         public decimal LoyaltyLevelDiscountPercentage { get; }
@@ -19,5 +19,11 @@ namespace FysioEnterprise.Domain.ValueObjects
         public static readonly LoyaltyLevel Bronze = new("Bronze", 5m);
         public static readonly LoyaltyLevel Silver = new("Silver", 10m);
         public static readonly LoyaltyLevel Gold = new("Gold", 15m);
+
+        protected override IEnumerable<object> GetEqualityComponents()
+        {
+            yield return LoyaltyLevelName;
+            yield return LoyaltyLevelDiscountPercentage;
+        }
     }
 }

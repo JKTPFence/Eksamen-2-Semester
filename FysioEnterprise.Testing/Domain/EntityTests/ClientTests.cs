@@ -7,21 +7,9 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
 {
     public class ClientTests
     {
-        private static Staff BuildStaff()
+        private static Guid BuildStaff()
         {
-            var staff = new Staff();
-            typeof(Staff).GetProperty(nameof(Staff.StaffID))!
-                .SetValue(staff, Guid.NewGuid());
-            typeof(Staff).GetProperty(nameof(Staff.StaffFirstName))!
-                .SetValue(staff, "Johannes");
-            typeof(Staff).GetProperty(nameof(Staff.StaffLastName))!
-                .SetValue(staff, "Testing");
-            typeof(Staff).GetProperty(nameof(Staff.StaffAuthorisationType))!
-                .SetValue(staff, "Terapeut");
-            typeof(Staff).GetProperty(nameof(Staff.StaffContactInformation))!
-                .SetValue(staff, "Testing@gmail.com");
-            typeof(Staff).GetProperty(nameof(Staff.StaffAuthorisationNumber))!
-                .SetValue(staff, 1);
+            var staff = Guid.NewGuid();
             return staff;
         }
 
@@ -32,13 +20,13 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
             string email = "johanne@example.com",
             string phone = "71362851",
             string address = "Valløesgade 37, 2. th, 7100 Vejle",
-            Staff? staff = null)    
+            Guid? staff = null)    
         {
             return Client.Create(
                 firstName, lastName, email, phone,
                 new DateOnly(1990, 6, 15), address,
                 clientNote: null,
-                clientPrefferedStaff: staff ?? BuildStaff(),
+                clientPrefferedStaffID: BuildStaff(),
                 clientLoyaltyLevel: LoyaltyLevel.Bronze);
         }
 
@@ -46,11 +34,11 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
         public void Create_ValidInputs_ReturnsClient()
         {
             var staff = BuildStaff();
-            var client = BuildClient(staff: staff);
+            var client = BuildClient(staff: Guid.NewGuid());
 
-            Assert.NotEqual(Guid.Empty, client.ClientID);
+            Assert.NotEqual(Guid.Empty, client.Id);
             Assert.Equal("Jane", client.ClientFirstName);
-            Assert.Equal(staff.StaffID, client.ClientPrefferedStaffID);
+            Assert.Equal(staff, client.ClientPrefferedStaffID);
         }
 
         [Theory]
@@ -76,7 +64,7 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
 
             client.UpdateStaff(newStaff);
 
-            Assert.Equal(newStaff.StaffID, client.ClientPrefferedStaffID);
+            Assert.Equal(newStaff, client.ClientPrefferedStaffID);
         }
 
         [Fact]
@@ -84,7 +72,7 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
         {
             var client = BuildClient();
 
-            Assert.Throws<DomainException>(() => client.UpdateStaff(null!));
+            Assert.Throws<DomainException>(() => client.UpdateStaff(Guid.NewGuid()));
         }
 
         //Note test

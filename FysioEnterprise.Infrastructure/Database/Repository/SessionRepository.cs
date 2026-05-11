@@ -25,7 +25,7 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
         {
             var session = await _context.Sessions
                 .Include(s => s.SessionPromotion)
-                .FirstOrDefaultAsync(s => s.SessionID == sessionId);
+                .FirstOrDefaultAsync(s => s.Id == sessionId);
 
             if (session == null)
                 return Result.Fail($"Session with ID {sessionId} was not found.");

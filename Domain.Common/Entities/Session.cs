@@ -6,9 +6,9 @@ using FysioEnterprise.Domain.Service;
 
 namespace FysioEnterprise.Domain.Entities
 {
-    public class Session
+    public class Session : Aggregateroot
     {
-        public Guid SessionID { get; private set; }
+
         public Guid SessionClientID { get; private set; }
         public Guid SessionStaffID { get; private set; }
         public Guid SessionRoomID { get; private set; }
@@ -23,6 +23,23 @@ namespace FysioEnterprise.Domain.Entities
 
         private Session() { } // EF Core
 
+        private Session(
+            Guid clientId,
+            Guid staffId,
+            Guid sessionTypeId,
+            Guid roomId,
+            Guid? promotionId,
+            DateTime startTime,
+            DateTime endTime
+        )
+        {
+            Id = Guid.NewGuid();
+            if (clientId == Guid.Empty) throw new DomainException(nameof(clientId));
+            if (staffId == Guid.Empty) throw new DomainException(nameof(staffId));
+            if (sessionTypeId == Guid.Empty) throw new DomainException(nameof(sessionTypeId));
+            if (roomId == Guid.Empty) throw new DomainException(nameof(roomId));
+        }
+
         public static Session Create(
             Guid clientId,
             Guid staffId,
@@ -35,28 +52,14 @@ namespace FysioEnterprise.Domain.Entities
             IEnumerable<Session> existingClientSessions,
             IEnumerable<Session> existingStaffSessions)
         {
-            if (clientId == Guid.Empty) throw new ArgumentNullException(nameof(clientId));
-            if (staffId == Guid.Empty) throw new ArgumentNullException(nameof(staffId));
-            if (sessionTypeId == Guid.Empty) throw new ArgumentNullException(nameof(sessionTypeId));
-            if (roomId == Guid.Empty) throw new ArgumentNullException(nameof(roomId));
+
+            var Session = new Session (clientId, staffId, sessionTypeId, roomId, promotionId, startTime, endTime);
 
             ValidateSessionTime(startTime, endTime);
             ValidateOverlap(existingClientSessions, startTime, endTime, "Client");
             ValidateOverlap(existingStaffSessions, startTime, endTime, "Staff");
 
-            return new Session
-            {
-                SessionID = Guid.NewGuid(),
-                SessionClientID = clientId,
-                SessionStaffID = staffId,
-                SessionRoomID = roomId,
-                SessionStartTime = startTime,
-                SessionEndTime = endTime,
-                SessionTotalPrice = totalPrice,
-                SessionStatus = SessionStatusEnum.Active,
-                SessionInstanceTypeID = sessionTypeId,
-                SessionPromotion = promotionId
-            };
+            return Session;
         }
 
         public void UpdateSessionTime(

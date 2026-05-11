@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
+﻿
 namespace FysioEnterprise.Domain.Entities
 {
-    public class SessionType
+    public class SessionType : Aggregateroot
     {
-        public Guid SessionTypeId { get; private set; }
         public string SessionTypeName { get; private set; }
         public decimal SessionTypePrice { get; private set; }
         public int SessionTypeMaxAmount { get; private set; }
@@ -14,7 +10,7 @@ namespace FysioEnterprise.Domain.Entities
 
         public SessionType(string sessionTypeName, decimal sessionTypePrice, int sessionTypeMaxAmount, TimeOnly sessionTypeTimeSpan)
         {
-            SessionTypeId = Guid.NewGuid();
+            Id = Guid.NewGuid();
             SessionTypeName = sessionTypeName;
             SessionTypePrice = sessionTypePrice;
             SessionTypeMaxAmount = sessionTypeMaxAmount;
