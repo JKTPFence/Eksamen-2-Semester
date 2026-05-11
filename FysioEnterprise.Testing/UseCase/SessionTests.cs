@@ -7,6 +7,7 @@ using FysioEnterprise.Domain.Service.PricingService.Strategies.PricingMethods;
 using FysioEnterprise.Facade.DTOs;
 using FysioEnterprise.Facade.UseCase.SessionUseCase;
 using FysioEnterprise.UseCase;
+using FysioEnterprise.UseCase.CommandHandlers.SessionCommands;
 using FysioEnterprise.UseCase.IRepositories;
 using Moq;
 using System;
@@ -30,44 +31,42 @@ namespace FysioEnterprise.Testing.UseCase
         private readonly Mock<PriceCalculator> _mockcalculator = new();
         private static readonly SemaphoreSlim _birthdayLock = new(1, 1);
 
-        private SessionCommandHandlerTests CreateSession() => new(
+        private SessionCommandHandler CreateSessionTest() => new(
             _mockclientRepository.Object,
             _mockstaffRepository.Object,
             _mockroomRepository.Object,
             _mockpromotionRepository.Object,
             _mocksessionRepository.Object,
+            _mocksessionTypeRepository.Object,
             _mocknow.Object,
             _mockstrategyFactory.Object,
-            _mockcalculator.Object)
-        public async Task<Result> CreateSessionAsync(CreateSessionRequest request)
+            _mockcalculator.Object);
+
+        [Fact]
+        public async Task<Result> CreateSessionAsync()
         {
-            var clientResult = await _clientRepository.GetClientAsync(request.ClientID);
-            if (clientResult.IsFailed)
-                return Result.Fail("Client not found.");
+            var clientId = Guid.NewGuid();
+            var staffId = Guid.NewGuid();
+            var roomId = Guid.NewGuid();
+            var promotionId = Guid.NewGuid();
+            var sessionId = Guid.NewGuid();
+            var sessionTypeId = Guid.NewGuid();
+            var timeNow = DateTime.Now;
+            var pricingStrategy = new BirthdayPricingStrategy();
 
-            var staffResult = await _staffRepository.GetStaffAsync(request.StaffID);
-            if (staffResult.IsFailed)
-                return Result.Fail("Staff not found.");
-
-            var roomResult = await _roomRepository.GetRoomAsync(request.SessionRoomID);
-            if (roomResult.IsFailed)
-                return Result.Fail("Room not found.");
-
-            var sessionTypeResult = await _sessionTypeRepository.GetSessionTypeAsync(request.SessionInstanceTypeID);
-            if (sessionTypeResult.IsFailed)
-                return Result.Fail("Session type not found.");
-
-            Result<Promotion> promotionResult = null;
-            if (request.PromotionID != Guid.Empty)
-            {
-                promotionResult = await _promotionRepository.GetPromotionAsync(request.PromotionID);
-                if (promotionResult.IsFailed)
-                    return Result.Fail("Promotion not found.");
-            }
-
-            var existingClientSessions = await _sessionRepository.GetSessionsByClientAsync(request.ClientID);
-            var existingStaffSessions = await _sessionRepository.GetSessionsByStaffAsync(request.StaffID);
-
+            _mockclientRepository.Setup(r => r.GetClientAsync(clientId))
+                .ReturnsAsync(new Client("Hans", "1312"));
+            _mockstaffRepository.Setup(r => r.GetStaffAsync(staffId))
+                .ReturnsAsync(new Staff("John", "Fysio"));
+            _mockroomRepository.Setup(r => r.GetRoomAsync(roomId))
+                .ReturnsAsync(new Room("Room 1"));
+            _mocksessionTypeRepository.Setup(r => r.GetSessionTypeAsync(sessionTypeId))
+                .ReturnsAsync(new SessionType("Massage", 100));
+            _mocksessionRepository.Setup(r => r.GetSessionsByClientAsync(clientId))
+                .ReturnsAsync(new List<Session>());
+            _mocksessionRepository.Setup(r => r.GetSessionsByStaffAsync(staffId))
+                .ReturnsAsync(new List<Session>());
+/*
             await _birthdayLock.WaitAsync();
             try
             {
@@ -176,7 +175,7 @@ namespace FysioEnterprise.Testing.UseCase
             }
 
             await _sessionRepository.UpdateSessionAsync(sessionResult.Value);
-            return Result.Ok();
+            return Result.Ok();*/
         }
     }
 }
