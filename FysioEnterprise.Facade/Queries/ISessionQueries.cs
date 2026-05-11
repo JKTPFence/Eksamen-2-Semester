@@ -1,6 +1,6 @@
 ﻿using FysioEnterprise.Facade.DTOs;
 
-namespace FysioEnterprise.Port.Driving.Queries
+namespace FysioEnterprise.Facade.Queries
 {
     public interface ISessionQueries
     {

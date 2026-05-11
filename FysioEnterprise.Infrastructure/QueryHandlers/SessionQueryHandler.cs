@@ -2,7 +2,7 @@
 using FysioEnterprise.Domain.Enums;
 using FysioEnterprise.Facade.DTOs;
 using FysioEnterprise.Infrastructure.Database;
-using FysioEnterprise.Port.Driving.Queries;
+using FysioEnterprise.Facade.Queries;
 using Microsoft.EntityFrameworkCore;
 
 namespace FysioEnterprise.Infrastructure.QueryHandlers

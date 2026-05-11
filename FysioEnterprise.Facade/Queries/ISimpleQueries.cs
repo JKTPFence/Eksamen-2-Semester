@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace FysioEnterprise.Port.Driving.Queries
+namespace FysioEnterprise.Facade.Queries
 {
     public interface ISimpleQueries
     {
