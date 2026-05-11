@@ -20,23 +20,6 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
         }
     }
 
-    public class RoomRepository : IRoomRepository
-    {
-        private readonly AppDBContext _context;
-        public RoomRepository(AppDBContext context) => _context = context;
-
-        public async Task<Result<Room>> GetRoomAsync(Guid roomId)
-        {
-            var roomResult = await _context.Rooms.FindAsync(roomId);
-
-            if (roomResult == null)
-            {
-                return Result.Fail<Room>("Room not found.");
-            }
-            return Result.Ok(roomResult);
-        }
-    }
-
     public class ClinicRepository : IClinicRepository
     {
         private readonly AppDBContext _context;

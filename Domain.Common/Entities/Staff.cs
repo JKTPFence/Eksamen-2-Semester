@@ -2,9 +2,8 @@
 
 namespace FysioEnterprise.Domain.Entities
 {
-    public class Staff
+    public class Staff : Aggregateroot
     {
-        public Guid StaffID { get; private set; }
         public string StaffFirstName { get; private set; }
         public string? StaffLastName { get; private set; }
         public string StaffContactInformation { get; private set; }
@@ -18,13 +17,13 @@ namespace FysioEnterprise.Domain.Entities
 
         public Staff(string staffFirstName, string? staffLastName, string staffContactInformation, string staffAuthorisationType, int staffAuthorisationNumber, List<Clinic> clinics)
         {
-            StaffID = Guid.NewGuid();
+            Id = Guid.NewGuid();
             StaffFirstName = staffFirstName;
             StaffLastName = staffLastName;
             StaffContactInformation = staffContactInformation;
             StaffAuthorisationType = staffAuthorisationType;
             StaffAuthorisationNumber = staffAuthorisationNumber;
-            ClinicIDs = clinics.Select(c => c.ClinicID).ToList();
+            ClinicIDs = clinics.Select(c => c.Id).ToList();
         }
     }
 }

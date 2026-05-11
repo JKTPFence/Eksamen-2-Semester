@@ -3,7 +3,6 @@ using FysioEnterprise.Domain.Entities;
 using FysioEnterprise.Domain.Exceptions;
 using FysioEnterprise.Domain.Service;
 using FysioEnterprise.Domain.Service.PricingService;
-using FysioEnterprise.Domain.Service.PricingService.Strategies;
 using FysioEnterprise.Domain.Service.PricingService.Strategies.PricingMethods;
 using FysioEnterprise.Facade.UseCase.SessionUseCase;
 using FysioEnterprise.UseCase.IRepositories;
@@ -15,7 +14,7 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
     {
         private readonly IClientRepository _clientRepository;
         private readonly IStaffRepository _staffRepository;
-        private readonly IRoomRepository _roomRepository;
+        private readonly IClinicRepository _clinicRepository;
         private readonly IPromotionRepository _promotionRepository;
         private readonly ISessionRepository _sessionRepository;
         private readonly ISessionTypeRepository _sessionTypeRepository;
@@ -27,7 +26,7 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
         public SessionCommandHandler(
             IClientRepository clientRepository,
             IStaffRepository staffRepository,
-            IRoomRepository roomRepository,
+            IClinicRepository clinicRepository,
             IPromotionRepository promotionRepository,
             ISessionRepository sessionRepository,
             ITimeNow now,
@@ -36,7 +35,7 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
         {
             _clientRepository = clientRepository;
             _staffRepository = staffRepository;
-            _roomRepository = roomRepository;
+            _clinicRepository = clinicRepository;
             _promotionRepository = promotionRepository;
             _sessionRepository = sessionRepository;
             _now = now;
@@ -52,9 +51,11 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
             if (staffResult.IsFailed)
                 return Result.Fail("Staff not found.");
 
-            var roomResult = await _roomRepository.GetRoomAsync(request.SessionRoomID);
-            if (roomResult.IsFailed)
-                return Result.Fail("Room not found.");
+            var clinicResult = await _clinicRepository.GetClinicAsync(request.ClinicID);
+            if (clinicResult.IsFailed) return Result.Fail("Clinic not found.");
+
+            var roomResult = clinicResult.Value.GetRoom(request.SessionRoomID);
+            if (roomResult.IsFailed) return Result.Fail("Room not found.");
 
             var sessionTypeResult = await _sessionTypeRepository.GetSessionTypeAsync(request.SessionInstanceTypeID);
             if (sessionTypeResult.IsFailed)
@@ -105,14 +106,14 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
                 try
                 {
                     var session = Session.Create(
-                        clientResult.Value.ClientID,
-                        staffResult.Value.StaffID,
-                        sessionTypeResult.Value.SessionTypeId,
-                        roomResult.Value.RoomID,
+                        clientResult.Value.Id,
+                        staffResult.Value.Id,
+                        sessionTypeResult.Value.Id,
+                        roomResult.Value.Id,
                         request.StartTime,
                         request.EndTime,
                         totalPrice,
-                        promotionResult?.Value?.PromotionID,
+                        promotionResult?.Value?.Id,
                         existingClientSessions,
                         existingStaffSessions);
                     await _sessionRepository.CreateSessionAsync(session);
@@ -148,8 +149,8 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
                   session.UpdateSessionTime(
                     request.StartTime,
                     request.EndTime,
-                    existingClientSessions.Where(s => s.SessionID != session.SessionID),
-                    existingStaffSessions.Where(s => s.SessionID != session.SessionID)
+                    existingClientSessions.Where(s => s.Id != session.Id),
+                    existingStaffSessions.Where(s => s.Id != session.Id)
                     );
 
             }

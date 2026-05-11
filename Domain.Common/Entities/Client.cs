@@ -3,9 +3,8 @@ using FysioEnterprise.Domain.ValueObjects;
 
 namespace FysioEnterprise.Domain.Entities
 {
-    public class Client
+    public class Client : Aggregateroot
     {
-        public Guid ClientID { get; private set; }
         public Guid ClientPrefferedStaffID { get; private set; }
         public string ClientFirstName { get; private set; }
         public string? ClientLastName { get; private set; }
@@ -23,6 +22,29 @@ namespace FysioEnterprise.Domain.Entities
         {
 
         }
+
+        private Client(
+            string clientFirstName,
+            string? clientLastName,
+            string clientEmail,
+            string clientPhoneNumber,
+            DateOnly clientBirthDate,
+            string clientAddress,
+            string? clientNote,
+            Guid clientPrefferedStaffID,
+            LoyaltyLevel clientLoyaltyLevel)
+        {
+            Id = Guid.NewGuid();
+            if (string.IsNullOrWhiteSpace(clientFirstName))
+                throw new DomainException($"First name cannot be empty: {clientFirstName}");
+            if (string.IsNullOrWhiteSpace(clientEmail))
+                throw new DomainException($"Email cannot be empty: {clientEmail}");
+            if (string.IsNullOrWhiteSpace(clientPhoneNumber))
+                throw new DomainException($"Phone number cannot be empty: {clientPhoneNumber}");
+            if (string.IsNullOrWhiteSpace(clientAddress))
+                throw new DomainException($"Address cannot be empty: {clientAddress}");
+        }
+
         public static Client Create(
             string clientFirstName, 
             string? clientLastName, 
@@ -31,31 +53,13 @@ namespace FysioEnterprise.Domain.Entities
             DateOnly clientBirthDate, 
             string clientAddress, 
             string? clientNote, 
-            Staff clientPrefferedStaff, 
+            Guid clientPrefferedStaffID, 
             LoyaltyLevel clientLoyaltyLevel)
         {
-            if (string.IsNullOrWhiteSpace(clientFirstName)) 
-                throw new DomainException($"First name cannot be empty: {clientFirstName}");
-            if (string.IsNullOrWhiteSpace(clientEmail)) 
-                throw new DomainException($"Email cannot be empty: {clientEmail}");
-            if (string.IsNullOrWhiteSpace(clientPhoneNumber)) 
-                throw new DomainException($"Phone number cannot be empty: {clientPhoneNumber}");
-            if (string.IsNullOrWhiteSpace(clientAddress)) 
-                throw new DomainException($"Address cannot be empty: {clientAddress}");
 
-            return new Client
-            {
-                ClientID = Guid.NewGuid(),
-                ClientPrefferedStaffID = clientPrefferedStaff.StaffID,
-                ClientFirstName = clientFirstName,
-                ClientLastName = clientLastName,
-                ClientEmail = clientEmail,
-                ClientPhoneNumber = clientPhoneNumber,
-                ClientBirthDate = clientBirthDate,
-                ClientAddress = clientAddress,
-                ClientNote = clientNote,
-                ClientLoyaltyLevel = clientLoyaltyLevel,
-            };
+            var client = new Client(clientFirstName, clientLastName, clientEmail, clientPhoneNumber, clientBirthDate, clientAddress, clientNote, clientPrefferedStaffID, clientLoyaltyLevel);
+
+            return client;
         }
         public bool IsBirthdayMonth(DateOnly date)
         {
@@ -96,12 +100,12 @@ namespace FysioEnterprise.Domain.Entities
             ClientAddress = clientAddress;
         }
 
-        public void UpdateStaff(Staff clientpreferredStaff)
+        public void UpdateStaff(Guid clientpreferredStaffID)
         {
-            if (clientpreferredStaff == null)
+            if (clientpreferredStaffID == null)
                 throw new DomainException($"No staff member with these informations could be found");
 
-            ClientPrefferedStaffID = clientpreferredStaff.StaffID;
+            ClientPrefferedStaffID = clientpreferredStaffID;
         }
 
         public void UpdateClientNote(string? clientNote)

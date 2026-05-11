@@ -8,6 +8,7 @@ namespace FysioEnterprise.Facade.RequestModels
         Guid ClientID,
         Guid StaffID,
         Guid PromotionID,
+        Guid ClinicID,
         Guid SessionRoomID,
         Guid SessionInstanceTypeID,
         int SessionTotalPrice,

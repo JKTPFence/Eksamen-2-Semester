@@ -1,8 +1,7 @@
 ﻿namespace FysioEnterprise.Domain.Entities
 {
-    public class Room
+    public class Room : Entity
     {
-        public Guid RoomID { get; private set; }
         public Guid ClinicID { get; private set; }
         public int? RoomNumber { get; private set; }
 
@@ -12,8 +11,8 @@
         }
         public Room(Clinic clinic, int? roomNumber)
         {
-            RoomID = Guid.NewGuid();
-            ClinicID = clinic.ClinicID;
+            Id = Guid.NewGuid();
+            ClinicID = clinic.Id;
             RoomNumber = roomNumber;
         }
     }

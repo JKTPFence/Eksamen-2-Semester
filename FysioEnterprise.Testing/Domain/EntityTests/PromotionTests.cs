@@ -24,7 +24,7 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
         {
             var promo = BuildPromotion();
 
-            Assert.NotEqual(Guid.Empty, promo.PromotionID);
+            Assert.NotEqual(Guid.Empty, promo.Id);
             Assert.Equal("Summer Sale", promo.PromotionName);
             Assert.Equal(10m, promo.PromotionDiscountPercent);
         }

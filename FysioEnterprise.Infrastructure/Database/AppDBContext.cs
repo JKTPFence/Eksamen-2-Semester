@@ -1,5 +1,6 @@
 ﻿using FysioEnterprise.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using static FysioEnterprise.Infrastructure.Database.SeedData;
 using Entity = FysioEnterprise.Domain.Entities;
 
@@ -14,7 +15,6 @@ namespace FysioEnterprise.Infrastructure.Database
         public DbSet<Entity.Client> Clients { get; set; }
         public DbSet<Entity.Promotion> Promotions { get; set; }
         public DbSet<Entity.Clinic> Clinics { get; set; }
-        public DbSet<Entity.Room> Rooms { get; set; }
         public DbSet<Entity.SessionType> SessionTypes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -27,6 +27,14 @@ namespace FysioEnterprise.Infrastructure.Database
 
             modelBuilder.Entity<Entity.Client>()
                 .OwnsOne(c => c.ClientLoyaltyLevel);
+
+            modelBuilder.Entity<Entity.Clinic>()
+            .OwnsMany(c => c.ClinicRooms, room =>
+            {
+                room.WithOwner().HasForeignKey("ClinicID");
+                room.HasKey(r => r.Id);
+                room.Property(r => r.RoomNumber);
+            });
 
             base.OnModelCreating(modelBuilder);
         }

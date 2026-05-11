@@ -1,16 +1,29 @@
 ﻿using FysioEnterprise.Domain.Exceptions;
-using FysioEnterprise.Domain.Service;
 
 namespace FysioEnterprise.Domain.Entities
 {
-    public class Promotion
+    public class Promotion : Aggregateroot
     {
-        public Guid PromotionID { get; private set; }
         public string PromotionName { get; private set; }
         public decimal PromotionDiscountPercent { get; private set; }
         public DateTime PromotionStartTime { get; private set; }
         public DateTime PromotionEndTime { get; private set; }
         public bool IsActive => IsPromotionActive(this);
+
+        Promotion() { } // Empty constructor for EF Core
+
+        private Promotion(
+            string promotionName, 
+            decimal promotionDiscountPercent, 
+            DateTime promotionStartTime, 
+            DateTime promotionEndTime)
+        {
+            Id = Guid.NewGuid();
+            if (string.IsNullOrWhiteSpace(promotionName))
+                throw new DomainException($"Promotion name cannot be empty: {promotionName}");
+            if (promotionDiscountPercent <= 0)
+                throw new DomainException($"Discount percentage must be greater than zero: {promotionDiscountPercent}");
+        }
 
         public static Promotion Create(
             string promotionName, 
@@ -18,19 +31,8 @@ namespace FysioEnterprise.Domain.Entities
             DateTime promotionStartTime, 
             DateTime promotionEndTime)
         { 
-            if (string.IsNullOrWhiteSpace(promotionName))
-                throw new DomainException($"Promotion name cannot be empty: {promotionName}");
-            if (promotionDiscountPercent <= 0)
-                throw new DomainException($"Discount percentage must be greater than zero: {promotionDiscountPercent}");
-
-            return new Promotion
-            {
-                PromotionID = Guid.NewGuid(),
-                PromotionName = promotionName,
-                PromotionDiscountPercent = promotionDiscountPercent,
-                PromotionStartTime = promotionStartTime,
-                PromotionEndTime = promotionEndTime,
-            };
+            var promotion = new Promotion(promotionName, promotionDiscountPercent, promotionStartTime, promotionEndTime);
+            return promotion;
         }
         private static Boolean IsPromotionActive(Promotion promotion)
         {
