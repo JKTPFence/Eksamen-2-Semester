@@ -25,6 +25,9 @@ namespace FysioEnterprise.Infrastructure.Database
                 .Property(s => s.SessionStatus)
                 .HasConversion<string>();
 
+            modelBuilder.Entity<Entity.Client>()
+                .OwnsOne(c => c.ClientLoyaltyLevel);
+
             base.OnModelCreating(modelBuilder);
         }
     }
