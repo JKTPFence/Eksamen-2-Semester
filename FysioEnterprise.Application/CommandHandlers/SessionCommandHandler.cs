@@ -22,7 +22,7 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
         private readonly ITimeNow _now;
         private readonly IPricingStrategyFactory _strategyFactory;
         private readonly PriceCalculator _calculator;
-        private static readonly SemaphoreSlim _birthdayLock = new(1, 1);
+        private static readonly SemaphoreSlim _sessionLock = new(1, 1);
 
         public SessionCommandHandler(
             IClientRepository clientRepository,
@@ -71,7 +71,7 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
             var existingClientSessions = await _sessionRepository.GetSessionsByClientAsync(request.ClientID);
             var existingStaffSessions = await _sessionRepository.GetSessionsByStaffAsync(request.StaffID);
 
-            await _birthdayLock.WaitAsync();
+            await _sessionLock.WaitAsync();
             try
             {
 
@@ -125,7 +125,7 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
             }
             finally
             {
-                _birthdayLock.Release();
+                _sessionLock.Release();
             }
         }
 
