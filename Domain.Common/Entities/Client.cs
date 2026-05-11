@@ -99,7 +99,7 @@ namespace FysioEnterprise.Domain.Entities
         public void UpdateStaff(Staff clientpreferredStaff)
         {
             if (clientpreferredStaff == null)
-                throw new DomainException($"No staff member with name: {clientpreferredStaff.StaffFirstName} could be found");
+                throw new DomainException($"No staff member with these informations could be found");
 
             ClientPrefferedStaffID = clientpreferredStaff.StaffID;
         }
