@@ -2,6 +2,7 @@
 using FysioEnterprise.UseCase.IRepositories;
 using FysioEnterprise.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using FysioEnterprise.Domain.Enums;
 
 namespace FysioEnterprise.Infrastructure.Database.Repository
 {
@@ -67,6 +68,15 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
             _context.Sessions.Remove(session.Value);
             await _context.SaveChangesAsync();
             return session.Value;
+        }
+
+        public async Task<List<Session>> GetCompletedSessionsInRangeAsync(DateTime from, DateTime to)
+        {
+            return await _context.Sessions
+                .AsNoTracking()
+                .Where(s => s.SessionStatus == SessionStatusEnum.Completed
+                        && s.SessionStartTime >= from && s.SessionStartTime <= to)
+                .ToListAsync();
         }
     }
 }

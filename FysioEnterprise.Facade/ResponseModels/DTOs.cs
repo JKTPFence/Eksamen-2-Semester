@@ -69,5 +69,12 @@ namespace FysioEnterprise.Facade.DTOs
         decimal SessionTypePrice,
         int SessionTypeMaxAmount,
         TimeOnly SessionTypeTimeSpan);
+
+    public record EarningsReportDTO(
+        DateTime From,
+        DateTime To,
+        decimal TotalEarnings,
+        int TotalSessions,
+        decimal AveragePerSession);
 }
 
