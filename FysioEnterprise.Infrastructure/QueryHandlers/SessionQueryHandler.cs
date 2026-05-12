@@ -17,23 +17,26 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
         {
             return await _context.Sessions
                 .AsNoTracking()
-                .Where(s => s.SessionID == sessionId)
+                .Where(s => s.Id == sessionId)
                 .Select(s => new SessionDTO(
-                    s.SessionID,
+                    s.Id,
                     _context.Clients
-                    .Where(c => c.ClientID == s.SessionClientID).Select(c => c.ClientFirstName).FirstOrDefault() ?? "",
+                    .Where(c => c.Id == s.SessionClientID).Select(c => c.ClientFirstName).FirstOrDefault() ?? "",
                     _context.Clients
-                    .Where(c => c.ClientID == s.SessionClientID).Select(c => c.ClientLastName).FirstOrDefault() ?? "",
+                    .Where(c => c.Id == s.SessionClientID).Select(c => c.ClientLastName).FirstOrDefault() ?? "",
                     _context.Staff
-                    .Where(st => st.StaffID == s.SessionStaffID).Select(st => st.StaffFirstName).FirstOrDefault() ?? "",
+                    .Where(st => st.Id == s.SessionStaffID).Select(st => st.StaffFirstName).FirstOrDefault() ?? "",
                     _context.Staff
-                    .Where(st => st.StaffID == s.SessionStaffID).Select(st => st.StaffLastName).FirstOrDefault() ?? "",
-                    _context.Rooms
-                    .Where(r => r.RoomID == s.SessionRoomID).Select(r => r.RoomNumber ?? null).FirstOrDefault(),
+                    .Where(st => st.Id == s.SessionStaffID).Select(st => st.StaffLastName).FirstOrDefault() ?? "",
+                    _context.Clinics
+                    .SelectMany(cl => cl.ClinicRooms)
+                    .Where(r => r.Id == s.SessionRoomID)
+                    .Select(r => r.RoomNumber)
+                    .FirstOrDefault(),
                     _context.SessionTypes
-                    .Where(styp => styp.SessionTypeId == s.SessionInstanceTypeID).Select(styp => styp.SessionTypeName).FirstOrDefault() ?? "",
+                    .Where(styp => styp.Id == s.SessionInstanceTypeID).Select(styp => styp.SessionTypeName).FirstOrDefault() ?? "",
                     _context.Promotions
-                    .Where(p => p.PromotionID == s.SessionPromotion).Select(p => p.PromotionName).FirstOrDefault() ?? "",
+                    .Where(p => p.Id == s.SessionPromotion).Select(p => p.PromotionName).FirstOrDefault() ?? "",
                     s.SessionStartTime,
                     s.SessionEndTime,
                     s.SessionTotalPrice,
@@ -47,21 +50,24 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                 .AsNoTracking()
                 .Where(s => s.SessionClientID == clientId)
                 .Select(s => new SessionDTO(
-                    s.SessionID,
+                    s.Id,
                     _context.Clients
-                    .Where(c => c.ClientID == s.SessionClientID).Select(c => c.ClientFirstName).FirstOrDefault() ?? "",
+                    .Where(c => c.Id == s.SessionClientID).Select(c => c.ClientFirstName).FirstOrDefault() ?? "",
                     _context.Clients
-                    .Where(c => c.ClientID == s.SessionClientID).Select(c => c.ClientLastName).FirstOrDefault() ?? "",
+                    .Where(c => c.Id == s.SessionClientID).Select(c => c.ClientLastName).FirstOrDefault() ?? "",
                     _context.Staff
-                    .Where(st => st.StaffID == s.SessionStaffID).Select(st => st.StaffFirstName).FirstOrDefault() ?? "",
+                    .Where(st => st.Id == s.SessionStaffID).Select(st => st.StaffFirstName).FirstOrDefault() ?? "",
                     _context.Staff
-                    .Where(st => st.StaffID == s.SessionStaffID).Select(st => st.StaffLastName).FirstOrDefault() ?? "",
-                    _context.Rooms
-                    .Where(r => r.RoomID == s.SessionRoomID).Select(r => r.RoomNumber ?? null).FirstOrDefault(),
+                    .Where(st => st.Id == s.SessionStaffID).Select(st => st.StaffLastName).FirstOrDefault() ?? "",
+                    _context.Clinics
+                    .SelectMany(cl => cl.ClinicRooms)
+                    .Where(r => r.Id == s.SessionRoomID)
+                    .Select(r => r.RoomNumber)
+                    .FirstOrDefault(),
                     _context.SessionTypes
-                    .Where(styp => styp.SessionTypeId == s.SessionInstanceTypeID).Select(styp => styp.SessionTypeName).FirstOrDefault() ?? "",
+                    .Where(styp => styp.Id == s.SessionInstanceTypeID).Select(styp => styp.SessionTypeName).FirstOrDefault() ?? "",
                     _context.Promotions
-                    .Where(p => p.PromotionID == s.SessionPromotion).Select(p => p.PromotionName).FirstOrDefault() ?? "",
+                    .Where(p => p.Id == s.SessionPromotion).Select(p => p.PromotionName).FirstOrDefault() ?? "",
                     s.SessionStartTime,
                     s.SessionEndTime,
                     s.SessionTotalPrice,
@@ -75,21 +81,24 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                 .AsNoTracking()
                 .Where(s => s.SessionClientID == clientId && s.SessionStatus == SessionStatusEnum.Active)
                 .Select(s => new SessionDTO(
-                    s.SessionID,
+                    s.Id,
                     _context.Clients
-                    .Where(c => c.ClientID == s.SessionClientID).Select(c => c.ClientFirstName).FirstOrDefault() ?? "",
+                    .Where(c => c.Id == s.SessionClientID).Select(c => c.ClientFirstName).FirstOrDefault() ?? "",
                     _context.Clients
-                    .Where(c => c.ClientID == s.SessionClientID).Select(c => c.ClientLastName).FirstOrDefault() ?? "",
+                    .Where(c => c.Id == s.SessionClientID).Select(c => c.ClientLastName).FirstOrDefault() ?? "",
                     _context.Staff
-                    .Where(st => st.StaffID == s.SessionStaffID).Select(st => st.StaffFirstName).FirstOrDefault() ?? "",
+                    .Where(st => st.Id == s.SessionStaffID).Select(st => st.StaffFirstName).FirstOrDefault() ?? "",
                     _context.Staff
-                    .Where(st => st.StaffID == s.SessionStaffID).Select(st => st.StaffLastName).FirstOrDefault() ?? "",
-                    _context.Rooms
-                    .Where(r => r.RoomID == s.SessionRoomID).Select(r => r.RoomNumber ?? null).FirstOrDefault(),
+                    .Where(st => st.Id == s.SessionStaffID).Select(st => st.StaffLastName).FirstOrDefault() ?? "",
+                    _context.Clinics
+                    .SelectMany(cl => cl.ClinicRooms)
+                    .Where(r => r.Id == s.SessionRoomID)
+                    .Select(r => r.RoomNumber)
+                    .FirstOrDefault(),
                     _context.SessionTypes
-                    .Where(styp => styp.SessionTypeId == s.SessionInstanceTypeID).Select(styp => styp.SessionTypeName).FirstOrDefault() ?? "",
+                    .Where(styp => styp.Id == s.SessionInstanceTypeID).Select(styp => styp.SessionTypeName).FirstOrDefault() ?? "",
                     _context.Promotions
-                    .Where(p => p.PromotionID == s.SessionPromotion).Select(p => p.PromotionName).FirstOrDefault() ?? "",
+                    .Where(p => p.Id == s.SessionPromotion).Select(p => p.PromotionName).FirstOrDefault() ?? "",
                     s.SessionStartTime,
                     s.SessionEndTime,
                     s.SessionTotalPrice,
@@ -103,21 +112,24 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                 .AsNoTracking()
                 .Where(s => s.SessionStaffID == staffId && s.SessionStatus == SessionStatusEnum.Active)
                 .Select(s => new SessionDTO(
-                    s.SessionID,
+                    s.Id,
                     _context.Clients
-                    .Where(c => c.ClientID == s.SessionClientID).Select(c => c.ClientFirstName).FirstOrDefault() ?? "",
+                    .Where(c => c.Id == s.SessionClientID).Select(c => c.ClientFirstName).FirstOrDefault() ?? "",
                     _context.Clients
-                    .Where(c => c.ClientID == s.SessionClientID).Select(c => c.ClientLastName).FirstOrDefault() ?? "",
+                    .Where(c => c.Id == s.SessionClientID).Select(c => c.ClientLastName).FirstOrDefault() ?? "",
                     _context.Staff
-                    .Where(st => st.StaffID == s.SessionStaffID).Select(st => st.StaffFirstName).FirstOrDefault() ?? "",
+                    .Where(st => st.Id == s.SessionStaffID).Select(st => st.StaffFirstName).FirstOrDefault() ?? "",
                     _context.Staff
-                    .Where(st => st.StaffID == s.SessionStaffID).Select(st => st.StaffLastName).FirstOrDefault() ?? "",
-                    _context.Rooms
-                    .Where(r => r.RoomID == s.SessionRoomID).Select(r => r.RoomNumber ?? null).FirstOrDefault(),
+                    .Where(st => st.Id == s.SessionStaffID).Select(st => st.StaffLastName).FirstOrDefault() ?? "",
+                    _context.Clinics
+                    .SelectMany(cl => cl.ClinicRooms)
+                    .Where(r => r.Id == s.SessionRoomID)
+                    .Select(r => r.RoomNumber)
+                    .FirstOrDefault(),
                     _context.SessionTypes
-                    .Where(styp => styp.SessionTypeId == s.SessionInstanceTypeID).Select(styp => styp.SessionTypeName).FirstOrDefault() ?? "",
+                    .Where(styp => styp.Id == s.SessionInstanceTypeID).Select(styp => styp.SessionTypeName).FirstOrDefault() ?? "",
                     _context.Promotions
-                    .Where(p => p.PromotionID == s.SessionPromotion).Select(p => p.PromotionName).FirstOrDefault() ?? "",
+                    .Where(p => p.Id == s.SessionPromotion).Select(p => p.PromotionName).FirstOrDefault() ?? "",
                     s.SessionStartTime,
                     s.SessionEndTime,
                     s.SessionTotalPrice,

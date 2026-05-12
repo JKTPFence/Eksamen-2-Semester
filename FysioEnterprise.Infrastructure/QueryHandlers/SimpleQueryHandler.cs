@@ -20,16 +20,16 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
         {
             return await _context.Staff
                 .AsNoTracking()
-                .Where(st => st.StaffID == staffId)
+                .Where(st => st.Id == staffId)
                 .Select(st => new StaffDTO(
-                    st.StaffID,
+                    st.Id,
                     st.StaffFirstName,
                     st.StaffLastName,
                     st.StaffContactInformation,
                     st.StaffAuthorisationType,
                     st.StaffAuthorisationNumber,
                     _context.Clinics
-                    .Where(cl => st.ClinicIDs.Contains(cl.ClinicID))
+                    .Where(cl => st.ClinicIDs.Contains(cl.Id))
                     .Select(cl => cl.ClinicAddress)
                     .ToList()))
                 .FirstOrDefaultAsync();
@@ -42,14 +42,14 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
             return await _context.Staff
                 .AsNoTracking()
                 .Select(st => new StaffDTO(
-                    st.StaffID,
+                    st.Id,
                     st.StaffFirstName,
                     st.StaffLastName,
                     st.StaffContactInformation,
                     st.StaffAuthorisationType,
                     st.StaffAuthorisationNumber,
                     _context.Clinics
-                    .Where(cl => st.ClinicIDs.Contains(cl.ClinicID))
+                    .Where(cl => st.ClinicIDs.Contains(cl.Id))
                     .Select(cl => cl.ClinicAddress)
                     .ToList()))
                 .ToListAsync();
@@ -61,59 +61,31 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                 .AsNoTracking()
                 .Where(st => st.ClinicIDs.Contains(clinicId))
                 .Select(st => new StaffDTO(
-                    st.StaffID,
+                    st.Id,
                     st.StaffFirstName,
                     st.StaffLastName,
                     st.StaffContactInformation,
                     st.StaffAuthorisationType,
                     st.StaffAuthorisationNumber,
                     _context.Clinics
-                    .Where(cl => st.ClinicIDs.Contains(cl.ClinicID))
+                    .Where(cl => st.ClinicIDs.Contains(cl.Id))
                     .Select(cl => cl.ClinicAddress)
                     .ToList()))
                 .ToListAsync();
         }
 
-        public async Task<RoomDTO?> GetRoomsByIdAsync(Guid roomId)
-        {
-            return await _context.Rooms
-                .AsNoTracking()
-                .Where(r => r.RoomID == roomId)
-                .Select(r => new RoomDTO(
-                    r.RoomID,
-                    _context.Clinics
-                    .Where(cl => cl.ClinicID == r.ClinicID)
-                    .Select(cl => cl.ClinicAddress)
-                    .FirstOrDefault() ?? "",
-                    r.RoomNumber))
-                .FirstOrDefaultAsync();
-        }
-
-        public async Task<List<RoomDTO>> GetAllRoomsAsync()
-        {
-            return await _context.Rooms
-                .AsNoTracking()
-                .Select(r => new RoomDTO(
-                    r.RoomID,
-                    _context.Clinics
-                    .Where(cl => cl.ClinicID == r.ClinicID)
-                    .Select(cl => cl.ClinicAddress)
-                    .FirstOrDefault() ?? "",
-                    r.RoomNumber))
-                .ToListAsync();
-        }
 
         public async Task<ClinicDTO?> GetClinicByIdAsync(Guid clinicId)
         {
             return await _context.Clinics
                 .AsNoTracking()
-                .Where(cl => cl.ClinicID == clinicId)
+                .Include(cl => cl.ClinicRooms)
+                .Where(cl => cl.Id == clinicId)
                 .Select(cl => new ClinicDTO(
-                    cl.ClinicID,
+                    cl.Id,
                     cl.ClinicAddress,
                     cl.ClinicOpeningHours,
-                    _context.Rooms
-                    .Where(r => r.ClinicID == cl.ClinicID)
+                    cl.ClinicRooms
                     .Select(r => r.RoomNumber)
                     .ToList()))
                 .FirstOrDefaultAsync();
@@ -123,12 +95,12 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
         {
             return await _context.Clinics
                 .AsNoTracking()
+                .Include(cl => cl.ClinicRooms)
                 .Select(cl => new ClinicDTO(
-                    cl.ClinicID,
+                    cl.Id,
                     cl.ClinicAddress,
                     cl.ClinicOpeningHours,
-                    _context.Rooms
-                    .Where(r => r.ClinicID == cl.ClinicID)
+                    cl.ClinicRooms
                     .Select(r => r.RoomNumber)
                     .ToList()))
                 .ToListAsync();

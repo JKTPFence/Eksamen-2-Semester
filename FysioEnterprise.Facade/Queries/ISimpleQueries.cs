@@ -28,19 +28,6 @@ namespace FysioEnterprise.Facade.Queries
         Task<List<StaffDTO>> GetAllStaffByClinicAsync(Guid clinicId);
 
         /// <summary>
-        ///     Som receptionist vil jeg kunne se alle behandlingsrum, så jeg kan få et større og bedre overblik. 
-        /// </summary>
-        /// <param name="roomId"></param>
-        /// <returns></returns>
-        Task<RoomDTO?> GetRoomsByIdAsync(Guid roomId);
-
-        /// <summary>
-        ///     Som receptionist vil jeg kunne se alle behandlingsrum, så jeg kan få et større og bedre overblik. 
-        /// </summary>
-        /// <returns></returns>
-        Task<List<RoomDTO>> GetAllRoomsAsync();
-
-        /// <summary>
         ///     Som receptionist vil jeg kunne se alle klinikker, for at få et bedre overblik. 
         /// </summary>
         /// <param name="clinicId"></param>

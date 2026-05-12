@@ -19,7 +19,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
             return await _context.Promotions
                 .AsNoTracking()
                 .Select(p => new PromotionDTO(
-                    p.PromotionID,
+                    p.Id,
                     p.PromotionName,
                     p.PromotionDiscountPercent,
                     p.PromotionStartTime,
@@ -34,7 +34,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                 .AsNoTracking()
                 .Where(p => p.IsActive)
                 .Select(p => new PromotionDTO(
-                    p.PromotionID,
+                    p.Id,
                     p.PromotionName,
                     p.PromotionDiscountPercent,
                     p.PromotionStartTime,
@@ -49,7 +49,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                 .AsNoTracking()
                 .Where(p => !p.IsActive)
                 .Select(p => new PromotionDTO(
-                    p.PromotionID,
+                    p.Id,
                     p.PromotionName,
                     p.PromotionDiscountPercent,
                     p.PromotionStartTime,
@@ -62,9 +62,9 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
         {
             return await _context.Promotions
                 .AsNoTracking()
-                .Where(p => p.PromotionID == promotionId)
+                .Where(p => p.Id == promotionId)
                 .Select(p => new PromotionDTO(
-                    p.PromotionID,
+                    p.Id,
                     p.PromotionName,
                     p.PromotionDiscountPercent,
                     p.PromotionStartTime,

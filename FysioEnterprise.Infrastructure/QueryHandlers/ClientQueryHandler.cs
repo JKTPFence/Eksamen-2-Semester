@@ -19,9 +19,9 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
         {
             return await _context.Clients
                 .AsNoTracking()
-                .Where(c => c.ClientID  == clientId)
+                .Where(c => c.Id  == clientId)
                 .Select(c => new ClientDTO(
-                    c.ClientID,
+                    c.Id,
                     c.ClientFirstName,
                     c.ClientLastName,
                     c.ClientEmail,
@@ -31,7 +31,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     c.ClientNote,
                     c.ClientPrefferedStaffID,
                     _context.Staff
-                    .Where(st => st.StaffID == c.ClientPrefferedStaffID)
+                    .Where(st => st.Id == c.ClientPrefferedStaffID)
                     .Select(st => $"{st.StaffFirstName} {st.StaffLastName}").FirstOrDefault() ?? "",
                     c.ClientLoyaltyLevel,
                     c.HasUsedBirthdayDiscountThisYear))
@@ -43,7 +43,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
             return await _context.Clients
                 .AsNoTracking()
                 .Select(c => new ClientDTO(
-                    c.ClientID,
+                    c.Id,
                     c.ClientFirstName,
                     c.ClientLastName,
                     c.ClientEmail,
@@ -53,7 +53,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     c.ClientNote,
                     c.ClientPrefferedStaffID,
                     _context.Staff
-                    .Where(st => st.StaffID == c.ClientPrefferedStaffID)
+                    .Where(st => st.Id == c.ClientPrefferedStaffID)
                     .Select(st => $"{st.StaffFirstName} {st.StaffLastName}").FirstOrDefault() ?? "",
                     c.ClientLoyaltyLevel,
                     c.HasUsedBirthdayDiscountThisYear))
