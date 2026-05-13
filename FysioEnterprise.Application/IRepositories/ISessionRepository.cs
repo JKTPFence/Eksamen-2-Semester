@@ -11,6 +11,7 @@ namespace FysioEnterprise.UseCase.IRepositories
         Task<Session> DeleteSessionAsync(Guid ID);
         Task<List<Session>> GetSessionsByClientAsync(Guid clientId);
         Task<List<Session>> GetSessionsByStaffAsync(Guid staffId);
+        Task<List<Session>> GetCompletedSessionsInRangeAsync(DateTime from, DateTime to);
 
     }
 }
