@@ -15,12 +15,12 @@ namespace FysioEnterprise.Infrastructure
     public static class InfrastructureServiceCollectionExtensions
     {
         //ConnectionString brug af blazor fra appsettings.json
-        public static IServiceCollection AddInfrastructure(
+        public static IServiceCollection AddInfrastructureServices(
             this IServiceCollection services,
             IConfiguration configuration)
         {
             services.AddDbContext<AppDBContext>(options => options.UseSqlServer(
-                configuration.GetConnectionString("YEPPPPPPPOOOOO")));
+                configuration.GetConnectionString("Default")));
 
             RegisterRepositoriesAndQueries(services);
             return services;
@@ -51,12 +51,14 @@ namespace FysioEnterprise.Infrastructure
             services.AddScoped<IPromotionRepository, PromotionRepository>();
             services.AddScoped<IStaffRepository, StaffRepository>();
             services.AddScoped<IClinicRepository, ClinicRepository>();
+            services.AddScoped<ISessionTypeRepository, SessionTypeRepository>();
 
             //Query Handlers
             services.AddScoped<ISessionQueries, SessionQueriesImpl>();
             services.AddScoped<IClientQueries, ClientQueriesImpl>();
             services.AddScoped<IPromotionQueries, PromotionQueriesImpl>();
             services.AddScoped<ISimpleQueries, SimpleQueriesImpl>();
+            services.AddScoped<IEarningsReportQuery, EarningsReportQueryImpl>();
         }
     }
 }

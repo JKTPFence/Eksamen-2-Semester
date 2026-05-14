@@ -1,0 +1,81 @@
+﻿namespace FysioEnterprise.Presentation.Components.CSSFiles {
+    public class HomePage {
+        .home-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 2rem;
+            min-height: calc(100vh - 56px);
+            gap: 2rem;
+        }
+
+        .home-header {
+            text-align: center;
+        }
+
+            .home-header .date {
+                font-size: 13px;
+                color: var(--color-text-tertiary);
+                margin: 0 0 8px;
+            }
+
+            .home-header h1 {
+                font-size: 26px;
+                font-weight: 500;
+                margin: 0 0 6px;
+            }
+
+            .home-header .sub {
+                font-size: 14px;
+                color: var(--color-text-secondary);
+                margin: 0;
+            }
+
+        .home-card {
+            background: var(--color-surface);
+            border: 0.5px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .field-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+            .field-group label {
+                font-size: 12px;
+                font-weight: 500;
+                color: var(--color-text-secondary);
+                display: flex;
+                align-items: center;
+                gap: 6px;
+            }
+
+                .field-group label i {
+                    font-size: 14px;
+                }
+
+            .field-group select {
+                width: 100%;
+            }
+
+        .divider {
+            border: none;
+            border-top: 0.5px solid var(--color-border);
+            margin: 0;
+        }
+
+        button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+    }
+}

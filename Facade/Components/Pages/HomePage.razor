@@ -1,0 +1,50 @@
+﻿@using Radzen.Blazor;
+@page "/"
+
+<section class="home-wrap">
+
+    <header class="home-header">
+        <p class="date">@DateTime.Now.ToString("dddd, d. MMMM yyyy", new System.Globalization.CultureInfo("da-DK"))</p>
+        <h1>GodDag — velkommen tilbage</h1>
+        <p class="sub">FysioFunc · receptionssystem</p>
+    </header>
+
+    <article class="home-card">
+
+        <div class="field-group">
+            <label for="clinic-select">
+                <RadzenIcon Icon="business" />
+                Vælg klinik
+            </label>
+            <select id="clinic-select" @onchange="OnClinicChanged">
+                <option value="" disabled selected>— Vælg en klinik —</option>
+                @foreach (var clinic in _clinics)
+                {
+                    <option value="@clinic.ClinicID">@clinic.ClinicAddress</option>
+                }
+            </select>
+        </div>
+
+        <hr class="divider" />
+
+        <div class="field-group">
+            <label for="staff-select">
+                <RadzenIcon Icon="person" />
+                Hvem er du?
+            </label>
+            <select id="staff-select" @bind="_selectedStaffId" disabled="@(_selectedClinicId == Guid.Empty)">
+                <option value="" disabled>— Vælg receptionist —</option>
+                @foreach (var staff in _staff)
+                {
+                    <option value="@staff.StaffID">@staff.StaffFirstName @staff.StaffLastName</option>
+                }
+            </select>
+        </div>
+
+        <button @onclick="Proceed" disabled="@(!CanProceed)">
+            Fortsæt til oversigt
+        </button>
+
+    </article>
+
+</section>

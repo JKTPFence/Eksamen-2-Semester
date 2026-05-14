@@ -1,4 +1,5 @@
-﻿using FysioEnterprise.Domain.Service.PricingService;
+﻿using FysioEnterprise.Domain.Service;
+using FysioEnterprise.Domain.Service.PricingService;
 using FysioEnterprise.Facade.UseCase.ClientUseCase;
 using FysioEnterprise.Facade.UseCase.PromotionUseCase;
 using FysioEnterprise.Facade.UseCase.SessionUseCase;
@@ -12,7 +13,7 @@ namespace FysioEnterprise.UseCase.DependencyInjection
 {
     public static class UseCasesServiceCollectionExtensions
     {
-        public static IServiceCollection AddUseCases(this IServiceCollection services)
+        public static IServiceCollection AddUseCaseServices(this IServiceCollection services)
         {
             //Client Use Case
             services.AddScoped<ICreateClientUseCase, ClientCommandHandler>();
@@ -29,14 +30,12 @@ namespace FysioEnterprise.UseCase.DependencyInjection
             //Session Use Case
             services.AddScoped<ICreateSessionUseCase, SessionCommandHandler>();
             services.AddScoped<IUpdateSessionUseCase, SessionCommandHandler>();
-            services.AddScoped<IDeleteSessionUseCase, SessionCommandHandler>();
-
-            //Need to implement EndSession og CancelSession
+            services.AddScoped<IMarkSessionAsNoShowUseCase, SessionCommandHandler>();
             services.AddScoped<ICreateSessionUseCase, SessionCommandHandler>();
             services.AddScoped<ICreateSessionUseCase, SessionCommandHandler>();
-
             services.AddScoped<IPricingStrategyFactory, PricingStrategyFactoryService>();
             services.AddScoped<PriceCalculator>();
+            services.AddScoped<ITimeNow, CurrentDateTime>();
 
             return services;
         }

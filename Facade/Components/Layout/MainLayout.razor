@@ -1,23 +1,53 @@
-﻿@inherits LayoutComponentBase
+﻿@using Radzen.Blazor;
+@inherits LayoutComponentBase
+@inject NavigationManager Nav
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+<nav class="topnav" aria-label="Main navigation">
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+    <NavLink href="/" class="nav-logo" Match="NavLinkMatch.All">
+        <RadzenIcon Icon="physical_therapy" />
+        <span class="logo-text">FysioFunc</span>
+    </NavLink>
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
-</div>
+    <ul class="nav-links" role="list">
+        <li><NavLink href="@AppendSession("clients")">
+            <RadzenIcon Icon="group" />Clients
+        </NavLink></li>
+        <li><NavLink href="@AppendSession("promotions")">
+            <RadzenIcon Icon="sell" />Promotions
+        </NavLink></li>
+        <li><NavLink href="@AppendSession("sessions")">
+            <RadzenIcon Icon="event_note" />Sessions
+        </NavLink></li>
+        <li><NavLink href="@AppendSession("bookings")">
+            <RadzenIcon Icon="calendar_month" />Bookings
+        </NavLink></li>
+        <li><NavLink href="@AppendSession("statistics")">
+            <RadzenIcon Icon="bar_chart" />Statistics
+        </NavLink></li>
+    </ul>
 
-<div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
-</div>
+    <aside class="nav-right">
+        @if (!string.IsNullOrEmpty(ClinicId) && !string.IsNullOrEmpty(StaffId))
+        {
+            <RadzenIcon Icon="location_on" />
+            <span>@ClinicId</span>
+            <span class="separator">·</span>
+            <RadzenIcon Icon="account_circle" />
+            <span>@StaffId</span>
+        }
+    </aside>
+
+</nav>
+
+<main>
+    @Body
+</main>
+
+@code {
+    [SupplyParameterFromQuery] private string? ClinicId { get; set; }
+    [SupplyParameterFromQuery] private string? StaffId  { get; set; }
+
+    private string AppendSession(string page) =>
+        $"/{page}?clinicId={ClinicId}&staffId={StaffId}";
+}

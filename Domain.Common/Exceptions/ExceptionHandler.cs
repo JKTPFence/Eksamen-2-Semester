@@ -5,7 +5,8 @@
 
     public sealed class NotFoundException(string message) : DomainException(message);
 
+    public sealed class UserInvalidInputException(string message) : DomainException(message);
+
     public sealed class ValidationException(string message) : DomainException(message);
 
-    public sealed class OwnershipException(string message) : DomainException(message);
 }

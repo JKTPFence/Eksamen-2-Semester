@@ -21,7 +21,7 @@ namespace FysioEnterprise.Facade.RequestModels
             Guid StaffID,
             DateTime StartTime,
             DateTime EndTime);
-        public record DeleteSessionRequest(
+        public record MarkNoShowSessionRequest(
             Guid SessionID);
         public record EndSessionRequest(
             Guid SessionId, string Note);

@@ -69,7 +69,7 @@ namespace FysioEnterprise.Domain.Entities
             IEnumerable<Session> existingStaffSessions)
         {
             if (!IsActive)
-                throw new InvalidOperationException($"Cannot update time of an inactive session.");
+                throw new UserInvalidInputException($"Cannot update time of an inactive session.");
 
             ValidateSessionTime(newStartTime, newEndTime);
             ValidateOverlap(existingClientSessions, newStartTime, newEndTime, "Client");
@@ -82,7 +82,7 @@ namespace FysioEnterprise.Domain.Entities
         public void CompletedSession()
         {
             if (!IsActive)
-                throw new InvalidOperationException($"Cannot complete a non active session.");
+                throw new UserInvalidInputException($"Cannot complete a non active session.");
 
             SessionStatus = SessionStatusEnum.Completed;
         }
@@ -90,10 +90,16 @@ namespace FysioEnterprise.Domain.Entities
         public void CancelSession()
         {
             if (!IsActive)
-                throw new InvalidOperationException($"Cannot cancel a non active session.");
+                throw new UserInvalidInputException($"Cannot cancel a non active session.");
             SessionStatus = SessionStatusEnum.Cancelled;
         }
 
+        public void SetNoShowSession()
+        {
+            if (SessionStatus == SessionStatusEnum.Completed)
+                throw new UserInvalidInputException($"Cannot set a completed session to no show.");
+            SessionStatus = SessionStatusEnum.NoShow;
+        }
         private static void ValidateSessionTime(DateTime startTime, DateTime endTime)
         {
             if (startTime >= endTime)

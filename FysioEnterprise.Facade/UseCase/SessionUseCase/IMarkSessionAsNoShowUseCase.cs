@@ -3,8 +3,8 @@ using static FysioEnterprise.Facade.RequestModels.SessionRequests;
 
 namespace FysioEnterprise.Facade.UseCase.SessionUseCase
 {
-    public interface IDeleteSessionUseCase
+    public interface IMarkSessionAsNoShowUseCase
     {
-        Task<Result> DeleteSessionAsync(DeleteSessionRequest request);
+        Task<Result> MarkSessionAsNoShowAsync(MarkNoShowSessionRequest request);
     }
 }
