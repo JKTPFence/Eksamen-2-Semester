@@ -10,7 +10,7 @@ using static FysioEnterprise.Facade.RequestModels.SessionRequests;
 
 namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
 {
-    public class SessionCommandHandler : ICreateSessionUseCase, IUpdateSessionUseCase, IDeleteSessionUseCase
+    public class SessionCommandHandler : ICreateSessionUseCase, IUpdateSessionUseCase, ICancelSessionUseCase, IEndSessionUseCase, IMarkSessionAsNoShowUseCase
     {
         private readonly IClientRepository _clientRepository;
         private readonly IStaffRepository _staffRepository;
@@ -169,9 +169,28 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
             return Result.Ok();
         }
 
-        public async Task<Result> DeleteSessionAsync(DeleteSessionRequest request)
+        public async Task<Result> EndSessionAsync(EndSessionRequest request)
         {
-            var sessionResult = await _sessionRepository.GetSessionAsync(request.SessionID);
+            var sessionResult = await _sessionRepository.GetSessionAsync(request.SessionId);
+            if (sessionResult.IsFailed)
+                return Result.Fail("Session not found.");
+
+            try
+            {
+                sessionResult.Value.CompletedSession();
+            }
+            catch (UserInvalidInputException ex)
+            {
+                return Result.Fail($"Error couldn't complete session: {ex.Message}");
+            }
+
+            await _sessionRepository.UpdateSessionAsync(sessionResult.Value);
+            return Result.Ok();
+        }
+
+        public async Task<Result> CancelSessionAsync(CancelSessionRequest request)
+        {
+            var sessionResult = await _sessionRepository.GetSessionAsync(request.SessionId);
             if (sessionResult.IsFailed)
                 return Result.Fail("Session not found.");
 
@@ -179,9 +198,28 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
             {
                 sessionResult.Value.CancelSession();
             }
-            catch (DomainException ex)
+            catch (UserInvalidInputException ex)
             {
-                return Result.Fail(ex.Message);
+                return Result.Fail($"Error couldn't set session to cancelled: {ex.Message}");
+            }
+
+            await _sessionRepository.UpdateSessionAsync(sessionResult.Value);
+            return Result.Ok();
+        }
+
+        public async Task<Result> MarkSessionAsNoShowAsync(MarkNoShowSessionRequest request)
+        {
+            var sessionResult = await _sessionRepository.GetSessionAsync(request.SessionID);
+            if (sessionResult.IsFailed)
+                return Result.Fail("Session not found.");
+
+            try
+            {
+                sessionResult.Value.SetNoShowSession();
+            }
+            catch (UserInvalidInputException ex)
+            {
+                return Result.Fail($"Error couldn't set session as NoShow: {ex.Message}");
             }
 
             await _sessionRepository.UpdateSessionAsync(sessionResult.Value);

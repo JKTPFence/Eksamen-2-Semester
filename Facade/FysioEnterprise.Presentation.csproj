@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Radzen.Blazor" Version="10.4.3" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\FysioEnterprise.Application\FysioEnterprise.UseCase.csproj" />
     <ProjectReference Include="..\FysioEnterprise.Infrastructure\FysioEnterprise.Infrastructure.csproj" />
   </ItemGroup>
