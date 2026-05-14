@@ -1,7 +1,5 @@
+using FysioEnterprise.UseCase.IRepositories;
 using FysioEnterprise.Presentation.Components;
-using FysioEnterprise.Presentation.Service;
-using FysioEnterprise.Infrastructure;
-using FysioEnterprise.UseCase.DependencyInjection;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +14,39 @@ builder.Services
     .AddPresentationServices(builder.Configuration);
 
 var app = builder.Build();
+
+
+//Seed Data
+using(var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<AppDBContext>();
+    context.Database.Migrate();
+
+    if (!context.Clinics.Any())
+    {
+        //Clinics og rooms
+        var clinics = ClinicSeed.GetSeedData();
+        context.Clinics.AddRange(clinics);
+        context.SaveChanges();
+
+        //Staff
+        var staff = StaffSeed.GetSeedData(clinics);
+        context.Staff.AddRange(staff);
+        context.SaveChanges();
+
+        //Clients
+        var clients = ClientSeed.GetSeedData(staff);
+        context.Clients.AddRange(clients);
+        context.SaveChanges();
+
+        //Sessions - henter sessiontype via databasen
+        var sessionTypes = context.SessionTypes.ToList();
+        var sessions = SessionSeed.GetSeedData(clients, staff, sessionTypes, clinics);
+        context.Sessions.AddRange(sessions);
+        context.SaveChanges();
+    }
+}
+
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
