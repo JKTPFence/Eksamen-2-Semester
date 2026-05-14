@@ -1,8 +1,5 @@
 ﻿using FysioEnterprise.Domain.Entities;
 using FysioEnterprise.Domain.ValueObjects;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace FysioEnterprise.Infrastructure.Database
 {
@@ -37,8 +34,30 @@ namespace FysioEnterprise.Infrastructure.Database
         {
             public static List<Clinic> GetSeedData()
             {
-                var clinic1 = new Clinic("Vejle Klinik, Boulevarden 24, 7100 Vejle", new DateTime(2026, 1, 1, 8, 0, 0), new List<Room>());
-                var clinic2 = new Clinic("Egtved Klinik, Østergade 5, 6040 Egtved", new DateTime(2026, 1, 1, 9, 0, 0), new List<Room>());
+                var clinic1 = new Clinic("Vejle Klinik, Boulevarden 24, 7100 Vejle",
+                    new List<OpeningHours>
+                    {
+                        new(DayOfWeek.Monday,    new TimeOnly(8, 0),  new TimeOnly(16, 0)),
+                        new(DayOfWeek.Tuesday,   new TimeOnly(8, 0),  new TimeOnly(16, 0)),
+                        new(DayOfWeek.Wednesday, new TimeOnly(8, 0),  new TimeOnly(16, 0)),
+                        new(DayOfWeek.Thursday,  new TimeOnly(8, 0),  new TimeOnly(16, 0)),
+                        new(DayOfWeek.Friday,    new TimeOnly(8, 0),  new TimeOnly(14, 0)),
+                        OpeningHours.Closed(DayOfWeek.Saturday),
+                        OpeningHours.Closed(DayOfWeek.Sunday),
+                    }, 
+                    new List<Room>());
+                
+                var clinic2 = new Clinic("Egtved Klinik, Østergade 5, 6040 Egtved", 
+                    new List<OpeningHours>
+                    {
+                        new(DayOfWeek.Monday,    new TimeOnly(7, 0),  new TimeOnly(15, 0)),
+                        new(DayOfWeek.Tuesday,   new TimeOnly(7, 0),  new TimeOnly(15, 0)),
+                        new(DayOfWeek.Wednesday, new TimeOnly(7, 0),  new TimeOnly(15, 0)),
+                        new(DayOfWeek.Thursday,  new TimeOnly(7, 0),  new TimeOnly(15, 0)),
+                        new(DayOfWeek.Friday,    new TimeOnly(7, 0),  new TimeOnly(15, 0)),
+                        OpeningHours.Closed(DayOfWeek.Saturday),
+                        OpeningHours.Closed(DayOfWeek.Sunday),
+                    }, new List<Room>());
 
                 //Oprettelse af rum
                 var room1 = new Room(clinic1, 01);
@@ -48,7 +67,7 @@ namespace FysioEnterprise.Infrastructure.Database
 
                 //Tilføjelse af rum til klinikker
                 clinic1 = new Clinic(clinic1.ClinicAddress, clinic1.ClinicOpeningHours, new List<Room> { room1, room2 });
-                clinic2 = new Clinic(clinic2.ClinicAddress, clinic2.ClinicOpeningHours, new List<Room> { room1, room2 });
+                clinic2 = new Clinic(clinic2.ClinicAddress, clinic2.ClinicOpeningHours, new List<Room> { room3, room4 });
 
                 return new List<Clinic> { clinic1, clinic2 };
             }
@@ -58,9 +77,14 @@ namespace FysioEnterprise.Infrastructure.Database
         {
             public static List<Staff> GetSeedData(List<Clinic> clinics)
             {
-                var staff1 = new Staff("Anders", "Nielsen", "anders@bookright.dk", "Fysioterapeut", 12345, new List<Clinic> { clinics[0] });
-                var staff2 = new Staff("Maria", "Hansen", "maria@bookright.dk", "Massør", 67890, new List<Clinic> { clinics[0], clinics[1] });
-                var staff3 = new Staff("Lars", "Pedersen", "lars@fysio.dk", "Akupunktør", 11111, new List<Clinic> { clinics[1] });
+                var staff1 = new Staff("Anders", "Nielsen", "anders@bookright.dk", "Fysioterapeut", 12345, new List<Clinic> {});
+                var staff2 = new Staff("Maria", "Hansen", "maria@bookright.dk", "Massør", 67890, new List<Clinic> {});
+                var staff3 = new Staff("Lars", "Pedersen", "lars@fysio.dk", "Akupunktør", 11111, new List<Clinic> {});
+
+                staff1.AssignToClinic(clinics[0].Id);
+                staff2.AssignToClinic(clinics[0].Id);
+                staff2.AssignToClinic(clinics[1].Id);
+                staff3.AssignToClinic(clinics[1].Id);
 
                 return new List<Staff> { staff1, staff2, staff3 };
             }
@@ -93,9 +117,9 @@ namespace FysioEnterprise.Infrastructure.Database
         {
             public static List<Session> GetSeedData(List<Client> clients, List<Staff> staff, List<SessionType> sessionTypes, List<Clinic> clinics)
             {
-                var session1 = Session.Create(clients[0].Id, staff[0].Id, sessionTypes[0].Id, clinics[0].ClinicRooms[0].Id, DateTime.UtcNow.AddDays(1), DateTime.UtcNow.AddDays(1).AddMinutes(30), 395, null, new List<Session>(), new List<Session>());
-                var session2 = Session.Create(clients[1].Id, staff[1].Id, sessionTypes[4].Id, clinics[0].ClinicRooms[1].Id, DateTime.UtcNow.AddDays(2), DateTime.UtcNow.AddDays(2).AddHours(1), 699, null, new List<Session>(), new List<Session>());
-                var session3 = Session.Create(clients[2].Id, staff[2].Id, sessionTypes[5].Id, clinics[1].ClinicRooms[0].Id, DateTime.UtcNow.AddDays(3), DateTime.UtcNow.AddDays(3).AddMinutes(45), 550, null, new List<Session>(), new List<Session>());
+                var session1 = Session.Create(clients[0].Id, staff[0].Id, sessionTypes[0].Id, clinics[0].ClinicRooms[0].Id, new TimeSlot(DateTime.UtcNow.AddDays(1), DateTime.UtcNow.AddDays(1).AddMinutes(30)), 395, null, new List<Session>(), new List<Session>(), new List<Session>());
+                var session2 = Session.Create(clients[1].Id, staff[1].Id, sessionTypes[4].Id, clinics[0].ClinicRooms[1].Id, new TimeSlot(DateTime.UtcNow.AddDays(2), DateTime.UtcNow.AddDays(2).AddHours(1)), 699, null, new List<Session>(), new List<Session>(), new List<Session>());
+                var session3 = Session.Create(clients[2].Id, staff[2].Id, sessionTypes[5].Id, clinics[1].ClinicRooms[0].Id, new TimeSlot(DateTime.UtcNow.AddDays(3), DateTime.UtcNow.AddDays(3).AddMinutes(45)), 550, null, new List<Session>(), new List<Session>(), new List<Session>());
 
                 return new List<Session> { session1,  session2, session3 };
             }

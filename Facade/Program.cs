@@ -1,5 +1,10 @@
-using FysioEnterprise.UseCase.IRepositories;
+using FysioEnterprise.Infrastructure;
+using FysioEnterprise.Infrastructure.Database;
 using FysioEnterprise.Presentation.Components;
+using FysioEnterprise.Presentation.Service;
+using FysioEnterprise.UseCase.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
+using static FysioEnterprise.Infrastructure.Database.SeedData;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,31 +25,8 @@ var app = builder.Build();
 using(var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDBContext>();
-    context.Database.Migrate();
-
-    if (!context.Clinics.Any())
-    {
-        //Clinics og rooms
-        var clinics = ClinicSeed.GetSeedData();
-        context.Clinics.AddRange(clinics);
-        context.SaveChanges();
-
-        //Staff
-        var staff = StaffSeed.GetSeedData(clinics);
-        context.Staff.AddRange(staff);
-        context.SaveChanges();
-
-        //Clients
-        var clients = ClientSeed.GetSeedData(staff);
-        context.Clients.AddRange(clients);
-        context.SaveChanges();
-
-        //Sessions - henter sessiontype via databasen
-        var sessionTypes = context.SessionTypes.ToList();
-        var sessions = SessionSeed.GetSeedData(clients, staff, sessionTypes, clinics);
-        context.Sessions.AddRange(sessions);
-        context.SaveChanges();
-    }
+    context.Database.EnsureCreated();
+    await context.SeedDataMigrateAsync();
 }
 
 

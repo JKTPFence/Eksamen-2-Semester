@@ -1,8 +1,10 @@
 ﻿using FluentResults;
-using FysioEnterprise.UseCase.IRepositories;
 using FysioEnterprise.Domain.Entities;
-using Microsoft.EntityFrameworkCore;
 using FysioEnterprise.Domain.Enums;
+using FysioEnterprise.Domain.Exceptions;
+using FysioEnterprise.Domain.ValueObjects;
+using FysioEnterprise.UseCase.IRepositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace FysioEnterprise.Infrastructure.Database.Repository
 {
@@ -56,6 +58,29 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
             return sessions;
         }
 
+        public async Task<List<Session>> GetSessionsByRoomAsync(Guid clinicId, Guid roomId)
+        {
+            // First verify the room belongs to this clinic
+            var clinic = await _context.Clinics
+                .AsNoTracking()
+                .Include(c => c.GetRoom(roomId))
+                .FirstOrDefaultAsync(c => c.Id == clinicId);
+
+            if (clinic is null)
+                throw new NotFoundException($"Clinic {clinicId} not found");
+
+            if (clinic.ClinicRooms.Count() == 0)
+                throw new NotFoundException($"Room {roomId} does not belong to clinic {clinicId}");
+
+            var sessions = await _context.Sessions
+                .AsNoTracking()
+                .Include(s => s.SessionPromotion)
+                .Where(s => s.SessionRoomID == roomId)
+                .ToListAsync();
+
+            return sessions;
+        }
+
         public async Task UpdateSessionAsync(Session session)
         {
             _context.Sessions.Update(session);
@@ -75,7 +100,7 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
             return await _context.Sessions
                 .AsNoTracking()
                 .Where(s => s.SessionStatus == SessionStatusEnum.Completed
-                        && s.SessionStartTime >= from && s.SessionStartTime <= to)
+                        && s.SessionTimeSlot.To >= from && s.SessionTimeSlot.From <= to)
                 .ToListAsync();
         }
     }

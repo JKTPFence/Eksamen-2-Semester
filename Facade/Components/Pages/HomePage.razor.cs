@@ -1,4 +1,5 @@
-﻿using FysioEnterprise.Facade.DTOs;
+﻿using FluentResults;
+using FysioEnterprise.Facade.DTOs;
 using FysioEnterprise.Facade.Queries;
 using Microsoft.AspNetCore.Components;
 
@@ -21,13 +22,8 @@ namespace FysioEnterprise.Presentation.Components.Pages
 
         protected override async Task OnInitializedAsync()
         {
-            var clinicsTask = Queries.GetAllClinicsAsync();
-            var staffTask = Queries.GetAllStaffAsync();
-
-            await Task.WhenAll(clinicsTask, staffTask);
-
-            _clinics = clinicsTask.Result;
-            _staff = staffTask.Result;
+            _clinics = await Queries.GetAllClinicsAsync();
+            _staff = await Queries.GetAllStaffAsync();
         }
 
         private async Task OnClinicChanged(ChangeEventArgs e)

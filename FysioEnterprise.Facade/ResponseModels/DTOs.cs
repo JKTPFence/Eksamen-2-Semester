@@ -1,10 +1,4 @@
-﻿using FysioEnterprise.Domain.Entities;
-using FysioEnterprise.Domain.Enums;
-using FysioEnterprise.Domain.Service;
-using FysioEnterprise.Domain.ValueObjects;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using FysioEnterprise.Domain.ValueObjects;
 
 namespace FysioEnterprise.Facade.DTOs
 {
@@ -17,8 +11,7 @@ namespace FysioEnterprise.Facade.DTOs
         int? RoomNumber,
         string SessionTypeName,
         string? PromotionName,
-        DateTime SessionStartTime,
-        DateTime? SessionEndTime,
+        TimeSlot timeSlot,
         decimal? SessionTotalPrice,
         string SessionStatus);
 
@@ -48,7 +41,7 @@ namespace FysioEnterprise.Facade.DTOs
     public record ClinicDTO(
         Guid ClinicID,
         string ClinicAddress,
-        DateTime ClinicOpeningHours,
+        List<OpeningHours> ClinicOpeningHours,
         List<int?> ClinicRooms);
 
     public record PromotionDTO(

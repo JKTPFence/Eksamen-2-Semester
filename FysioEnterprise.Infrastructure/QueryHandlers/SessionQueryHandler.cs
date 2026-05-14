@@ -37,8 +37,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     .Where(styp => styp.Id == s.SessionInstanceTypeID).Select(styp => styp.SessionTypeName).FirstOrDefault() ?? "",
                     _context.Promotions
                     .Where(p => p.Id == s.SessionPromotion).Select(p => p.PromotionName).FirstOrDefault() ?? "",
-                    s.SessionStartTime,
-                    s.SessionEndTime,
+                    s.SessionTimeSlot,
                     s.SessionTotalPrice,
                     s.SessionStatus.ToString()))
                     .FirstOrDefaultAsync();
@@ -68,8 +67,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     .Where(styp => styp.Id == s.SessionInstanceTypeID).Select(styp => styp.SessionTypeName).FirstOrDefault() ?? "",
                     _context.Promotions
                     .Where(p => p.Id == s.SessionPromotion).Select(p => p.PromotionName).FirstOrDefault() ?? "",
-                    s.SessionStartTime,
-                    s.SessionEndTime,
+                    s.SessionTimeSlot,
                     s.SessionTotalPrice,
                     s.SessionStatus.ToString()))
                     .ToListAsync();
@@ -99,8 +97,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     .Where(styp => styp.Id == s.SessionInstanceTypeID).Select(styp => styp.SessionTypeName).FirstOrDefault() ?? "",
                     _context.Promotions
                     .Where(p => p.Id == s.SessionPromotion).Select(p => p.PromotionName).FirstOrDefault() ?? "",
-                    s.SessionStartTime,
-                    s.SessionEndTime,
+                    s.SessionTimeSlot,
                     s.SessionTotalPrice,
                     s.SessionStatus.ToString()))
                     .ToListAsync();
@@ -130,8 +127,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     .Where(styp => styp.Id == s.SessionInstanceTypeID).Select(styp => styp.SessionTypeName).FirstOrDefault() ?? "",
                     _context.Promotions
                     .Where(p => p.Id == s.SessionPromotion).Select(p => p.PromotionName).FirstOrDefault() ?? "",
-                    s.SessionStartTime,
-                    s.SessionEndTime,
+                    s.SessionTimeSlot,
                     s.SessionTotalPrice,
                     s.SessionStatus.ToString()))
                     .ToListAsync();

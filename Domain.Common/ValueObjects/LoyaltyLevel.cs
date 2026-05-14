@@ -9,6 +9,8 @@ namespace FysioEnterprise.Domain.ValueObjects
         public string LoyaltyLevelName { get; }
         public decimal LoyaltyLevelDiscountPercentage { get; }
 
+        public LoyaltyLevel() { } // Empty constructor for EF Core
+
         private LoyaltyLevel(string loyaltyLevelName, decimal loyaltyLevelDiscountPercentage)
         {
             LoyaltyLevelName = loyaltyLevelName;

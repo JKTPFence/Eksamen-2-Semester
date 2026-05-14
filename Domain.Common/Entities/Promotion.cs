@@ -21,8 +21,14 @@ namespace FysioEnterprise.Domain.Entities
             Id = Guid.NewGuid();
             if (string.IsNullOrWhiteSpace(promotionName))
                 throw new DomainException($"Promotion name cannot be empty: {promotionName}");
+            PromotionName = promotionName;
             if (promotionDiscountPercent <= 0)
                 throw new DomainException($"Discount percentage must be greater than zero: {promotionDiscountPercent}");
+            PromotionDiscountPercent = promotionDiscountPercent;
+                if (promotionStartTime >= promotionEndTime)
+                    throw new DomainException($"Promotion start time must be before end time: {promotionStartTime} - {promotionEndTime}");
+            PromotionStartTime = promotionStartTime;
+            PromotionEndTime = promotionEndTime;
         }
 
         public static Promotion Create(

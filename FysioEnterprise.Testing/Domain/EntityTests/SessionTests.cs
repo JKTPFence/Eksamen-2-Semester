@@ -1,6 +1,8 @@
-﻿using FysioEnterprise.Domain.Entities;
+﻿using System.Collections;
+using FysioEnterprise.Domain.Entities;
 using FysioEnterprise.Domain.Enums;
 using FysioEnterprise.Domain.Exceptions;
+using FysioEnterprise.Domain.ValueObjects;
 using Xunit;
 
 namespace FysioEnterprise.Testing.Domain.EntityTests
@@ -12,10 +14,11 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
                 DateTime? end = null)
             {
                 var s = start ?? DateTime.UtcNow.AddHours(1);
+                var timeSlot = new TimeSlot(s, end ?? s.AddHours(1));
                 return Session.Create(
                     Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
-                    s, end ?? s.AddHours(1),
-                    totalPrice: 100m, promotionId: null, [], []);
+                    timeSlot,
+                    totalPrice: 100m, promotionId: null, [], [], []);
             }
 
             [Fact]
@@ -46,8 +49,8 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
 
                 var ex = Assert.Throws<ArgumentNullException>(() => Session.Create(
                     ids["clientId"], ids["staffId"], ids["sessionTypeId"], ids["roomId"],
-                    DateTime.UtcNow.AddHours(1), DateTime.UtcNow.AddHours(2),
-                    100m, null, [], []));
+                    new TimeSlot(DateTime.UtcNow.AddHours(1), DateTime.UtcNow.AddHours(2)),
+                    100m, null, [], [], []));
 
                 Assert.Equal(paramName, ex.ParamName);
             }
@@ -58,10 +61,11 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
             {
                 var start = DateTime.UtcNow.AddHours(2);
                 var end = DateTime.UtcNow.AddHours(1);
+                var timeSlot = new TimeSlot(start, end);
 
                 Assert.Throws<DomainException>(() => Session.Create(
                     Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
-                    start, end, 100m, null, [], []));
+                    timeSlot, 100m, null, [], [], []));
             }
 
             [Fact]
@@ -69,8 +73,8 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
             {
                 Assert.Throws<DomainException>(() => Session.Create(
                     Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
-                    DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow.AddHours(1),
-                    100m, null, [], []));
+                    new TimeSlot(DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow.AddHours(1)),
+                    100m, null, [], [], []));
             }
 
             //Overlap validation tests
@@ -79,11 +83,12 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
             {
                 var start = DateTime.UtcNow.AddHours(2);
                 var end = start.AddHours(1);
+                var timeSlot = new TimeSlot(start, end);
                 var existing = BuildSession(start, end);
 
                 Assert.Throws<DomainException>(() => Session.Create(
                     existing.SessionClientID, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
-                    start, end, 100m, null, [existing], []));
+                    timeSlot, 100m, null, [existing], [], []));
             }
 
             [Fact]
@@ -91,11 +96,12 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
             {
                 var start = DateTime.UtcNow.AddHours(2);
                 var end = start.AddHours(1);
+                var timeSlot = new TimeSlot(start, end);
                 var existing = BuildSession(start, end);
 
                 Assert.Throws<DomainException>(() => Session.Create(
                     Guid.NewGuid(), existing.SessionStaffID, Guid.NewGuid(), Guid.NewGuid(),
-                    start, end, 100m, null, [], [existing]));
+                    timeSlot, 100m, null, [], [existing], []));
             }
 
             //Update Session Validation tests
@@ -105,11 +111,12 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
                 var session = BuildSession();
                 var newStart = DateTime.UtcNow.AddHours(3);
                 var newEnd = newStart.AddHours(1);
+                var timeSlot = new TimeSlot(newStart, newEnd);
 
-                session.UpdateSessionTime(newStart, newEnd, [], []);
+            session.UpdateSessionTime(session.Id, timeSlot, [], [], []);
 
-                Assert.Equal(newStart, session.SessionStartTime);
-                Assert.Equal(newEnd, session.SessionEndTime);
+                Assert.Equal(newStart, session.SessionTimeSlot.From);
+                Assert.Equal(newEnd, session.SessionTimeSlot.To);
             }
 
             //Completed session tests
@@ -154,5 +161,15 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
                 Assert.Throws<InvalidOperationException>(() => session.CancelSession());
             }
 
-        }
+            [Fact]
+            public void NoShowSession_ActiveSession_SetsNoShow()
+            {
+                var session = BuildSession();
+
+                session.SetNoShowSession();
+
+                Assert.Equal(SessionStatusEnum.NoShow, session.SessionStatus);
+            }
+
+    }
 }

@@ -1,15 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using FluentResults;
+﻿using FluentResults;
+using FysioEnterprise.Domain.ValueObjects;
 
 namespace FysioEnterprise.Domain.Entities
 {
     public class Clinic : Aggregateroot
     {
         public string ClinicAddress { get; private set; }
-        public DateTime ClinicOpeningHours { get; private set; }
-        
+        public List<OpeningHours> ClinicOpeningHours { get; private set; } = new();
+
         private List<Room> _clinicRooms = new();
         public IReadOnlyList<Room> ClinicRooms => _clinicRooms.AsReadOnly();
 
@@ -18,7 +16,7 @@ namespace FysioEnterprise.Domain.Entities
             
         }
 
-        public Clinic(string clinicAddress, DateTime clinicOpeningHours, List<Room> clinicRooms)
+        public Clinic(string clinicAddress, List<OpeningHours> clinicOpeningHours, List<Room> clinicRooms)
         {
             Id = Guid.NewGuid();
             ClinicAddress = clinicAddress;
