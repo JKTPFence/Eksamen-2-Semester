@@ -4,6 +4,7 @@ using FysioEnterprise.Domain.Exceptions;
 using FysioEnterprise.Domain.Service;
 using FysioEnterprise.Domain.Service.PricingService;
 using FysioEnterprise.Domain.Service.PricingService.Strategies.PricingMethods;
+using FysioEnterprise.Domain.ValueObjects;
 using FysioEnterprise.Facade.UseCase.SessionUseCase;
 using FysioEnterprise.UseCase.IRepositories;
 using static FysioEnterprise.Facade.RequestModels.SessionRequests;
@@ -76,6 +77,8 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
 
             var existingClientSessions = await _sessionRepository.GetSessionsByClientAsync(request.ClientID);
             var existingStaffSessions = await _sessionRepository.GetSessionsByStaffAsync(request.StaffID);
+            var existingRoomSessions = await _sessionRepository.GetSessionsByRoomAsync(request.ClinicID, request.SessionRoomID);
+            var timeSlot = new TimeSlot(request.StartTime, request.EndTime);
 
             await _sessionLock.WaitAsync();
             try
@@ -115,12 +118,12 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
                         staffResult.Value.Id,
                         sessionTypeResult.Value.Id,
                         roomResult.Value.Id,
-                        request.StartTime,
-                        request.EndTime,
+                        timeSlot,
                         totalPrice,
                         promotionResult?.Value?.Id,
                         existingClientSessions,
-                        existingStaffSessions);
+                        existingStaffSessions,
+                        existingRoomSessions);
                     await _sessionRepository.CreateSessionAsync(session);
                 }
                 catch (DomainException ex)
@@ -148,14 +151,17 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
 
             var existingClientSessions = await _sessionRepository.GetSessionsByClientAsync(request.ClientID);
             var existingStaffSessions = await _sessionRepository.GetSessionsByStaffAsync(request.StaffID);
+            var existingRoomSessions = await _sessionRepository.GetSessionsByRoomAsync(request.ClinicID, request.SessionRoomID);
+            var timeSlot = new TimeSlot(request.StartTime, request.EndTime);
 
             try
             {
                   session.UpdateSessionTime(
-                    request.StartTime,
-                    request.EndTime,
+                    request.SessionID,
+                    timeSlot,
                     existingClientSessions.Where(s => s.Id != session.Id),
-                    existingStaffSessions.Where(s => s.Id != session.Id)
+                    existingStaffSessions.Where(s => s.Id != session.Id),
+                    existingRoomSessions.Where(s => s.Id != session.Id)
                     );
 
             }

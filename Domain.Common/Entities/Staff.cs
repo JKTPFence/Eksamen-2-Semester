@@ -1,4 +1,4 @@
-﻿using FysioEnterprise.Domain.Entities;
+﻿using FysioEnterprise.Domain.ValueObjects;
 
 namespace FysioEnterprise.Domain.Entities
 {
@@ -9,7 +9,10 @@ namespace FysioEnterprise.Domain.Entities
         public string StaffContactInformation { get; private set; }
         public string StaffAuthorisationType { get; private set; }
         public int StaffAuthorisationNumber { get; private set; }
-        public List<Guid> ClinicIDs { get; private set; }
+
+        private readonly List<StaffClinicAssignment> _clinicAssignments = new();
+        public IReadOnlyList<StaffClinicAssignment> ClinicAssignments =>
+            _clinicAssignments.AsReadOnly();
         public Staff() // Empty constructor for EF Core
         {
             
@@ -23,7 +26,22 @@ namespace FysioEnterprise.Domain.Entities
             StaffContactInformation = staffContactInformation;
             StaffAuthorisationType = staffAuthorisationType;
             StaffAuthorisationNumber = staffAuthorisationNumber;
-            ClinicIDs = clinics.Select(c => c.Id).ToList();
+        }
+
+        public void AssignToClinic(Guid clinicId)
+        {
+            var assignment = new StaffClinicAssignment(Id, clinicId);
+
+            if (_clinicAssignments.Contains(assignment))
+                return;
+
+            _clinicAssignments.Add(assignment);
+        }
+
+        public void RemoveFromClinic(Guid clinicId)
+        {
+            var assignment = new StaffClinicAssignment(Id, clinicId);
+            _clinicAssignments.Remove(assignment);
         }
     }
 }

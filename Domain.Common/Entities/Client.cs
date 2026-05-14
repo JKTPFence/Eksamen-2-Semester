@@ -37,12 +37,21 @@ namespace FysioEnterprise.Domain.Entities
             Id = Guid.NewGuid();
             if (string.IsNullOrWhiteSpace(clientFirstName))
                 throw new DomainException($"First name cannot be empty: {clientFirstName}");
+            ClientFirstName = clientFirstName;
+            ClientLastName = clientLastName;
             if (string.IsNullOrWhiteSpace(clientEmail))
                 throw new DomainException($"Email cannot be empty: {clientEmail}");
+            ClientEmail = clientEmail;
             if (string.IsNullOrWhiteSpace(clientPhoneNumber))
                 throw new DomainException($"Phone number cannot be empty: {clientPhoneNumber}");
+            ClientPhoneNumber = clientPhoneNumber;
             if (string.IsNullOrWhiteSpace(clientAddress))
                 throw new DomainException($"Address cannot be empty: {clientAddress}");
+            ClientAddress = clientAddress;
+            ClientNote = clientNote;
+            ClientPrefferedStaffID = clientPrefferedStaffID;
+            ClientBirthDate = clientBirthDate;
+            ClientLoyaltyLevel = clientLoyaltyLevel;
         }
 
         public static Client Create(

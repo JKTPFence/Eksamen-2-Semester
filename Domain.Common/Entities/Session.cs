@@ -3,6 +3,7 @@ using System.Net.NetworkInformation;
 using FysioEnterprise.Domain.Enums;
 using FysioEnterprise.Domain.Exceptions;
 using FysioEnterprise.Domain.Service;
+using FysioEnterprise.Domain.ValueObjects;
 
 namespace FysioEnterprise.Domain.Entities
 {
@@ -14,8 +15,7 @@ namespace FysioEnterprise.Domain.Entities
         public Guid SessionRoomID { get; private set; }
         public Guid SessionInstanceTypeID { get; private set; }
         public Guid? SessionPromotion { get; private set; }
-        public DateTime SessionStartTime { get; private set; }
-        public DateTime? SessionEndTime { get; private set; }
+        public TimeSlot SessionTimeSlot { get; private set; } = null!;
         public decimal? SessionTotalPrice { get; private set; }
         public SessionStatusEnum SessionStatus { get; private set; }
 
@@ -29,15 +29,22 @@ namespace FysioEnterprise.Domain.Entities
             Guid sessionTypeId,
             Guid roomId,
             Guid? promotionId,
-            DateTime startTime,
-            DateTime endTime
+            TimeSlot sessionTimeSlot
         )
         {
             Id = Guid.NewGuid();
+            SessionTimeSlot = sessionTimeSlot;
             if (clientId == Guid.Empty) throw new DomainException(nameof(clientId));
+            SessionClientID = clientId;
             if (staffId == Guid.Empty) throw new DomainException(nameof(staffId));
+            SessionStaffID = staffId;
             if (sessionTypeId == Guid.Empty) throw new DomainException(nameof(sessionTypeId));
+            SessionRoomID = roomId;
             if (roomId == Guid.Empty) throw new DomainException(nameof(roomId));
+            SessionRoomID = roomId;
+            SessionPromotion = promotionId;
+            SessionStatus = SessionStatusEnum.Active;
+
         }
 
         public static Session Create(
@@ -45,38 +52,34 @@ namespace FysioEnterprise.Domain.Entities
             Guid staffId,
             Guid sessionTypeId,
             Guid roomId,
-            DateTime startTime,
-            DateTime endTime,
+            TimeSlot sessionTimeSlot,
             decimal totalPrice,
             Guid? promotionId,
             IEnumerable<Session> existingClientSessions,
-            IEnumerable<Session> existingStaffSessions)
+            IEnumerable<Session> existingStaffSessions,
+            IEnumerable<Session> existingRoomSessions)
         {
 
-            var Session = new Session (clientId, staffId, sessionTypeId, roomId, promotionId, startTime, endTime);
+            var newSession = new Session(clientId, staffId, sessionTypeId, roomId, promotionId, sessionTimeSlot);
 
-            ValidateSessionTime(startTime, endTime);
-            ValidateOverlap(existingClientSessions, startTime, endTime, "Client");
-            ValidateOverlap(existingStaffSessions, startTime, endTime, "Staff");
+            ValidateOverlap(newSession.SessionTimeSlot, existingClientSessions, existingStaffSessions, existingRoomSessions);
 
-            return Session;
+            return newSession;
         }
 
         public void UpdateSessionTime(
-            DateTime newStartTime,
-            DateTime newEndTime,
+            Guid sessionId,
+            TimeSlot newSessionTimeSlot,
             IEnumerable<Session> existingClientSessions,
-            IEnumerable<Session> existingStaffSessions)
+            IEnumerable<Session> existingStaffSessions,
+            IEnumerable<Session> existingRoomSessions)
         {
             if (!IsActive)
                 throw new UserInvalidInputException($"Cannot update time of an inactive session.");
 
-            ValidateSessionTime(newStartTime, newEndTime);
-            ValidateOverlap(existingClientSessions, newStartTime, newEndTime, "Client");
-            ValidateOverlap(existingStaffSessions, newStartTime, newEndTime, "Staff");
+            ValidateOverlap(newSessionTimeSlot, existingClientSessions, existingStaffSessions, existingRoomSessions, sessionId);
 
-            SessionStartTime = newStartTime;
-            SessionEndTime = newEndTime;
+            SessionTimeSlot = newSessionTimeSlot;
         }
 
         public void CompletedSession()
@@ -100,32 +103,55 @@ namespace FysioEnterprise.Domain.Entities
                 throw new UserInvalidInputException($"Cannot set a completed session to no show.");
             SessionStatus = SessionStatusEnum.NoShow;
         }
-        private static void ValidateSessionTime(DateTime startTime, DateTime endTime)
-        {
-            if (startTime >= endTime)
-                throw new DomainException("Session start time must be before end time.");
-            if (startTime < DateTime.UtcNow)
-                throw new DomainException("Session start time cannot be in the past.");
-        }
 
         private static void ValidateOverlap(
-            IEnumerable<Session> existingSessions,
-            DateTime startTime,
-            DateTime endTime,
-            string ownerType)
+            TimeSlot sessionTimeSlot,
+            IEnumerable<Session> existingClientSessions,
+            IEnumerable<Session> existingStaffSessions,
+            IEnumerable<Session> existingRoomSessions,
+            Guid? currentSessionId = null
+            )
         {
-            var overlap = existingSessions
-                .Where(s => s.IsActive)
-                .FirstOrDefault(s =>
-                    startTime < s.SessionEndTime &&
-                    endTime > s.SessionStartTime);
+            var clientOverlap = existingClientSessions
+            .Where(c => c.Id != currentSessionId)
+            .Where(c => c.IsActive)
+            .FirstOrDefault(c => sessionTimeSlot.OverlapWithOtherTimeSlot(c.SessionTimeSlot));
 
-            if (overlap != null)
+            if (clientOverlap is not null)
+            {
                 throw new DomainException(
-                    $"{ownerType} already has a session " +
-                    $"({overlap.SessionStartTime:HH:mm}-{overlap.SessionEndTime:HH:mm}) " +
-                    $"that overlaps with the requested time.");
+                    $"Client already has a session "
+                    + $"({clientOverlap.SessionTimeSlot.From:HH:mm}-{clientOverlap.SessionTimeSlot.To:HH:mm}) "
+                    + $"that overlaps with current booking");
+            }
+
+            var staffOverlap = existingStaffSessions
+                .Where(p => p.Id != currentSessionId)
+                .Where(p => p.IsActive)
+                .FirstOrDefault(p => sessionTimeSlot.OverlapWithOtherTimeSlot(p.SessionTimeSlot));
+
+            if (staffOverlap is not null)
+            {
+                throw new DomainException(
+                    $"Staff already has a session "
+                    + $"({staffOverlap.SessionTimeSlot.From:HH:mm}-{staffOverlap.SessionTimeSlot.To:HH:mm}) "
+                    + $"that overlaps with current booking");
+            }
+
+            var roomOverlap = existingRoomSessions
+            .Where(c => c.Id != currentSessionId)
+            .Where(c => c.IsActive)
+            .FirstOrDefault(c => sessionTimeSlot.OverlapWithOtherTimeSlot(c.SessionTimeSlot));
+
+            if (roomOverlap is not null)
+            {
+                throw new DomainException(
+                    $"Room is currently occupied by a different session "
+                    + $"({roomOverlap.SessionTimeSlot.From:HH:mm}-{roomOverlap.SessionTimeSlot.To:HH:mm}) "
+                    + $"this overlaps with current booking");
+            }
         }
+
     }
 
 }

@@ -1,7 +1,10 @@
+using FysioEnterprise.Infrastructure;
+using FysioEnterprise.Infrastructure.Database;
 using FysioEnterprise.Presentation.Components;
 using FysioEnterprise.Presentation.Service;
-using FysioEnterprise.Infrastructure;
 using FysioEnterprise.UseCase.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
+using static FysioEnterprise.Infrastructure.Database.SeedData;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +19,16 @@ builder.Services
     .AddPresentationServices(builder.Configuration);
 
 var app = builder.Build();
+
+
+//Seed Data
+using(var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<AppDBContext>();
+    context.Database.EnsureCreated();
+    await context.SeedDataMigrateAsync();
+}
+
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

@@ -29,7 +29,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     st.StaffAuthorisationType,
                     st.StaffAuthorisationNumber,
                     _context.Clinics
-                    .Where(cl => st.ClinicIDs.Contains(cl.Id))
+                    .Where(cl => st.ClinicAssignments.Select(a => a.ClinicId).Contains(cl.Id))
                     .Select(cl => cl.ClinicAddress)
                     .ToList()))
                 .FirstOrDefaultAsync();
@@ -49,7 +49,9 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     st.StaffAuthorisationType,
                     st.StaffAuthorisationNumber,
                     _context.Clinics
-                    .Where(cl => st.ClinicIDs.Contains(cl.Id))
+                    .Where(cl => st.ClinicAssignments
+                        .Select(a => a.ClinicId)
+                        .Contains(cl.Id))
                     .Select(cl => cl.ClinicAddress)
                     .ToList()))
                 .ToListAsync();
@@ -59,7 +61,8 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
         {
             return await _context.Staff
                 .AsNoTracking()
-                .Where(st => st.ClinicIDs.Contains(clinicId))
+                .Include(st => st.ClinicAssignments)
+                .Where(st => st.ClinicAssignments.Any(a => a.ClinicId == clinicId))
                 .Select(st => new StaffDTO(
                     st.Id,
                     st.StaffFirstName,
@@ -68,7 +71,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     st.StaffAuthorisationType,
                     st.StaffAuthorisationNumber,
                     _context.Clinics
-                    .Where(cl => st.ClinicIDs.Contains(cl.Id))
+                    .Where(cl => st.ClinicAssignments.Select(a => a.ClinicId).Contains(cl.Id))
                     .Select(cl => cl.ClinicAddress)
                     .ToList()))
                 .ToListAsync();

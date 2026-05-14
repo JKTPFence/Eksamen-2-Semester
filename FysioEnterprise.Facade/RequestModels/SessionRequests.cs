@@ -19,6 +19,8 @@ namespace FysioEnterprise.Facade.RequestModels
             Guid SessionID,
             Guid ClientID,
             Guid StaffID,
+            Guid ClinicID,
+            Guid SessionRoomID,
             DateTime StartTime,
             DateTime EndTime);
         public record MarkNoShowSessionRequest(
