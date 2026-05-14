@@ -1,8 +1,10 @@
 ﻿using FysioEnterprise.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System.Collections.Generic;
 using static FysioEnterprise.Infrastructure.Database.SeedData;
 using Entity = FysioEnterprise.Domain.Entities;
+using System.Text.Json;
 
 namespace FysioEnterprise.Infrastructure.Database
 {
@@ -20,6 +22,8 @@ namespace FysioEnterprise.Infrastructure.Database
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<SessionType>().HasData(SessionTypeSeed.GetSeedData());
+            modelBuilder.Entity<Promotion>().HasData(PromotionSeed.GetSeedData());
+
 
             modelBuilder.Entity<Entity.Session>()
                 .Property(s => s.SessionStatus)
@@ -35,6 +39,12 @@ namespace FysioEnterprise.Infrastructure.Database
                 room.HasKey(r => r.Id);
                 room.Property(r => r.RoomNumber);
             });
+
+            modelBuilder.Entity<Entity.Staff>()
+                .Property(s => s.ClinicIDs)
+                .HasConversion(
+                    v => JsonSerializer.Serialize(v, (JsonSerializerOptions)null),
+                    v => JsonSerializer.Deserialize<List<Guid>>(v, (JsonSerializerOptions)null) ?? new List<Guid>());
 
             base.OnModelCreating(modelBuilder);
         }
