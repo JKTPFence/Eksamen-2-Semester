@@ -28,11 +28,14 @@ namespace FysioEnterprise.Infrastructure.Database
             var clients = SeedData.ClientSeed.GetSeedData(staff);
             var sessions = SeedData.SessionSeed.GetSeedData(clients, staff, sessionTypes, clinics);
 
+            var promotion = SeedData.PromotionSeed.GetSeedData();
+
             await Clinics.AddRangeAsync(clinics);
             await SessionTypes.AddRangeAsync(sessionTypes); 
             await Staff.AddRangeAsync(staff);
             await Clients.AddRangeAsync(clients);
             await Sessions.AddRangeAsync(sessions);
+            await Promotions.AddRangeAsync(promotion);
 
             await SaveChangesAsync();
         }
