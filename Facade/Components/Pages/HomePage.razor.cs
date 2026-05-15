@@ -1,5 +1,4 @@
-﻿using FluentResults;
-using FysioEnterprise.Facade.DTOs;
+﻿using FysioEnterprise.Facade.DTOs;
 using FysioEnterprise.Facade.Queries;
 using Microsoft.AspNetCore.Components;
 

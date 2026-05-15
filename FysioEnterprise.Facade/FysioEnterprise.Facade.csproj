@@ -20,4 +20,8 @@
     <PackageReference Include="FluentResults" Version="4.0.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Domain.Common\FysioEnterprise.Domain.csproj" />
+  </ItemGroup>
+
 </Project>
