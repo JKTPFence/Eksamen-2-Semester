@@ -51,10 +51,22 @@ namespace FysioEnterprise.Infrastructure.Database
                     new List<OpeningHours>
                     {
                         new(DayOfWeek.Monday,    new TimeOnly(7, 0),  new TimeOnly(15, 0)),
-                        new(DayOfWeek.Tuesday,   new TimeOnly(7, 0),  new TimeOnly(15, 0)),
-                        new(DayOfWeek.Wednesday, new TimeOnly(7, 0),  new TimeOnly(15, 0)),
-                        new(DayOfWeek.Thursday,  new TimeOnly(7, 0),  new TimeOnly(15, 0)),
-                        new(DayOfWeek.Friday,    new TimeOnly(7, 0),  new TimeOnly(15, 0)),
+                        new(DayOfWeek.Tuesday,   new TimeOnly(7, 0),  new TimeOnly(16, 0)),
+                        new(DayOfWeek.Wednesday, new TimeOnly(7, 0),  new TimeOnly(15, 30)),
+                        new(DayOfWeek.Thursday,  new TimeOnly(7, 0),  new TimeOnly(16, 0)),
+                        new(DayOfWeek.Friday,    new TimeOnly(7, 0),  new TimeOnly(14, 0)),
+                        OpeningHours.Closed(DayOfWeek.Saturday),
+                        OpeningHours.Closed(DayOfWeek.Sunday),
+                    }, new List<Room>());
+
+                var clinic3 = new Clinic("Hedensted Klinik, Hovedvejen 9, 8722 Hedensted",
+                    new List<OpeningHours>
+                    {
+                        new(DayOfWeek.Monday,    new TimeOnly(7, 30),  new TimeOnly(15, 0)),
+                        new(DayOfWeek.Tuesday,   new TimeOnly(7, 30),  new TimeOnly(16, 0)),
+                        new(DayOfWeek.Wednesday, new TimeOnly(7, 30),  new TimeOnly(16, 0)),
+                        new(DayOfWeek.Thursday,  new TimeOnly(7, 30),  new TimeOnly(16, 0)),
+                        new(DayOfWeek.Friday,    new TimeOnly(7, 30),  new TimeOnly(14, 0)),
                         OpeningHours.Closed(DayOfWeek.Saturday),
                         OpeningHours.Closed(DayOfWeek.Sunday),
                     }, new List<Room>());
@@ -64,12 +76,16 @@ namespace FysioEnterprise.Infrastructure.Database
                 var room2 = new Room(clinic1, 02);
                 var room3 = new Room(clinic2, 01);
                 var room4 = new Room(clinic2, 02);
+                var room5 = new Room(clinic3, 01);
+                var room6 = new Room(clinic3, 02);
+                var room7 = new Room(clinic3, 03);
 
                 //Tilføjelse af rum til klinikker
                 clinic1 = new Clinic(clinic1.ClinicAddress, clinic1.ClinicOpeningHours, new List<Room> { room1, room2 });
                 clinic2 = new Clinic(clinic2.ClinicAddress, clinic2.ClinicOpeningHours, new List<Room> { room3, room4 });
+                clinic3 = new Clinic(clinic3.ClinicAddress, clinic3.ClinicOpeningHours, new List<Room> { room5, room6, room7 });
 
-                return new List<Clinic> { clinic1, clinic2 };
+                return new List<Clinic> { clinic1, clinic2, clinic3 };
             }
         }
 
@@ -77,16 +93,29 @@ namespace FysioEnterprise.Infrastructure.Database
         {
             public static List<Staff> GetSeedData(List<Clinic> clinics)
             {
-                var staff1 = new Staff("Anders", "Nielsen", "anders@bookright.dk", "Fysioterapeut", 12345, new List<Clinic> {});
-                var staff2 = new Staff("Maria", "Hansen", "maria@bookright.dk", "Massør", 67890, new List<Clinic> {});
+                var staff1 = new Staff("Anders", "Nielsen", "anders@bookright.dk", "Fysioterapeut", 444444, new List<Clinic> {});
+                var staff2 = new Staff("Maria", "Hansen", "maria@bookright.dk", "Massør", 33333, new List<Clinic> {});
                 var staff3 = new Staff("Lars", "Pedersen", "lars@fysio.dk", "Akupunktør", 11111, new List<Clinic> {});
+                var staff4 = new Staff("Sofie", "Jensen", "jense@bookright.dk", "Kostvejleder", 55555, new List<Clinic> {});
+                var staff5 = new Staff("Karl", "Lennart", "KarlL@bookright.dk", "Fysioterapeut", 444444, new List<Clinic> { });
+
+                var receptionist1 = new Staff("Sofie", "Jørgensen", "smj01@bookwell.dk", "Receptionist", 22222, new List<Clinic> {});
+                var receptionist2 = new Staff("Emilie", "Hansen", "erh97@bookwell.dk", "Receptionist", 22222, new List<Clinic> { });
+                var receptionist3 = new Staff("Jan", "Krabbe", "jk85@bookwell.dk", "Receptionist", 22222, new List<Clinic> { });
 
                 staff1.AssignToClinic(clinics[0].Id);
                 staff2.AssignToClinic(clinics[0].Id);
                 staff2.AssignToClinic(clinics[1].Id);
                 staff3.AssignToClinic(clinics[1].Id);
+                staff4.AssignToClinic(clinics[2].Id);
+                staff5.AssignToClinic(clinics[2].Id);
 
-                return new List<Staff> { staff1, staff2, staff3 };
+                receptionist1.AssignToClinic(clinics[0].Id);
+                receptionist2.AssignToClinic(clinics[1].Id);
+                receptionist3.AssignToClinic(clinics[2].Id);
+
+
+                return new List<Staff> { staff1, staff2, staff3, staff4, staff5, receptionist1, receptionist2, receptionist3};
             }
         }
 

@@ -7,21 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Commands\**" />
-    <EmbeddedResource Remove="Commands\**" />
-    <None Remove="Commands\**" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="ResponseModels\ResponseDTO\" />
+    <ProjectReference Include="..\FysioEnterprise.Domain\FysioEnterprise.Domain.csproj" />
+    <ProjectReference Include="..\FysioEnterprise.Facade\FysioEnterprise.Facade.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="FluentResults" Version="4.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\FysioEnterprise.Domain\FysioEnterprise.Domain.csproj" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.7" />
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,87 @@
+﻿@page "/calendar"
+@using System.Globalization
+@using Radzen.Blazor;
+
+<h2 class="sr-only">Booking kalender — ugeoversigt</h2>
+
+<section class="booking-page">
+
+    <header class="booking-toolbar">
+        <div class="toolbar-left">
+            <button class="btn-primary" @onclick="NewBooking">
+                <RadzenIcon Icon="add" />
+                Opret booking
+            </button>
+            <button class="btn-secondary">
+                <RadzenIcon Icon="schedule" />
+                Åbningstider
+            </button>
+        </div>
+
+        <div class="toolbar-center">
+            <nav class="view-toggle" aria-label="Kalendervisning">
+                <button class="@(View == "month" ? "active" : "")" @onclick='() => View = "month"'>Måned</button>
+                <button class="@(View == "week"  ? "active" : "")" @onclick='() => View = "week"'> Uge  </button>
+                <button class="@(View == "day"   ? "active" : "")" @onclick='() => View = "day"'>  Dag  </button>
+            </nav>
+
+            <span class="current-range">@GetRangeLabel()</span>
+
+            <div class="nav-arrows">
+                <button @onclick="PreviousWeek" aria-label="Forrige uge"><RadzenIcon Icon="chevron_left" /></button>
+                <button @onclick="GoToToday">i dag</button>
+                <button @onclick="NextWeek" aria-label="Næste uge"><RadzenIcon Icon="chevron_right" /></button>
+            </div>
+        </div>
+
+        <div class="toolbar-right">
+            <button class="btn-secondary">
+                <RadzenIcon Icon="calendar_view_week" />
+                Kalendere
+                <RadzenIcon Icon="expand_more" />
+            </button>
+        </div>
+    </header>
+
+    <article class="calendar-wrap">
+        <div class="calendar-grid">
+
+            <div class="time-gutter"></div>
+            @foreach (var day in WeekDays)
+            {
+                <header class="day-header @(IsToday(day) ? "today" : "")">
+                    <span class="day-name">@day.ToString("ddd", DanishCulture).ToUpper()</span>
+                    <span class="day-number @(IsToday(day) ? "today-circle" : "")">@day.Day</span>
+                </header>
+            }
+
+            @foreach (var hour in Hours)
+            {
+                <time class="time-label" datetime="@hour:00">@hour:00</time>
+
+                @foreach (var day in WeekDays)
+                {
+                    var dayStr = day.ToString("yyyy-MM-dd");
+                    var isWeekend = day.DayOfWeek == DayOfWeek.Saturday || day.DayOfWeek == DayOfWeek.Sunday;
+                    var sessionsInSlot = GetSessionsForSlot(day, hour);
+
+                    <div class="time-cell @(isWeekend ? "weekend" : "") @(IsToday(day) ? "today-col" : "")"
+                         @onclick="() => OnCellClick(day, hour)">
+                        @foreach (var session in sessionsInSlot)
+                        {
+                            <div class="session-block color-@(GetSessionColor(session))"
+                                 @onclick:stopPropagation="true"
+                                 @onclick="() => OnSessionClick(session)">
+                                <span class="session-time">@session.timeSlot.From.ToString("HH:mm") - @session.timeSlot.To.ToString("HH:mm")</span>
+                                <span class="session-client">@session.ClientFirstName</span>
+                                <span class="session-type">@session.SessionTypeName</span>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+
+        </div>
+    </article>
+
+</section>

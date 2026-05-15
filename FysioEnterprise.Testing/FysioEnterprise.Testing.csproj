@@ -21,8 +21,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Domain.Common\FysioEnterprise.Domain.csproj" />
-    <ProjectReference Include="..\FysioEnterprise.Application\FysioEnterprise.UseCase.csproj" />
+    <ProjectReference Include="..\FysioEnterprise.Domain\FysioEnterprise.Domain.csproj" />
+    <ProjectReference Include="..\FysioEnterprise.UseCase\FysioEnterprise.UseCase.csproj" />
     <ProjectReference Include="..\FysioEnterprise.Facade\FysioEnterprise.Facade.csproj" />
   </ItemGroup>
 
