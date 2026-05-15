@@ -59,7 +59,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
 
         public async Task<List<StaffDTO>> GetAllStaffByClinicAsync(Guid clinicId)
         {
-            return await _context.Staff
+            var staffList = await _context.Staff
                 .AsNoTracking()
                 .Include(st => st.ClinicAssignments)
                 .Where(st => st.ClinicAssignments.Any(a => a.ClinicId == clinicId))
@@ -75,6 +75,8 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     .Select(cl => cl.ClinicAddress)
                     .ToList()))
                 .ToListAsync();
+
+            return staffList;
         }
 
 

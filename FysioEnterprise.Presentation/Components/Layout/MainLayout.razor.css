@@ -1,0 +1,99 @@
+﻿.site-header {
+    background-color: #333333;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    padding: 0 1.5rem;
+}
+
+.topbar {
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.brand-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none !important;
+    height: 32px;
+}
+
+    .brand-link ::deep .brand-icon {
+        display: inline-flex !important;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff !important;
+        font-size: 24px !important;
+        line-height: 1 !important;
+        width: 24px;
+        height: 24px;
+    }
+
+.brand-text {
+    color: #ffffff !important;
+    font-weight: 700;
+    font-size: 20px;
+    letter-spacing: -0.5px;
+    line-height: 1;
+}
+
+.spacer {
+    flex: 1;
+}
+
+.user-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #ffffff;
+    cursor: pointer;
+}
+
+    .user-pill ::deep .user-icon {
+        color: #ffffff !important;
+        font-size: 20px !important;
+        display: flex !important;
+    }
+
+.pill-text {
+    font-size: 13px;
+    opacity: 0.9;
+}
+
+nav.subnav {
+    display: flex;
+    height: 45px;
+    background: #ffffff;
+    border-bottom: 1px solid #e0e0e0;
+    padding: 0 1.5rem;
+}
+
+.subnav-link {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding: 0 1rem;
+    font-size: 13px;
+    color: #555555 !important;
+    text-decoration: none !important;
+    border-bottom: 2px solid transparent;
+}
+
+    .subnav-link.active {
+        color: var(--color-primary) !important;
+        border-bottom-color: var(--color-primary);
+    }
+
+.page-content {
+    background-color: var(--color-page-bg);
+    min-height: calc(100vh - 50px);
+}
+
+.logo-image {
+    height: 32px;
+    width: auto;
+    display: block;
+    z-index: 100;
+}

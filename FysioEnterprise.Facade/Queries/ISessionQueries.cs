@@ -39,5 +39,12 @@ namespace FysioEnterprise.Facade.Queries
         /// <returns></returns>
         Task<List<SessionDTO>> GetAllActiveSessionsByStaffIdAsync(Guid staffId);
 
+        /// <summary>
+        ///     Som receptionist vil jeg kunne se alle aktive sessioner for en given klinik så jeg kan se klinikkens kalender.
+        /// </summary>
+        /// <param name="clinicId"></param>
+        /// <returns></returns>
+        Task<List<SessionDTO>> GetAllActiveSessionsByClincIdAsync(Guid clinicId);
+
     }
 }
