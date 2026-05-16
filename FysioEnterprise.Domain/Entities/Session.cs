@@ -39,7 +39,7 @@ namespace FysioEnterprise.Domain.Entities
             if (staffId == Guid.Empty) throw new DomainException(nameof(staffId));
             SessionStaffID = staffId;
             if (sessionTypeId == Guid.Empty) throw new DomainException(nameof(sessionTypeId));
-            SessionRoomID = roomId;
+            SessionInstanceTypeID = sessionTypeId;
             if (roomId == Guid.Empty) throw new DomainException(nameof(roomId));
             SessionRoomID = roomId;
             SessionPromotion = promotionId;

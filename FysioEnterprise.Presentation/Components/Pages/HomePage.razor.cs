@@ -75,14 +75,14 @@ namespace FysioEnterprise.Presentation.Components.Pages
             StateHasChanged();
         }
 
-        private void Proceed()
+        private async Task Proceed()
         {
             if (!CanProceed) return;
 
             var clinic = _clinics.First(c => c.ClinicID == _selectedClinicId);
             var staff = _staff.First(s => s.StaffID == _selectedStaffId);
 
-            Context.SetSession(
+            await Context.SetSessionAsync(
                 clinic.ClinicID,
                 clinic.ClinicAddress,
                 staff.StaffID,

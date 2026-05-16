@@ -1,36 +1,51 @@
 ﻿@using FysioEnterprise.Presentation.Service
-@using Radzen.Blazor;
+@using Radzen.Blazor
 @inherits LayoutComponentBase
 @inject LogInContext Context
 @implements IDisposable
 
 <header class="site-header">
-    <nav class="topbar">
+    <nav class="topbar" aria-label="Applikation header">
         <NavLink href="/" class="brand-link" Match="NavLinkMatch.All">
             <img src="/images/FysioFuncLogo.jpg" alt="FysioFunc Logo" class="logo-image" />
         </NavLink>
 
-        <div class="spacer"></div>
+        <span class="spacer"></span>
 
         @if (Context.IsLoggedIn)
         {
             <aside class="top-right">
-                <div class="user-pill">
-                    <span class="pill-text">@Context.ClinicName · @Context.StaffName</span>
-                    <RadzenIcon Icon="expand_more" Style="font-size: 14px;" />
-                </div>
+                <details class="profile-dropdown">
+                    <summary class="user-pill">
+                        <span class="user-avatar">
+                            @Context.StaffName.FirstOrDefault()
+                        </span>
+                        <span class="pill-text">@Context.StaffName</span>
+                        <RadzenIcon Icon="expand_more" />
+                    </summary>
+                    <nav class="dropdown-menu" aria-label="Profil menu">
+                        <p class="dropdown-clinic">
+                            <RadzenIcon Icon="location_on" />
+                            @Context.ClinicName
+                        </p>
+                        <hr class="dropdown-divider" />
+                        <button class="dropdown-item logout-btn" @onclick="Logout">
+                            <RadzenIcon Icon="logout" />
+                            Log ud
+                        </button>
+                    </nav>
+                </details>
             </aside>
         }
     </nav>
 </header>
 
-@if (Context.IsLoggedIn)
+@if (!Context.IsLoggedIn)
 {
-    <nav class="subnav">
-        <NavLink href="/clients" class="subnav-link"><RadzenIcon Icon="group" />Clients</NavLink>
+    <nav class="subnav" aria-label="Side navigation">
+        <NavLink href="/sessions" class="subnav-link"><RadzenIcon Icon="event_note" />Sessions  </NavLink>
+        <NavLink href="/clients" class="subnav-link"><RadzenIcon Icon="group" />Clients   </NavLink>
         <NavLink href="/promotions" class="subnav-link"><RadzenIcon Icon="sell" />Promotions</NavLink>
-        <NavLink href="/sessions" class="subnav-link"><RadzenIcon Icon="event_note" />Sessions</NavLink>
-        <NavLink href="/bookings" class="subnav-link"><RadzenIcon Icon="calendar_month" />Bookings</NavLink>
         <NavLink href="/statistics" class="subnav-link"><RadzenIcon Icon="bar_chart" />Statistics</NavLink>
     </nav>
 }
@@ -38,15 +53,3 @@
 <main class="page-content">
     @Body
 </main>
-
-@code {
-    protected override void OnInitialized()
-    {
-        Context.OnChange += StateHasChanged;
-    }
-
-    public void Dispose()
-    {
-        Context.OnChange -= StateHasChanged;
-    }
-}

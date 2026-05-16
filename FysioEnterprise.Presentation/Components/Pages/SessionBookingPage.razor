@@ -1,87 +1,219 @@
 ﻿@page "/calendar"
-@using System.Globalization
+@rendermode InteractiveServer
 @using Radzen.Blazor;
-
-<h2 class="sr-only">Booking kalender — ugeoversigt</h2>
+@using System.Globalization
+@inject IJSRuntime JS
 
 <section class="booking-page">
 
+    <header class="booking-header">
+        <h1 class="booking-title">Booking kalender</h1>
+    </header>
+
     <header class="booking-toolbar">
-        <div class="toolbar-left">
-            <button class="btn-primary" @onclick="NewBooking">
+        <nav class="toolbar-left" aria-label="Booking handlinger">
+            <button class="btn-primary" @onclick="GoToCreateSession">
                 <RadzenIcon Icon="add" />
                 Opret booking
             </button>
-            <button class="btn-secondary">
-                <RadzenIcon Icon="schedule" />
-                Åbningstider
+            
+            <button class="btn-secondary" @onclick="ToggleViewMode">
+                <RadzenIcon Icon="swap_horiz" />
+                Gå til @(CurrentViewMode == CalendarViewMode.Staff ? "Klient" : "Medarbejder") kalender
             </button>
-        </div>
+        </nav>
 
-        <div class="toolbar-center">
-            <nav class="view-toggle" aria-label="Kalendervisning">
-                <button class="@(View == "month" ? "active" : "")" @onclick='() => View = "month"'>Måned</button>
-                <button class="@(View == "week"  ? "active" : "")" @onclick='() => View = "week"'> Uge  </button>
-                <button class="@(View == "day"   ? "active" : "")" @onclick='() => View = "day"'>  Dag  </button>
+        <nav class="toolbar-center" aria-label="Kalender navigation">
+            <menu class="view-toggle">
+                <li><button class="@(View == "month" ? "active" : "")" @onclick='() => SetView("month")'>Måned</button></li>
+                <li><button class="@(View == "week" ? "active" : "")" @onclick='() => SetView("week")'>Uge</button></li>
+                <li><button class="@(View == "day" ? "active" : "")" @onclick='() => SetView("day")'>Dag</button></li>
+            </menu>
+
+            <nav class="nav-arrows" aria-label="Naviger perioder">
+                <button @onclick="NavigateBack" aria-label="Forrige"><RadzenIcon Icon="chevron_left" /></button>
+                <strong class="current-range">@GetRangeLabel()</strong>
+                <button @onclick="NavigateForward" aria-label="Næste"><RadzenIcon Icon="chevron_right" /></button>
             </nav>
 
-            <span class="current-range">@GetRangeLabel()</span>
+            <button class="btn-today" @onclick="GoToToday">i dag</button>
+        </nav>
 
-            <div class="nav-arrows">
-                <button @onclick="PreviousWeek" aria-label="Forrige uge"><RadzenIcon Icon="chevron_left" /></button>
-                <button @onclick="GoToToday">i dag</button>
-                <button @onclick="NextWeek" aria-label="Næste uge"><RadzenIcon Icon="chevron_right" /></button>
+        <aside class="toolbar-right">
+            <div class="search-wrapper" style="position: relative; display: flex; align-items: center;">
+                <RadzenIcon Icon="search" style="position: absolute; left: 8px; color: rgba(0,0,0,0.4); pointer-events: none;" />
+                <input type="text"
+                       class="form-control calendar-search"
+                       placeholder="Søg efter @(CurrentViewMode == CalendarViewMode.Staff ? "medarbejder..." : "klient...")"
+                       @bind-value="SearchQuery"
+                       @bind-value:event="oninput"
+                       style="padding: 0.375rem 0.75rem 0.375rem 2rem; border: 1px solid rgba(0,0,0,0.15); border-radius: 4px; min-width: 240px; font-size: 0.875rem;" />
+                @if (!string.IsNullOrEmpty(SearchQuery))
+                {
+                    <span @onclick='() => SearchQuery = ""' style="position: absolute; right: 10px; cursor: pointer; color: rgba(0,0,0,0.4); font-size: 0.75rem;">✕</span>
+                }
             </div>
-        </div>
-
-        <div class="toolbar-right">
-            <button class="btn-secondary">
-                <RadzenIcon Icon="calendar_view_week" />
-                Kalendere
-                <RadzenIcon Icon="expand_more" />
-            </button>
-        </div>
+        </aside>
     </header>
 
-    <article class="calendar-wrap">
-        <div class="calendar-grid">
+    @if (View is "week" or "day")
+    {
+        <article class="calendar-wrap" aria-label="Uge kalender">
+            <table class="calendar-table" role="grid"
+                   style="grid-template-columns: 56px @(View == "day" ? "1fr" : "repeat(7, 1fr)")">
 
-            <div class="time-gutter"></div>
-            @foreach (var day in WeekDays)
-            {
-                <header class="day-header @(IsToday(day) ? "today" : "")">
-                    <span class="day-name">@day.ToString("ddd", DanishCulture).ToUpper()</span>
-                    <span class="day-number @(IsToday(day) ? "today-circle" : "")">@day.Day</span>
-                </header>
-            }
-
-            @foreach (var hour in Hours)
-            {
-                <time class="time-label" datetime="@hour:00">@hour:00</time>
-
-                @foreach (var day in WeekDays)
-                {
-                    var dayStr = day.ToString("yyyy-MM-dd");
-                    var isWeekend = day.DayOfWeek == DayOfWeek.Saturday || day.DayOfWeek == DayOfWeek.Sunday;
-                    var sessionsInSlot = GetSessionsForSlot(day, hour);
-
-                    <div class="time-cell @(isWeekend ? "weekend" : "") @(IsToday(day) ? "today-col" : "")"
-                         @onclick="() => OnCellClick(day, hour)">
-                        @foreach (var session in sessionsInSlot)
+                <thead>
+                    <tr>
+                        <th class="time-gutter-header" scope="col"></th>
+                        @foreach (var day in VisibleDays)
                         {
-                            <div class="session-block color-@(GetSessionColor(session))"
-                                 @onclick:stopPropagation="true"
-                                 @onclick="() => OnSessionClick(session)">
-                                <span class="session-time">@session.timeSlot.From.ToString("HH:mm") - @session.timeSlot.To.ToString("HH:mm")</span>
-                                <span class="session-client">@session.ClientFirstName</span>
-                                <span class="session-type">@session.SessionTypeName</span>
-                            </div>
+                            <th scope="col"
+                                class="day-header @(IsToday(day) ? "today-header" : "")"
+                                @onclick="() => DrillToDay(day)">
+                                <span class="day-name">@day.ToString("ddd", DanishCulture).ToUpper()</span>
+                                <span class="day-number @(IsToday(day) ? "today-circle" : "")">
+                                    @day.Day/@day.Month
+                                </span>
+                            </th>
                         }
-                    </div>
-                }
-            }
+                    </tr>
+                </thead>
 
-        </div>
-    </article>
+                <tbody>
+                    @foreach (var hour in Hours)
+                    {
+                        <tr>
+                            <td class="time-label @(SelectedRow == hour ? "selected-row-label" : "")"
+                                @onclick="() => SelectRow(hour)">
+                                <time datetime="@hour:00:00">@hour:00</time>
+                            </td>
+
+                            @foreach (var day in VisibleDays)
+                            {
+                                var isWeekend = day.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
+                                var isClosed = IsOutsideOpeningHours(day, hour);
+                                var isSelectedRow = SelectedRow == hour;
+                                var isSelectedCell = SelectedCell.HasValue
+                                    && SelectedCell.Value.Date == day.Date
+                                    && SelectedCell.Value.Hour == hour;
+                                var sessionsHere = GetSessionsForSlot(day, hour);
+
+                                <td class="time-cell
+                                    @(isClosed ? "closed-hours" : "")
+                                    @(isWeekend ? "weekend" : "")
+                                    @(isSelectedRow ? "selected-row" : "")
+                                    @(IsToday(day) ? "today-col" : "")
+                                    @(isSelectedCell ? "selected-cell" : "")"
+                                    @onclick="() => OnCellClick(day, hour)"
+                                    @ondblclick="() => OnCellDoubleClick(day, hour)">
+
+                                    @foreach (var session in sessionsHere)
+                                    {
+                                        <article class="session-block @GetDynamicColorClass(session)"
+                                                 @onclick:stopPropagation="true"
+                                                 @onclick="() => OnSessionClick(session)"
+                                                 title="@session.ClientFirstName @session.ClientLastName — @session.SessionTypeName">
+                                            <time class="session-time" datetime="@session.timeSlot.From.ToString("HH:mm")">
+                                                @session.timeSlot.From.ToString("HH:mm") – @session.timeSlot.To.ToString("HH:mm")
+                                            </time>
+                                            
+                                            @if (CurrentViewMode == CalendarViewMode.Staff)
+                                            {
+                                                <strong class="session-client">@session.StaffFirstName @session.StaffLastname - @GetStaffAuthorisationType(session.StaffFirstName + " " + session.StaffLastname)</strong>
+                                            }
+                                            else
+                                            {
+                                                <strong class="session-client">@GetClientName(session.ClientFirstName + " " + session.ClientLastName)</strong>
+                                            }
+                                            <span class="session-type">@session.SessionTypeName</span>
+                                        </article>
+                                    }
+
+                                    @if (isSelectedCell && !sessionsHere.Any())
+                                    {
+                                        <aside class="cell-popup" @onclick:stopPropagation="true">
+                                            <strong class="popup-time">@hour:00 – @(hour + 1):00</strong>
+                                            <p class="popup-date">@day.ToString("dddd d. MMMM", DanishCulture)</p>
+                                            <select class="popup-select" @onchange="OnSessionTypeSelected">
+                                                <option value="">— Vælg sessiontype —</option>
+                                                @foreach (var type in _sessionTypes)
+                                                {
+                                                    <option value="@type.SessionTypeID">@type.SessionTypeName</option>
+                                                }
+                                            </select>
+                                            <button class="popup-btn"
+                                                    @onclick="GoToCreateSessionWithSlot"
+                                                    disabled="@(SelectedSessionTypeId == Guid.Empty)">
+                                                Opret booking her
+                                            </button>
+                                        </aside>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </article>
+    }
+
+    @if (View == "month")
+    {
+        <article class="month-wrap" aria-label="Måneds kalender">
+            <table class="month-table">
+                <thead>
+                    <tr>
+                        @foreach (var dayName in new[] { "MAN", "TIRS", "ONS", "TORS", "FRE", "LØR", "SØN" })
+                        {
+                            <th scope="col" class="month-day-header">@dayName</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (var i = 0; i < MonthDays.Count; i += 7)
+                    {
+                        <tr>
+                            @foreach (var day in MonthDays.Skip(i).Take(7))
+                            {
+                                var inMonth = day.Month == CurrentDate.Month;
+                                var isToday = IsToday(day);
+                                var daySessions = GetSessionsForDay(day);
+
+                                <td class="month-cell @(!inMonth ? "out-of-month" : "") @(isToday ? "today-month" : "")"
+                                    @onclick="() => DrillToDay(day)">
+                                    <span class="month-day-number @(isToday ? "today-circle" : "")">@day.Day</span>
+                                    @foreach (var session in daySessions.Take(3))
+                                    {
+                                        <article class="month-session @GetDynamicColorClass(session)"
+                                                 @onclick:stopPropagation="true"
+                                                 @onclick="() => OnSessionClick(session)"
+                                                 title="@session.ClientFirstName @session.ClientLastName — @session.SessionTypeName">
+                                            <time class="session-time" datetime="@session.timeSlot.From.ToString("HH:mm")">
+                                                @session.timeSlot.From.ToString("HH:mm") – @session.timeSlot.To.ToString("HH:mm")
+                                            </time>
+                                            
+                                            @if (CurrentViewMode == CalendarViewMode.Staff)
+                                            {
+                                                <strong class="session-month">@session.StaffFirstName @session.StaffLastname - @GetStaffAuthorisationType(session.StaffFirstName + " " + session.StaffLastname)</strong>
+                                            }
+                                            else
+                                            {
+                                                <strong class="session-month">@GetClientName(session.ClientFirstName + " " + session.ClientLastName)</strong>
+                                            }
+                                            <span class="session-type">@session.SessionTypeName</span>
+                                        </article>
+                                    }
+                                    @if (daySessions.Count > 3)
+                                    {
+                                        <span class="month-more">+@(daySessions.Count - 3) mere</span>
+                                    }
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </article>
+    }
 
 </section>
