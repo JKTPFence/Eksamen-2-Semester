@@ -3,7 +3,6 @@ using FysioEnterprise.Domain.ValueObjects;
 using FysioEnterprise.Domain.Entities;
 using FysioEnterprise.Infrastructure.Database;
 using FysioEnterprise.Infrastructure.QueryHandlers;
-
 using Microsoft.EntityFrameworkCore;
 
 namespace FysioEnterprise.Testing.QueryHandlerTests

@@ -93,21 +93,21 @@ namespace FysioEnterprise.Testing.UseCase
 
         private Clinic CreateMockClinic(Guid clinicId)
         {
-            var clinic = new Clinic("123 Clinic St", DateTime.Now, new List<Room>());
+            var clinic = new Clinic("123 Clinic St", new List<OpeningHours> (), new List<Room>());
             clinic.GetType().GetProperty("Id")?.SetValue(clinic, clinicId);
             return clinic;
         }
 
         private Clinic CreateMockClinic(Guid clinicId, Guid roomId)
         {
-            var clinic = new Clinic("123 Clinic St", DateTime.Now, new List<Room>());
+            var clinic = new Clinic("123 Clinic St", new List<OpeningHours>(), new List<Room>());
             clinic.GetType().GetProperty("Id")?.SetValue(clinic, clinicId);
             return clinic;
         }
 
         private Clinic CreateMockClinicWithFailingRoom(Guid clinicId)
         {
-            var clinic = new Clinic("123 Clinic St", DateTime.Now, new List<Room>());
+            var clinic = new Clinic("123 Clinic St", new List<OpeningHours>(), new List<Room>());
             clinic.GetType().GetProperty("Id")?.SetValue(clinic, clinicId);
             return clinic;
         }

@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Moq;
+﻿using Moq;
 using Xunit;
 using FluentResults;
 using FysioEnterprise.Domain.Entities;
-using FysioEnterprise.Domain.Exceptions;
 using FysioEnterprise.Domain.ValueObjects;
-using FysioEnterprise.Facade.UseCase.ClientUseCase;
 using FysioEnterprise.UseCase.CommandHandler.ClientCommands;
 using FysioEnterprise.UseCase.IRepositories;
 using static FysioEnterprise.Facade.RequestModels.ClientRequests;
