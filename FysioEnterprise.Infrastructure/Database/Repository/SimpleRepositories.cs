@@ -20,23 +20,6 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
         }
     }
 
-    public class RoomRepository : IRoomRepository
-    {
-        private readonly AppDBContext _context;
-        public RoomRepository(AppDBContext context) => _context = context;
-
-        public async Task<Result<Room>> GetRoomAsync(Guid roomId)
-        {
-            var roomResult = await _context.Rooms.FindAsync(roomId);
-
-            if (roomResult == null)
-            {
-                return Result.Fail<Room>("Room not found.");
-            }
-            return Result.Ok(roomResult);
-        }
-    }
-
     public class ClinicRepository : IClinicRepository
     {
         private readonly AppDBContext _context;
@@ -51,6 +34,22 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
                 return Result.Fail<Clinic>("Clinic not found.");
             }
             return Result.Ok(clinicResult);
+        }
+    }
+    public class SessionTypeRepository : ISessionTypeRepository
+    {
+        private readonly AppDBContext _context;
+        public SessionTypeRepository(AppDBContext context) => _context = context;
+
+        public async Task<Result<SessionType>> GetSessionTypeAsync(Guid sessionTypeId)
+        {
+            var sessionTypeResult = await _context.SessionTypes.FindAsync(sessionTypeId);
+
+            if (sessionTypeResult == null)
+            {
+                return Result.Fail<SessionType>("Session type not found.");
+            }
+            return Result.Ok(sessionTypeResult);
         }
     }
 }

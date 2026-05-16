@@ -1,4 +1,4 @@
-﻿using FysioEnterprise.Domain.ValueObjects;
+﻿using FysioEnterprise.Domain.Entities;
 
 namespace FysioEnterprise.Facade.RequestModels
 {
@@ -8,8 +8,9 @@ namespace FysioEnterprise.Facade.RequestModels
         Guid ClientID,
         Guid StaffID,
         Guid PromotionID,
+        Guid ClinicID,
         Guid SessionRoomID,
-        SessionType SessionInstanceType,
+        Guid SessionInstanceTypeID,
         int SessionTotalPrice,
         DateTime StartTime,
         DateTime EndTime);
@@ -18,9 +19,11 @@ namespace FysioEnterprise.Facade.RequestModels
             Guid SessionID,
             Guid ClientID,
             Guid StaffID,
+            Guid ClinicID,
+            Guid SessionRoomID,
             DateTime StartTime,
             DateTime EndTime);
-        public record DeleteSessionRequest(
+        public record MarkNoShowSessionRequest(
             Guid SessionID);
         public record EndSessionRequest(
             Guid SessionId, string Note);

@@ -37,7 +37,7 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
         public async Task<Result<Client>> GetClientAsync(Guid clientId)
         {
             var client = await _context.Clients
-                .FirstOrDefaultAsync(c => c.ClientID == clientId);
+                .FirstOrDefaultAsync(c => c.Id == clientId);
 
             if (client == null)
                 return Result.Fail($"Client with ID {clientId} was not found.");
@@ -61,14 +61,14 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
         {
             var emailExists = await _context.Clients
                 .AnyAsync(c => c.ClientEmail == client.ClientEmail
-                            && c.ClientID != client.ClientID);
+                            && c.Id != client.Id);
 
             if (emailExists)
                 return Result.Fail($"Email {client.ClientEmail} is already in use");
 
             var phoneExists = await _context.Clients
                 .AnyAsync(c => c.ClientPhoneNumber == client.ClientPhoneNumber
-                            && c.ClientID != client.ClientID);
+                            && c.Id != client.Id);
 
             if (phoneExists)
                 return Result.Fail($"Phonenumber {client.ClientPhoneNumber} is already in use");

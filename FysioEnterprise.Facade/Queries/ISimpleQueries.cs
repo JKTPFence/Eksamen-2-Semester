@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace FysioEnterprise.Port.Driving.Queries
+namespace FysioEnterprise.Facade.Queries
 {
     public interface ISimpleQueries
     {
@@ -26,19 +26,6 @@ namespace FysioEnterprise.Port.Driving.Queries
         /// <param name="clinicId"></param>
         /// <returns></returns>
         Task<List<StaffDTO>> GetAllStaffByClinicAsync(Guid clinicId);
-
-        /// <summary>
-        ///     Som receptionist vil jeg kunne se alle behandlingsrum, så jeg kan få et større og bedre overblik. 
-        /// </summary>
-        /// <param name="roomId"></param>
-        /// <returns></returns>
-        Task<RoomDTO?> GetRoomsByIdAsync(Guid roomId);
-
-        /// <summary>
-        ///     Som receptionist vil jeg kunne se alle behandlingsrum, så jeg kan få et større og bedre overblik. 
-        /// </summary>
-        /// <returns></returns>
-        Task<List<RoomDTO>> GetAllRoomsAsync();
 
         /// <summary>
         ///     Som receptionist vil jeg kunne se alle klinikker, for at få et bedre overblik. 

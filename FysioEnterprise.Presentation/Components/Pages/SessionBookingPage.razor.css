@@ -1,0 +1,288 @@
+﻿section.booking-page {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 96px);
+    background: var(--color-page-bg);
+}
+
+header.booking-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 1.25rem;
+    background: #ffffff;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    gap: 1rem;
+    flex-shrink: 0;
+}
+
+.toolbar-left,
+.toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.toolbar-center {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+    justify-content: center;
+}
+
+.btn-primary {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: var(--color-primary);
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+}
+
+    .btn-primary:hover {
+        background: var(--color-primary-hover);
+    }
+
+.btn-secondary {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: transparent;
+    color: #444444;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s;
+    white-space: nowrap;
+}
+
+    .btn-secondary:hover {
+        background: rgba(0, 0, 0, 0.04);
+    }
+
+nav.view-toggle {
+    display: flex;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+    nav.view-toggle button {
+        padding: 5px 14px;
+        font-size: 12px;
+        border: none;
+        border-right: 1px solid rgba(0, 0, 0, 0.1);
+        background: transparent;
+        color: #555555;
+        cursor: pointer;
+        transition: background 0.12s;
+    }
+
+        nav.view-toggle button:last-child {
+            border-right: none;
+        }
+
+        nav.view-toggle button:hover {
+            background: rgba(0, 0, 0, 0.04);
+        }
+
+        nav.view-toggle button.active {
+            background: #2d3748;
+            color: #ffffff;
+            font-weight: 500;
+        }
+
+span.current-range {
+    font-size: 14px;
+    font-weight: 500;
+    color: #1a1a1a;
+    white-space: nowrap;
+}
+
+div.nav-arrows {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+    div.nav-arrows button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 5px 10px;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        border-radius: 6px;
+        background: transparent;
+        color: #444444;
+        font-size: 12px;
+        cursor: pointer;
+        transition: background 0.12s;
+    }
+
+        div.nav-arrows button:hover {
+            background: rgba(0, 0, 0, 0.04);
+        }
+
+article.calendar-wrap {
+    flex: 1;
+    overflow-y: auto;
+}
+
+div.calendar-grid {
+    display: grid;
+    grid-template-columns: 56px repeat(7, 1fr);
+    min-width: 700px;
+}
+
+div.time-gutter {
+    background: #ffffff;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+}
+
+header.day-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 0 8px;
+    background: #ffffff;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    border-left: 1px solid rgba(0, 0, 0, 0.06);
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    gap: 4px;
+}
+
+.day-name {
+    font-size: 11px;
+    color: #888888;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.day-number {
+    font-size: 18px;
+    font-weight: 400;
+    color: #1a1a1a;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+    .day-number.today-circle {
+        background: var(--color-primary);
+        color: #ffffff;
+        font-weight: 500;
+    }
+
+time.time-label {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    padding: 4px 8px 0 0;
+    font-size: 11px;
+    color: #aaaaaa;
+    height: 56px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+div.time-cell {
+    height: 56px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    border-left: 1px solid rgba(0, 0, 0, 0.06);
+    padding: 2px;
+    cursor: pointer;
+    transition: background 0.1s;
+    position: relative;
+}
+
+    div.time-cell:hover {
+        background: rgba(0, 0, 0, 0.02);
+    }
+
+    div.time-cell.weekend {
+        background: repeating-linear-gradient( 45deg, transparent, transparent 4px, rgba(0, 0, 0, 0.02) 4px, rgba(0, 0, 0, 0.02) 8px );
+    }
+
+    div.time-cell.today-col {
+        background: rgba(255, 251, 235, 0.6);
+    }
+
+div.session-block {
+    border-radius: 4px;
+    padding: 3px 6px;
+    font-size: 11px;
+    cursor: pointer;
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    transition: opacity 0.12s;
+}
+
+    div.session-block:hover {
+        opacity: 0.85;
+    }
+
+.session-time {
+    font-weight: 500;
+    font-size: 10px;
+}
+
+.session-client {
+    font-weight: 500;
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.session-type {
+    font-size: 10px;
+    opacity: 0.8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+div.session-block.color-teal {
+    background: #9fe1cb;
+    color: #085041;
+}
+
+div.session-block.color-purple {
+    background: #cec9f6;
+    color: #3c3489;
+}
+
+div.session-block.color-coral {
+    background: #f5c4b3;
+    color: #712b13;
+}
+
+div.session-block.color-blue {
+    background: #b5d4f4;
+    color: #0c447c;
+}
+
+div.session-block.color-amber {
+    background: #fac775;
+    color: #633806;
+}

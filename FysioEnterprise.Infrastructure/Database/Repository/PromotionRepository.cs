@@ -31,7 +31,7 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
         public async Task<Promotion> GetPromotionAsync(Guid promotionId)
         {
             var promotion = await _context.Promotions
-                .FirstOrDefaultAsync(p => p.PromotionID == promotionId);
+                .FirstOrDefaultAsync(p => p.Id == promotionId);
 
             if (promotion == null)
                 throw new KeyNotFoundException($"Promotion with ID {promotionId} was not found.");
@@ -43,7 +43,7 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
         {
             var exists = await _context.Promotions
                 .AnyAsync(p => p.PromotionName == promotion.PromotionName
-                            && p.PromotionID != promotion.PromotionID);
+                            && p.Id != promotion.Id);
 
             if (exists)
                 return Result.Fail($"Promotion with name {promotion.PromotionName} already exists");

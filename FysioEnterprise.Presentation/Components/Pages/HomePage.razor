@@ -1,0 +1,53 @@
+﻿@using Radzen.Blazor;
+@rendermode InteractiveServer
+@page "/"
+
+<main class="home-wrap">
+    <header class="home-header">
+        <p class="service-tag">Din løsning til et moderne receptionssystem · © 2026</p>
+        <h1 class="welcome-text">FysioFunc - Receptionssystem</h1>
+        <p class="date-label">@DateTime.Now.ToString("dddd, d. MMMM yyyy", new System.Globalization.CultureInfo("da-DK"))</p>
+    </header>
+
+    <article class="selection-card">
+        <section class="form-field">
+            <label class="field-label">
+                <RadzenIcon Icon="business" Style="font-size: 18px;" />
+                Klinik
+            </label>
+            <select class="form-select" @onchange="@((ChangeEventArgs e) => OnClinicChanged(e))">
+                <option value="" disabled selected hidden>— Vælg en klinik —</option>
+                @foreach (var clinic in _clinics)
+                {
+                    <option value="@clinic.ClinicID.ToString()">@clinic.ClinicAddress</option>
+                }
+            </select>
+        </section>
+
+        <section class="form-field">
+            <label for="staff" class="field-label">
+                <RadzenIcon Icon="person_outline" Style="font-size: 18px;" />
+                Receptionist
+            </label>
+            <select id="staff"
+                    class="form-select"
+                    @onchange="OnStaffChanged"
+                    disabled="@(_selectedClinicId == Guid.Empty)">
+                <option value="" disabled selected hidden>— Vælg receptionist —</option>
+                @if (_receptionistsInClinic != null)
+                {
+                    @foreach (var r in _receptionistsInClinic)
+                    {
+                        <option value="@r.StaffID.ToString()">@r.StaffFirstName @r.StaffLastName</option>
+                    }
+                }
+            </select>
+        </section>
+
+        <footer class="action-footer">
+            <button class="submit-button" @onclick="Proceed" disabled="@(!CanProceed)">
+                Fortsæt til oversigt
+            </button>
+        </footer>
+    </article>
+</main>

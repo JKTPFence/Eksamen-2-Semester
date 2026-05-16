@@ -1,9 +1,10 @@
-﻿using static FysioEnterprise.Facade.RequestModels.SessionRequests;
+﻿using FluentResults;
+using static FysioEnterprise.Facade.RequestModels.SessionRequests;
 
 namespace FysioEnterprise.Facade.UseCase.SessionUseCase
 {
     public interface ICancelSessionUseCase
     {
-        Task CancelSessionRequest(CancelSessionRequest request);
+        Task<Result> CancelSessionAsync(CancelSessionRequest request);
     }
 }
