@@ -24,24 +24,44 @@ public partial class SessionBookingPage : ComponentBase
     private Guid SelectedSessionTypeId { get; set; }
     private enum CalendarViewMode { Staff, Client }
     private CalendarViewMode CurrentViewMode { get; set; } = CalendarViewMode.Staff;
-    private string SearchQuery { get; set; } = string.Empty;
+    private bool HideWeekends { get; set; } = false;
 
     private List<SessionDTO> _sessions = [];
     private List<ClientDTO> _clients = [];
     private List<StaffDTO> _staff = [];
     private List<SessionTypeDTO> _sessionTypes = [];
     private ClinicDTO? _clinic;
+    private const int SlotHeight = 30;
+    private const int TotalDayHeight = 24 * 4 * SlotHeight;
+    private int SessionTimeInMinutes;
+    private string clinicName = string.Empty;
+    private record SessionLayout(double Top, double Height, double Left, double Width);
+
+    private double TimeToPixels(DateTime time)
+    => (time.Hour * 60 + time.Minute) * SlotHeight / 15.0;
 
     private static readonly string[] StaffColors =
         ["teal", "coral", "purple", "blue", "amber", "rose", "lime"];
 
     private static readonly int[] Hours = Enumerable.Range(0, 24).ToArray();
 
+    private string _searchQuery = string.Empty;
+    private string SearchQuery
+    {
+        get => _searchQuery;
+        set
+        {
+            _searchQuery = value;
+            StateHasChanged();
+        }
+    }
+
     private List<DateTime> VisibleDays => View switch
     {
         "day" => new List<DateTime> { CurrentDate },
         "week" => Enumerable.Range(0, 7)
                     .Select(i => GetMonday(CurrentDate).AddDays(i))
+                    .Where(d => !HideWeekends || (d.DayOfWeek != DayOfWeek.Saturday && d.DayOfWeek != DayOfWeek.Sunday))
                     .ToList(),
         _ => new List<DateTime>()
     };
@@ -55,23 +75,17 @@ public partial class SessionBookingPage : ComponentBase
             return Enumerable.Range(0, 42).Select(i => startDay.AddDays(i)).ToList();
         }
     }
-    private List<SessionDTO> FilteredSessions
-    {
-        get
-        {
-            if (string.IsNullOrWhiteSpace(SearchQuery))
-                return _sessions;
-
-            return _sessions.Where(s =>
-            {
-                var fullName = CurrentViewMode == CalendarViewMode.Staff
-                    ? $"{s.StaffFirstName} {s.StaffLastname}"
-                    : $"{s.ClientFirstName} {s.ClientLastName}";
-
-                return fullName.Contains(SearchQuery, StringComparison.OrdinalIgnoreCase);
-            }).ToList();
-        }
-    }
+    private List<SessionDTO> FilteredSessions => string.IsNullOrWhiteSpace(SearchQuery)
+    ? _sessions
+    : CurrentViewMode == CalendarViewMode.Staff
+        ? _sessions.Where(s =>
+            $"{s.StaffFirstName} {s.StaffLastname}"
+                .Contains(SearchQuery, StringComparison.OrdinalIgnoreCase))
+            .ToList()
+        : _sessions.Where(s =>
+            $"{s.ClientFirstName} {s.ClientLastName}"
+                .Contains(SearchQuery, StringComparison.OrdinalIgnoreCase))
+            .ToList();
 
     private void ToggleViewMode()
     {
@@ -80,6 +94,18 @@ public partial class SessionBookingPage : ComponentBase
             : CalendarViewMode.Staff;
 
         SearchQuery = string.Empty;
+    }
+
+    private int GetSessionTypeInMinutes(SessionTypeDTO sessionType)
+    {
+        if (sessionType.SessionTypeTimeSpan.Hour > 0)
+        {
+            var hourCount = sessionType.SessionTypeTimeSpan.Hour;
+            SessionTimeInMinutes = hourCount * 60;
+        }
+        var totalMinuteCount = sessionType.SessionTypeTimeSpan.Minute + SessionTimeInMinutes;
+        SessionTimeInMinutes = 0;
+        return totalMinuteCount;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -110,20 +136,37 @@ public partial class SessionBookingPage : ComponentBase
         var typesTask = await SimpleQueries.GetAllSessionTypesAsync();
         var clinicTask = await SimpleQueries.GetClinicByIdAsync(Context.ClinicId);
 
-        _sessions = sessionsTask?? [];
-        _clients = clientsTask?? [];
-        _staff = staffTask?? [];
-        _sessionTypes = typesTask ?? [];
+        _sessions = sessionsTask.OrderBy(s => s.StaffFirstName).ToList();
+        _clients = clientsTask.OrderBy(c => c.ClientFirstName).ToList();
+        _staff = staffTask.OrderBy(s => s.StaffFirstName).ToList();
+        _sessionTypes = typesTask.OrderBy(s => s.SessionTypeName).ToList();
         _clinic = clinicTask;
+        if (!string.IsNullOrEmpty(_clinic?.ClinicAddress))
+        {
+            var clinicsplit = _clinic.ClinicAddress.Split(',');
+
+            if (clinicsplit.Length >= 2)
+            {
+                clinicName = $"{clinicsplit[0].Trim()}, {clinicsplit[1].Trim()}";
+            }
+            else
+            {
+                clinicName = $"{clinicsplit[0].Trim()}";
+            }
+        }
+        else
+        {
+            clinicName = "Klinik";
+        }
     }
     private List<SessionDTO> GetSessionsForSlot(DateTime day, int hour)
-        => _sessions.Where(s =>
+        => FilteredSessions.Where(s =>
             s.timeSlot.From.Date == day.Date &&
             s.timeSlot.From.Hour == hour)
         .ToList();
 
     private List<SessionDTO> GetSessionsForDay(DateTime day)
-     => _sessions.Where(s => s.timeSlot.From.Date == day.Date).ToList();
+     => FilteredSessions.Where(s => s.timeSlot.From.Date == day.Date).ToList();
 
     private string GetClientName(string clientName)
     {
@@ -163,9 +206,15 @@ public partial class SessionBookingPage : ComponentBase
     {
         string stableIdentifier = $"{session.StaffFirstName} {session.StaffLastname}";
 
-        if (string.IsNullOrEmpty(stableIdentifier.Trim())) return "staff-color-0";
+        if (string.IsNullOrWhiteSpace(stableIdentifier)) return "staff-color-0";
 
-        int colorIndex = Math.Abs(stableIdentifier.GetHashCode()) % 7;
+        int hash = 5381;
+        foreach (char c in stableIdentifier)
+        {
+            hash = ((hash << 5) + hash) + c;
+        }
+
+        int colorIndex = Math.Abs(hash) % 7;
         return $"staff-color-{colorIndex}";
     }
 
@@ -193,13 +242,6 @@ public partial class SessionBookingPage : ComponentBase
         {
             SelectedCell = null;
         }
-        StateHasChanged();
-    }
-
-    private void OnCellDoubleClick(DateTime day, int hour)
-    {
-        SelectedCell = new DateTime(day.Year, day.Month, day.Day, hour, 0, 0);
-        SelectedSessionTypeId = Guid.Empty;
         StateHasChanged();
     }
 
@@ -256,8 +298,33 @@ public partial class SessionBookingPage : ComponentBase
     {
         "month" => CurrentDate.ToString("MMMM yyyy", DanishCulture),
         "day" => CurrentDate.ToString("dddd d. MMMM yyyy", DanishCulture),
+        "week" => GetWeekRangeLabel(),
         _ => $"{GetMonday(CurrentDate):d/M} – {GetMonday(CurrentDate).AddDays(6):d/M, yyyy}"
     };
+
+    private string GetWeekRangeLabel()
+    {
+        var monday = GetMonday(CurrentDate);
+        var sunday = monday.AddDays(6);
+        string monthName = monday.ToString("MMMM", DanishCulture);
+
+        if (!string.IsNullOrEmpty(monthName))
+        {
+            monthName = char.ToUpper(monthName[0]) + monthName.Substring(1);
+        }
+
+        if (monday.Month != sunday.Month)
+        {
+            string endMonthName = sunday.ToString("MMMM", DanishCulture);
+            if (!string.IsNullOrEmpty(endMonthName))
+            {
+                endMonthName = char.ToUpper(endMonthName[0]) + endMonthName.Substring(1);
+            }
+
+            return $"{monthName} {monday.Day} – {endMonthName} {sunday.Day}, {sunday.Year}";
+        }
+        return $"{monthName} , {monday.Day} - {sunday.Day} , {monday.Year}";
+    }
 
     private static bool IsToday(DateTime day) => day.Date == DateTime.Today;
 
@@ -267,7 +334,95 @@ public partial class SessionBookingPage : ComponentBase
         return date.AddDays(-diff).Date;
     }
 
+    private List<(SessionDTO Session, int Col, int TotalCols)> CalculateColumns(
+    List<SessionDTO> sessions)
+    {
+        var result = new List<(SessionDTO Session, int Col, int TotalCols)>();
+        if (!sessions.Any()) return result;
 
+        var sorted = sessions.OrderBy(s => s.timeSlot.From).ToList();
+        var columns = new List<List<SessionDTO>>();
 
+        foreach (var session in sorted)
+        {
+            var placed = false;
+            for (var col = 0; col < columns.Count; col++)
+            {
+                var overlaps = columns[col].Any(existing =>
+                    session.timeSlot.From < existing.timeSlot.To &&
+                    existing.timeSlot.From < session.timeSlot.To);
+
+                if (!overlaps)
+                {
+                    columns[col].Add(session);
+                    result.Add((session, col, 0));
+                    placed = true;
+                    break;
+                }
+            }
+
+            if (!placed)
+            {
+                columns.Add(new List<SessionDTO> { session });
+                result.Add((session, columns.Count - 1, 0));
+            }
+        }
+        var final = new List<(SessionDTO Session, int Col, int TotalCols)>();
+        foreach (var (session, col, _) in result)
+        {
+            var overlapGroup = result
+                .Where(r =>
+                    session.timeSlot.From < r.Session.timeSlot.To &&
+                    r.Session.timeSlot.From < session.timeSlot.To)
+                .ToList();
+
+            var totalCols = overlapGroup.Max(r => r.Col) + 1;
+            final.Add((session, col, totalCols));
+        }
+
+        foreach (var (s, col, total) in final)
+            Console.WriteLine($"{s.timeSlot.From:HH:mm}-{s.timeSlot.To:HH:mm} → col {col}/{total}");
+
+        return final;
+    }
+
+    private SessionLayout GetSessionLayout(
+    SessionDTO session,
+    List<(SessionDTO Session, int Col, int TotalCols)> columns)
+    {
+        var match = columns.FirstOrDefault(c => c.Session == session);
+        var top = TimeToPixels(session.timeSlot.From);
+        var bottom = TimeToPixels(session.timeSlot.To);
+
+        var height = Math.Max(bottom - top, SlotHeight);
+
+        var totalCols = match.TotalCols > 0 ? match.TotalCols : 1;
+        var col = match.Col;
+        var colWidth = 100.0 / totalCols;
+        var left = col * colWidth;
+
+        return new SessionLayout(top, height - 2, left + 0.3, colWidth - 0.8);
+    }
+
+    private void OnColumnDoubleClick(DateTime day, int hour, int minutes)
+    {
+        SelectedCell = new DateTime(day.Year, day.Month, day.Day, hour, minutes, 0);
+        SelectedSessionTypeId = Guid.Empty;
+        StateHasChanged();
+    }
+
+    private void ToggleWeekends()
+    {
+        HideWeekends = !HideWeekends;
+    }
+
+    private IEnumerable<DateTime> GetActiveVisibleDays()
+    {
+        if (HideWeekends)
+        {
+            return VisibleDays.Where(d => d.DayOfWeek != DayOfWeek.Saturday && d.DayOfWeek != DayOfWeek.Sunday);
+        }
+        return VisibleDays;
+    }
 
 }

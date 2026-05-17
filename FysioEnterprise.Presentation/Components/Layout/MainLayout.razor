@@ -3,6 +3,7 @@
 @inherits LayoutComponentBase
 @inject LogInContext Context
 @implements IDisposable
+@inject NavigationManager NavManager
 
 <header class="site-header">
     <nav class="topbar" aria-label="Applikation header">
@@ -12,13 +13,13 @@
 
         <span class="spacer"></span>
 
-        @if (Context.IsLoggedIn)
+        @if (!Context.IsLoggedIn && !NavManager.Uri.EndsWith("/"))
         {
             <aside class="top-right">
                 <details class="profile-dropdown">
                     <summary class="user-pill">
                         <span class="user-avatar">
-                            @Context.StaffName.FirstOrDefault()
+                            @(!string.IsNullOrEmpty(Context.StaffName) ? Context.StaffName.FirstOrDefault() : 'U')
                         </span>
                         <span class="pill-text">@Context.StaffName</span>
                         <RadzenIcon Icon="expand_more" />
@@ -40,14 +41,16 @@
     </nav>
 </header>
 
-@if (!Context.IsLoggedIn)
+@if (!Context.IsLoggedIn && !NavManager.Uri.EndsWith("/"))
 {
-    <nav class="subnav" aria-label="Side navigation">
-        <NavLink href="/sessions" class="subnav-link"><RadzenIcon Icon="event_note" />Sessions  </NavLink>
-        <NavLink href="/clients" class="subnav-link"><RadzenIcon Icon="group" />Clients   </NavLink>
-        <NavLink href="/promotions" class="subnav-link"><RadzenIcon Icon="sell" />Promotions</NavLink>
-        <NavLink href="/statistics" class="subnav-link"><RadzenIcon Icon="bar_chart" />Statistics</NavLink>
-    </nav>
+    <div class="subnav-container">
+        <nav class="subnav-bar" aria-label="Side navigation">
+            <NavLink href="/calendar" class="subnav-link"><RadzenIcon Icon="event_note" />Kalender</NavLink>
+            <NavLink href="/clients" class="subnav-link"><RadzenIcon Icon="group" />Klienter</NavLink>
+            <NavLink href="/promotions" class="subnav-link"><RadzenIcon Icon="sell" />Promoveringer</NavLink>
+            <NavLink href="/statistics" class="subnav-link"><RadzenIcon Icon="bar_chart" />Statistikker</NavLink>
+        </nav>
+    </div>
 }
 
 <main class="page-content">

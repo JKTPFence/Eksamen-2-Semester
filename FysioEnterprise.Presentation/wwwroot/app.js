@@ -1,6 +1,6 @@
 ﻿window.scrollToHour = function (hour) {
-    const rows = document.querySelectorAll('td.time-label');
-    if (rows.length > hour) {
-        rows[hour].scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    const wrap = document.querySelector('article.calendar-wrap');
+    if (!wrap) return;
+    const pixelsPerHour = 30 * 4;
+    wrap.scrollTop = hour * pixelsPerHour;
 };

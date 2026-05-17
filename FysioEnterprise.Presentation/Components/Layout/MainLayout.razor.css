@@ -63,9 +63,9 @@ summary.user-pill {
     user-select: none;
 }
 
-summary.user-pill .-webkit-details-marker {
-    display: none;
-}
+    summary.user-pill::-webkit-details-marker {
+        display: none;
+    }
 
     summary.user-pill:hover {
         background: rgba(255, 255, 255, 0.14);
@@ -75,7 +75,7 @@ span.user-avatar {
     width: 28px;
     height: 28px;
     border-radius: 50%;
-    background: #2d6a4f;
+    background: var(--color-nav-bg);
     color: #ffffff;
     font-size: 13px;
     font-weight: 700;
@@ -141,7 +141,7 @@ button.dropdown-item {
 }
 
     button.dropdown-item:hover {
-        background: #f5f5f3;
+        background: var(--color-page-bg);
     }
 
 button.logout-btn {
@@ -154,46 +154,96 @@ button.logout-btn {
 
 nav.subnav {
     display: flex;
-    align-items: stretch;
-    height: 44px;
+    align-items: center;
+    height: 48px;
     background: #ffffff;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-    padding: 0 0.75rem;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 0 2rem;
     position: sticky;
     top: 52px;
     z-index: 99;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    gap: 4px;
 }
 
-::deep nav.subnav a.subnav-link {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 0 14px;
-    font-size: 13px;
-    font-weight: 500;
-    color: #555555;
-    text-decoration: none;
-    border-bottom: 3px solid transparent;
-    margin: 4px 2px 0;
-    transition: color 0.12s, background 0.12s;
-    white-space: nowrap;
-    border-radius: 6px 6px 0 0;
-}
-
-    ::deep nav.subnav a.subnav-link:hover {
-        background: rgba(0, 0, 0, 0.04);
-        color: #1a1a1a;
+    nav.subnav a.subnav-link {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 16px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #4b5563 !important;
+        text-decoration: none !important; 
+        position: relative;
+        transition: color 0.15s ease;
+        height: 100%;
     }
 
-    ::deep nav.subnav a.subnav-link.active {
-        color: #2d6a4f;
-        border-bottom-color: #2d6a4f;
-        font-weight: 600;
-    }
+        nav.subnav a.subnav-link:hover {
+            background: transparent !important;
+            color: #4b5563 !important;
+            text-decoration: none !important;
+        }
+            nav.subnav a.subnav-link:hover ::deep .rz-icon-instance {
+                color: #4b5563 !important;
+            }
+
+        nav.subnav a.subnav-link:not(.active):hover {
+            background: transparent !important;
+            color: #111827 !important;
+            font-weight: 600 !important;
+            text-decoration: none !important;
+        }
+
+            nav.subnav a.subnav-link:not(.active):hover ::deep .rz-icon-instance {
+                color: #111827 !important;
+            }
+
+            nav.subnav a.subnav-link:not(.active):hover::after {
+                content: '' !important;
+                position: absolute !important;
+                bottom: -1px !important;
+                left: 16px !important;
+                right: 16px !important;
+                height: 3px !important;
+                background-color: var(--color-primary, #2d6a4f) !important;
+                border-radius: 3px 3px 0 0 !important;
+            }
+
+        nav.subnav a.subnav-link.active {
+            color: var(--color-primary, #2d6a4f) !important;
+            font-weight: 600 !important;
+            text-decoration: none !important;
+        }
+
+            nav.subnav a.subnav-link.active ::deep .rz-icon-instance {
+                color: var(--color-primary, #2d6a4f) !important;
+            }
+
+            nav.subnav a.subnav-link.active::after {
+                content: '' !important;
+                position: absolute !important;
+                bottom: -1px !important;
+                left: 16px !important;
+                right: 16px !important;
+                height: 3px !important;
+                background-color: var(--color-primary, #2d6a4f) !important; 
+                border-radius: 3px 3px 0 0 !important;
+            }
+
+        nav.subnav a.subnav-link ::deep .rz-icon-instance {
+            font-size: 18px !important;
+            color: inherit !important;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
 
 main.page-content {
     min-height: calc(100vh - 96px);
     background: var(--color-mainBackground-lightgreen);
     padding: 0;
 }
+
+
+

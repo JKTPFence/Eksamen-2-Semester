@@ -8,12 +8,14 @@ namespace FysioEnterprise.Presentation.Components.Layout
         [Inject] private LogInContext context { get; set; } = default!;
 
         [Inject] private NavigationManager Nav { get; set; } = default!;
+        private bool _isInitialized = false;
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             if (firstRender)
             {
                 await context.LoadFromStorageAsync();
+                _isInitialized = true;
                 StateHasChanged();
             }
         }
@@ -31,7 +33,7 @@ namespace FysioEnterprise.Presentation.Components.Layout
         private async Task Logout()
         {
             await Context.ClearAsync();
-            Nav.NavigateTo("/");
+            Nav.NavigateTo("/", forceLoad: true);
         }
     }
 }

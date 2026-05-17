@@ -7,20 +7,35 @@
 <section class="booking-page">
 
     <header class="booking-header">
-        <h1 class="booking-title">Booking kalender</h1>
+        <h1 class="booking-title">@clinicName - Kalender</h1>
     </header>
 
     <header class="booking-toolbar">
-        <nav class="toolbar-left" aria-label="Booking handlinger">
+        <nav class="toolbar-left" aria-label="Booking handlinger" style="min-width: auto; flex: 1; justify-content: flex-start;">
             <button class="btn-primary" @onclick="GoToCreateSession">
                 <RadzenIcon Icon="add" />
                 Opret booking
             </button>
             
-            <button class="btn-secondary" @onclick="ToggleViewMode">
+            <button class="btn-switch" @onclick="ToggleViewMode">
                 <RadzenIcon Icon="swap_horiz" />
                 Gå til @(CurrentViewMode == CalendarViewMode.Staff ? "Klient" : "Medarbejder") kalender
             </button>
+
+            <label class="search-wrapper" aria-label="Søg i kalender" style="margin-left: 4px;">
+                <RadzenIcon Icon="search" class="search-icon" />
+                <input type="search"
+                       class="calendar-search"
+                       placeholder="Søg efter @(CurrentViewMode == CalendarViewMode.Staff ? "medarbejder..." : "klient...")"
+                       value="@SearchQuery"
+                       @oninput="e => SearchQuery = e.Value?.ToString() ?? string.Empty" />
+                @if (!string.IsNullOrEmpty(SearchQuery))
+                {
+                    <button class="search-clear" @onclick='() => SearchQuery = string.Empty' aria-label="Ryd søgning">
+                        <RadzenIcon Icon="close" />
+                    </button>
+                }
+            </label>
         </nav>
 
         <nav class="toolbar-center" aria-label="Kalender navigation">
@@ -39,29 +54,20 @@
             <button class="btn-today" @onclick="GoToToday">i dag</button>
         </nav>
 
-        <aside class="toolbar-right">
-            <div class="search-wrapper" style="position: relative; display: flex; align-items: center;">
-                <RadzenIcon Icon="search" style="position: absolute; left: 8px; color: rgba(0,0,0,0.4); pointer-events: none;" />
-                <input type="text"
-                       class="form-control calendar-search"
-                       placeholder="Søg efter @(CurrentViewMode == CalendarViewMode.Staff ? "medarbejder..." : "klient...")"
-                       @bind-value="SearchQuery"
-                       @bind-value:event="oninput"
-                       style="padding: 0.375rem 0.75rem 0.375rem 2rem; border: 1px solid rgba(0,0,0,0.15); border-radius: 4px; min-width: 240px; font-size: 0.875rem;" />
-                @if (!string.IsNullOrEmpty(SearchQuery))
-                {
-                    <span @onclick='() => SearchQuery = ""' style="position: absolute; right: 10px; cursor: pointer; color: rgba(0,0,0,0.4); font-size: 0.75rem;">✕</span>
-                }
-            </div>
+        <aside class="toolbar-right" style="min-width: auto;">
+            <button class="btn-secondary @(HideWeekends ? "weekend-hidden-active" : "")"
+                    @onclick="ToggleWeekends"
+                    style="display: inline-flex; align-items: center; gap: 6px;">
+                <RadzenIcon Icon="@(HideWeekends ? "visibility" : "visibility_off")" />
+                @(HideWeekends ? "Vis Weekend" : "Fjern Weekend")
+            </button>
         </aside>
     </header>
 
     @if (View is "week" or "day")
     {
         <article class="calendar-wrap" aria-label="Uge kalender">
-            <table class="calendar-table" role="grid"
-                   style="grid-template-columns: 56px @(View == "day" ? "1fr" : "repeat(7, 1fr)")">
-
+            <table class="calendar-table">
                 <thead>
                     <tr>
                         <th class="time-gutter-header" scope="col"></th>
@@ -72,88 +78,107 @@
                                 @onclick="() => DrillToDay(day)">
                                 <span class="day-name">@day.ToString("ddd", DanishCulture).ToUpper()</span>
                                 <span class="day-number @(IsToday(day) ? "today-circle" : "")">
-                                    @day.Day/@day.Month
+                                    @day.ToString("d. MMM", DanishCulture)
                                 </span>
                             </th>
                         }
                     </tr>
                 </thead>
-
-                <tbody>
-                    @foreach (var hour in Hours)
-                    {
-                        <tr>
-                            <td class="time-label @(SelectedRow == hour ? "selected-row-label" : "")"
-                                @onclick="() => SelectRow(hour)">
-                                <time datetime="@hour:00:00">@hour:00</time>
-                            </td>
-
-                            @foreach (var day in VisibleDays)
-                            {
-                                var isWeekend = day.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
-                                var isClosed = IsOutsideOpeningHours(day, hour);
-                                var isSelectedRow = SelectedRow == hour;
-                                var isSelectedCell = SelectedCell.HasValue
-                                    && SelectedCell.Value.Date == day.Date
-                                    && SelectedCell.Value.Hour == hour;
-                                var sessionsHere = GetSessionsForSlot(day, hour);
-
-                                <td class="time-cell
-                                    @(isClosed ? "closed-hours" : "")
-                                    @(isWeekend ? "weekend" : "")
-                                    @(isSelectedRow ? "selected-row" : "")
-                                    @(IsToday(day) ? "today-col" : "")
-                                    @(isSelectedCell ? "selected-cell" : "")"
-                                    @onclick="() => OnCellClick(day, hour)"
-                                    @ondblclick="() => OnCellDoubleClick(day, hour)">
-
-                                    @foreach (var session in sessionsHere)
-                                    {
-                                        <article class="session-block @GetDynamicColorClass(session)"
-                                                 @onclick:stopPropagation="true"
-                                                 @onclick="() => OnSessionClick(session)"
-                                                 title="@session.ClientFirstName @session.ClientLastName — @session.SessionTypeName">
-                                            <time class="session-time" datetime="@session.timeSlot.From.ToString("HH:mm")">
-                                                @session.timeSlot.From.ToString("HH:mm") – @session.timeSlot.To.ToString("HH:mm")
-                                            </time>
-                                            
-                                            @if (CurrentViewMode == CalendarViewMode.Staff)
-                                            {
-                                                <strong class="session-client">@session.StaffFirstName @session.StaffLastname - @GetStaffAuthorisationType(session.StaffFirstName + " " + session.StaffLastname)</strong>
-                                            }
-                                            else
-                                            {
-                                                <strong class="session-client">@GetClientName(session.ClientFirstName + " " + session.ClientLastName)</strong>
-                                            }
-                                            <span class="session-type">@session.SessionTypeName</span>
-                                        </article>
-                                    }
-
-                                    @if (isSelectedCell && !sessionsHere.Any())
-                                    {
-                                        <aside class="cell-popup" @onclick:stopPropagation="true">
-                                            <strong class="popup-time">@hour:00 – @(hour + 1):00</strong>
-                                            <p class="popup-date">@day.ToString("dddd d. MMMM", DanishCulture)</p>
-                                            <select class="popup-select" @onchange="OnSessionTypeSelected">
-                                                <option value="">— Vælg sessiontype —</option>
-                                                @foreach (var type in _sessionTypes)
-                                                {
-                                                    <option value="@type.SessionTypeID">@type.SessionTypeName</option>
-                                                }
-                                            </select>
-                                            <button class="popup-btn"
-                                                    @onclick="GoToCreateSessionWithSlot"
-                                                    disabled="@(SelectedSessionTypeId == Guid.Empty)">
-                                                Opret booking her
-                                            </button>
-                                        </aside>
-                                    }
-                                </td>
-                            }
-                        </tr>
-                    }
-                </tbody>
             </table>
+
+            <section class="calendar-body" aria-label="Kalender indhold">
+
+                <aside class="time-gutter" aria-label="Tidslinje">
+                    @for (var hour = 0; hour < 24; hour++)
+                    {
+                        var topPx = hour * SlotHeight * 4;
+                        <time class="time-marker" style="top: @(topPx)px">
+                            @($"{hour:D2}:00")
+                        </time>
+                    }
+                </aside>
+
+                @foreach (var day in VisibleDays)
+                {
+                    var isWeekend = day.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
+                    var daySessions = GetSessionsForDay(day);
+                    var columns = CalculateColumns(daySessions);
+
+                    <section class="day-column
+                        @(isWeekend ? "weekend" : "")
+                        @(IsToday(day) ? "today-col" : "")
+                        @(SelectedCell.HasValue && SelectedCell.Value.Date == day.Date ? "selected-col" : "")"
+                             aria-label="@day.ToString("dddd d. MMMM", DanishCulture)">
+
+                        @for (var slot = 0; slot < 96; slot++)
+                        {
+                            var currentSlot = slot;
+                            var slotHour = currentSlot / 4;
+                            var slotMinute = (currentSlot % 4) * 15;
+                            var isClosed = IsOutsideOpeningHours(day, slotHour);
+
+                            string rowBorderClass;
+                            if (slotMinute == 0) rowBorderClass = "hour-border";
+                            else if (slotMinute == 30) rowBorderClass = "half-border";
+                            else rowBorderClass = "quarter-border";
+
+                            <section class="calendar-slot-row @rowBorderClass @(isClosed ? "closed-hours" : "")"
+                                     style="top: @(currentSlot * SlotHeight)px; height: @(SlotHeight)px;"
+                                     @onclick="() => OnCellClick(day, slotHour)"
+                                     @ondblclick="() => OnColumnDoubleClick(day, slotHour, slotMinute)">
+                            </section>
+                        }
+
+                        @foreach (var session in daySessions)
+                        {
+                            var layout = GetSessionLayout(session, columns);
+                            <article class="session-block @GetDynamicColorClass(session)"
+                                     style="top:@(layout.Top.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))px;height:@(layout.Height.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))px;left:@(layout.Left.ToString("F2", System.Globalization.CultureInfo.InvariantCulture))%;width:@(layout.Width.ToString("F2", System.Globalization.CultureInfo.InvariantCulture))%;"
+                                     @onclick:stopPropagation="true"
+                                     @onclick="() => OnSessionClick(session)"
+                                     title="@session.ClientFirstName @session.ClientLastName — @session.SessionTypeName">
+                                <time class="session-time">
+                                    @session.timeSlot.From.ToString("HH:mm") – @session.timeSlot.To.ToString("HH:mm")
+                                </time>
+                                @if (CurrentViewMode == CalendarViewMode.Staff)
+                                {
+                                    <strong class="session-client">@session.StaffFirstName @session.StaffLastname - @GetStaffAuthorisationType(session.StaffFirstName + " " + session.StaffLastname)</strong>
+                                }
+                                else
+                                {
+                                    <strong class="session-client">@session.ClientFirstName @session.ClientLastName</strong>
+                                }
+                                <span class="session-type">@session.SessionTypeName</span>
+                            </article>
+                        }
+
+                        @if (SelectedCell.HasValue && SelectedCell.Value.Date == day.Date)
+                        {
+                            var popupTop = TimeToPixels(SelectedCell.Value);
+                            <aside class="cell-popup"
+                                   style="top:@(popupTop.ToString("F0", System.Globalization.CultureInfo.InvariantCulture))px;"
+                                   @onclick:stopPropagation="true">
+                                <strong class="popup-time">
+                                    @SelectedCell.Value.ToString("HH:mm") – @SelectedCell.Value.AddMinutes(15).ToString("HH:mm")
+                                </strong>
+                                <p class="popup-date">@day.ToString("dddd d. MMMM", DanishCulture)</p>
+                                <select class="popup-select" @onchange="OnSessionTypeSelected">
+                                     <option value="" disabled selected hidden>— Vælg Sessionstype —</option>
+                                    @foreach (var type in _sessionTypes)
+                                    {
+                                        <option value="@type.SessionTypeID">@type.SessionTypeName - @GetSessionTypeInMinutes(type)</option>
+                                    }
+                                </select>
+                                <button class="popup-btn"
+                                        @onclick="GoToCreateSessionWithSlot"
+                                        disabled="@(SelectedSessionTypeId == Guid.Empty)">
+                                    Opret booking her
+                                </button>
+                            </aside>
+                        }
+                    </section>
+                }
+            </section>
         </article>
     }
 
