@@ -116,6 +116,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
             return await _context.SessionTypes
                 .AsNoTracking()
                 .Select(styp => new SessionTypeDTO(
+                    styp.Id,
                     styp.SessionTypeName,
                     styp.SessionTypePrice,
                     styp.SessionTypeMaxAmount,

@@ -4,9 +4,7 @@ using FysioEnterprise.Facade.DTOs;
 using FysioEnterprise.Facade.Queries;
 using FysioEnterprise.Presentation.Service;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using Radzen.Blazor.Markdown;
 
 namespace FysioEnterprise.Presentation.Components.Pages
 {
@@ -29,7 +27,9 @@ namespace FysioEnterprise.Presentation.Components.Pages
 
         protected override async Task OnInitializedAsync()
         {
-            _clinics = await Queries.GetAllClinicsAsync();
+            var fetchedClinics = await Queries.GetAllClinicsAsync();
+
+            _clinics = fetchedClinics.OrderBy(c => c.ClinicAddress).ToList();
         }
 
         private async void OnClinicChanged(ChangeEventArgs e)
@@ -44,16 +44,18 @@ namespace FysioEnterprise.Presentation.Components.Pages
                         _selectedStaffId = Guid.Empty;
 
                         var staffResult = await Queries.GetAllStaffByClinicAsync(_selectedClinicId);
-                        _staff = staffResult ?? new List<StaffDTO>();
+                        _staff = staffResult.OrderBy(s => s.StaffFirstName).ToList();
 
-                        if (_staff.IsNullOrEmpty() || _staff.Count() == 0)
+                    if (_staff.IsNullOrEmpty() || _staff.Count() == 0)
                             throw new ArgumentNullException();
 
-                        _receptionistsInClinic = _staff
+                        var clinicReceptionistResult = _staff
                             .Where(s => s.StaffAuthorisationNumber == 22222 || s.StaffAuthorisationType == "Receptionist")
                             .ToList();
 
-                        if (_receptionistsInClinic.Count() == 0)
+                        _receptionistsInClinic = clinicReceptionistResult.OrderBy(s => s.StaffFirstName).ToList();
+
+                    if (_receptionistsInClinic.Count() == 0)
                             throw new ArgumentNullException();
 
                     StateHasChanged();
@@ -75,14 +77,14 @@ namespace FysioEnterprise.Presentation.Components.Pages
             StateHasChanged();
         }
 
-        private void Proceed()
+        private async Task Proceed()
         {
             if (!CanProceed) return;
 
             var clinic = _clinics.First(c => c.ClinicID == _selectedClinicId);
             var staff = _staff.First(s => s.StaffID == _selectedStaffId);
 
-            Context.SetSession(
+            await Context.SetSessionAsync(
                 clinic.ClinicID,
                 clinic.ClinicAddress,
                 staff.StaffID,

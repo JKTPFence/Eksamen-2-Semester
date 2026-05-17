@@ -58,6 +58,7 @@ namespace FysioEnterprise.Facade.DTOs
         int? RoomNumber);
 
     public record SessionTypeDTO(
+        Guid SessionTypeID,
         string SessionTypeName,
         decimal SessionTypePrice,
         int SessionTypeMaxAmount,
