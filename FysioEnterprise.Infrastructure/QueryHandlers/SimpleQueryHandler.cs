@@ -111,6 +111,20 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                 .ToListAsync();
         }
 
+        public async Task<List<RoomDTO>> GetRoomsByClinicIdAsync(Guid clinicId)
+        {
+            return await _context.Clinics
+                .AsNoTracking()
+                .Include(cl => cl.ClinicRooms)
+                .Where(cl => cl.Id == clinicId)
+                .SelectMany(cl => cl.ClinicRooms
+                    .Select(r => new RoomDTO(
+                        r.Id,
+                        cl.ClinicAddress,
+                        r.RoomNumber)))
+                .ToListAsync();
+        }
+
         public async Task<List<SessionTypeDTO>> GetAllSessionTypesAsync()
         {
             return await _context.SessionTypes

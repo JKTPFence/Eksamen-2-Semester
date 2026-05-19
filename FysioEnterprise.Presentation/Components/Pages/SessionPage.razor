@@ -1,9 +1,145 @@
 ﻿@rendermode InteractiveServer
 @page "/createsession"
 @using System.Globalization
+@using Radzen.Blazor
 
-<h3>SessionPage</h3>
+<main class="home-wrap">
+	<header class="home-header">
+		<h1 class="welcome-text">Opret booking</h1>
+	</header>
 
-@code {
+	<article class="selection-card">
 
-}
+		@if (!string.IsNullOrEmpty(_errorMessage))
+		{
+			<p class="error-message">@_errorMessage</p>
+		}
+
+		@if (!string.IsNullOrEmpty(_successMessage))
+		{
+			<p class="success-message">@_successMessage</p>
+		}
+
+		
+		<!-- Klient -->
+		<section class="form-field">
+			<label class="field-label">
+				<RadzenIcon Icon="person" Style ="font-size: 18px;" />
+				Klient
+			</label>
+			<select class="form-select" @onchange="OnClientChanged">
+				<option value="" disabled selected hidden>- Vælg klient -</option>
+				@foreach (var client in _clients)
+				{
+					<option value="@client.ClientID">
+						@client.ClientFirstName @client.ClientLastName
+					</option>
+				}
+			</select>
+		</section>
+
+		<!-- Behandler -->
+		<section class="form-field"> 
+			<label class="field-label">
+				<RadzenIcon Icon="medical_services" Style="font-size: 18px;" />
+				Behandler
+			</label>
+			<select class="form-select" @onchange="OnStaffChanged"
+					disabled="@(_selectedClinicId == Guid.Empty)">
+				<option value="" disabled selected hidden>- Vælg Behandler -</option>
+				@foreach (var staff in _staffInClinic)
+				{
+					<option value="@staff.StaffID">
+						@staff.StaffFirstName @staff.StaffLastName - @staff.StaffAuthorisationType
+					</option>
+				}
+			</select>
+		</section>
+
+		<!-- Behandslingstype -->
+		<section class="form-field">
+			<label class="field-label">
+				<RadzenIcon Icon="healing" Style="font-size: 18px;" />
+				Behandslingstype
+			</label>
+			<select class="form-select" @onchange="OnSessionTypeChanged">
+				<option value="" disabled selectd hidden>- vælg behandlingstype -</option>
+				@foreach (var type in _sessionTypes)
+				{
+					<option value="@type.SessionTypeID"
+							selected="@(type.SessionTypeID == _selectedSessionTypeId)">
+					</option>
+				}
+			</select>
+		</section>
+
+		<!-- Rum -->
+		<section class="form-field">
+			<label class="field-label">
+				<RadzenIcon Icon="meeting_room" Style="font-size: 18px;" />
+				Rum
+			</label>
+			<select class="form-select" @onchange="OnRoomChanged"
+					disabled="@(_selectedClinicId == Guid.Empty)">
+				<option value="" disabled selected hidden>— Vælg rum —</option>
+				@foreach (var room in _rooms)
+				{
+					<option value="@room.RoomID">
+						Rum @room.RoomNumber
+					</option>
+				}
+			</select>
+		</section>
+
+		<!-- Starttid -->
+		<section class="form-field">
+			<label class="field-label">
+				<RadzenIcon Icon="schedule" Style="font-size: 18px;" />
+				Starttid
+			</label>
+			<input type="datetime-local" class="form-select"
+				   value="@_startTime?.ToString("yyyy-MM-ddTHH:mm")"
+				   @onchange="OnStartTimeChanged" />
+		</section>
+
+		<!-- Sluttid -->
+		<section class="form-field">
+			<label class="field-label">
+				<RadzenIcon Icon="schedule" Style="font-size: 18px;" />
+				Sluttid
+			</label>
+			<input type="datetime-local" class="form-select"
+				   value="@_endTime?.ToString("yyyy-MM-ddTHH:mm")"
+				   @onchange="OnEndTimeChanged" />
+		</section>
+
+		<!-- Promotion -->
+		<section class="form-field">
+			<label class="field-label">
+				<RadzenIcon Icon="sell" Style="font-size: 18px;" />
+				Promotion (Valgfri)
+			</label>
+			<select class="form-select" @onchange="OnPromotionChanged">
+				<option value="">- Ingen kampagne -</option>
+				@foreach (var promotion in _promotions)
+				{
+					<option value="@promotion.PromotionID">
+						@promotion.PromotionName - @promotion.PromotionDiscountPercent%
+					</option>
+				}
+			</select>
+		</section>
+
+		<!-- Knapper -->
+		<footer class="action-footer">
+			<button class="submit-button" @onclick="Cancel">
+				Annuller
+			</button>"
+			<button class="submit-button" @onclick="Submit"
+					disabled="@(!CanSubmit)">
+				@(_isEditMode ? "Gem ændringer" : "Opret booking")
+				</button>
+		</footer>
+
+	</article> 
+</main>
