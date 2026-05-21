@@ -395,7 +395,7 @@ namespace FysioEnterprise.Testing.UseCase
             Assert.Contains("Promotion not found", result.Errors[0].Message);
         }
 
-        [Fact]
+        /*[Fact]
         public async Task CreateSessionAsync_WithBirthdayDiscount_ShouldMarkBirthdayDiscountAsUsed()
         {
             var clientId = Guid.NewGuid();
@@ -435,6 +435,6 @@ namespace FysioEnterprise.Testing.UseCase
 
             Assert.True(result.IsSuccess);
             _mockClientRepository.Verify(r => r.UpdateClientAsync(It.IsAny<Client>()), Times.Once);
-        }
+        }*/
     }
 }

@@ -1,4 +1,5 @@
 ﻿using FysioEnterprise.Domain.Entities;
+using FysioEnterprise.Domain.ValueObjects;
 
 namespace FysioEnterprise.Domain.Service.PricingService.Strategies.PricingMethods
 {
@@ -7,12 +8,12 @@ namespace FysioEnterprise.Domain.Service.PricingService.Strategies.PricingMethod
         private decimal _discountPercentage;
         public string Name => "Promotion Discount";
 
-        public decimal calculatePrice(Client client,
+        public Price calculatePrice(Client client,
             Promotion promotion,
             SessionType sessionType)
         {
             _discountPercentage = promotion.PromotionDiscountPercent;
-            return sessionType.SessionTypePrice * (1 - _discountPercentage / 100);
+            return new Price(sessionType.SessionTypePrice * (1 - _discountPercentage / 100));
         }
     }
 }

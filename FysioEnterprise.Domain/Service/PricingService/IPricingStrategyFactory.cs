@@ -6,9 +6,9 @@ namespace FysioEnterprise.Domain.Service.PricingService
 {
     public interface IPricingStrategyFactory
     {
-        IEnumerable<IPricingStrategy> BuildStrategies(
+        Price BuildStrategies(
             Client client,
-            Promotion? promotion,
+            Promotion promotion,
             SessionType sessionType);
     }
 }

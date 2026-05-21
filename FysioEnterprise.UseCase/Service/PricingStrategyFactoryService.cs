@@ -6,7 +6,7 @@ using FysioEnterprise.Domain.ValueObjects;
 
 namespace FysioEnterprise.UseCase.Service
 {
-    public class PricingStrategyFactoryService : IPricingStrategyFactory
+    /*public class PricingStrategyFactoryService : IPricingStrategyFactory
     {
         public IEnumerable<IPricingStrategy> BuildStrategies(
             LoyaltyLevel loyaltyLevel,
@@ -26,5 +26,5 @@ namespace FysioEnterprise.UseCase.Service
 
             return strategies;
         }
-    }
+    }*/
 }

@@ -7,12 +7,12 @@ namespace FysioEnterprise.Domain.Service.PricingService.Strategies.PricingMethod
     {
         public string Name => "Loyalty Level Discount";
 
-        public decimal calculatePrice(Client client,
+        public Price calculatePrice(Client client,
             Promotion promotion,
             SessionType sessionType)
         {
             var discount = sessionType.SessionTypePrice * (client.ClientLoyaltyLevel.LoyaltyLevelDiscountPercentage / 100);
-            return discount;
+            return new Price(discount);
         }
     }
 }

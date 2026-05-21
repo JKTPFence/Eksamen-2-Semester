@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using FysioEnterprise.Domain.Entities;
+﻿using FysioEnterprise.Domain.Entities;
+using FysioEnterprise.Domain.ValueObjects;
 
 namespace FysioEnterprise.Domain.Service.PricingService.Strategies.PricingMethods
 {
@@ -9,11 +7,11 @@ namespace FysioEnterprise.Domain.Service.PricingService.Strategies.PricingMethod
     {
         public string Name => "Sessiontype price";
 
-        public decimal calculatePrice(Client client,
+        public Price calculatePrice(Client client,
             Promotion promotion,
             SessionType sessionType)
         {
-            return sessionType.SessionTypePrice;
+            return new Price(sessionType.SessionTypePrice);
         }
     }
 }

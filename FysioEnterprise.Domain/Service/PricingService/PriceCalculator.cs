@@ -1,9 +1,10 @@
 ﻿using FysioEnterprise.Domain.Entities;
 using FysioEnterprise.Domain.Service.PricingService.Strategies;
+using FysioEnterprise.Domain.ValueObjects;
 
 namespace FysioEnterprise.Domain.Service.PricingService
 {
-    public class PriceCalculator : IPricingStrategyFactory
+   /* public class PriceCalculator : IPricingStrategyFactory
     {
         private readonly IEnumerable<IPricingStrategy> _strategies;
 
@@ -11,18 +12,18 @@ namespace FysioEnterprise.Domain.Service.PricingService
         {
             _strategies = strategies;
         }
-        public async Task<decimal> BuildStrategies(Client client,
+        public Price BuildStrategies(Client client,
             Promotion promotion,
             SessionType sessionType)
         {
-            var rabatter = _rabatStrategier.Select(a => a.Beregn(tidspunkt, behandlingstype, patient));
-            var bedsteRabat = rabatter.MaxBy(a => a.Beløb) ?? new BeregnetRabat(0);
+            var discounts = _strategies.Select(a => a.calculatePrice(client, promotion, sessionType));
+            var bestDiscount = discounts.MaxBy(a => a.Value) ?? new Price(0);
 
-            var resultatBeløb = behandlingstype.EgenbetalingsBeløb.Beløb - bedsteRabat.Beløb;
+            var result = sessionType.SessionTypePrice - bestDiscount.Value;
 
-            resultatBeløb = Math.Max(0, resultatBeløb);
+            result = Math.Max(0, result);
 
-            return new EgenbetalingsBeløb(resultatBeløb);
+            return new Price(result);
         }
-    }
+    }*/
 }
