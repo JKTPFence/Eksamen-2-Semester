@@ -19,9 +19,8 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
         private readonly IPromotionRepository _promotionRepository;
         private readonly ISessionRepository _sessionRepository;
         private readonly ISessionTypeRepository _sessionTypeRepository;
+        private readonly IPricingStrategyFactory _pricingStrategyFactory;
         private readonly ITimeNow _now;
-        private readonly IPricingStrategyFactory _strategyFactory;
-        private readonly PriceCalculator _calculator;
         private static readonly SemaphoreSlim _sessionLock = new(1, 1);
 
         public SessionCommandHandler(
@@ -31,9 +30,8 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
             IPromotionRepository promotionRepository,
             ISessionRepository sessionRepository,
             ISessionTypeRepository sessionTypeRepository,
-            ITimeNow now,
-            IPricingStrategyFactory strategyFactory,
-            PriceCalculator calculator)
+            IPricingStrategyFactory pricingStrategyFactory,
+            ITimeNow now)
         {
             _clientRepository = clientRepository;
             _staffRepository = staffRepository;
@@ -42,9 +40,8 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
             _clinicRepository = clinicRepository;
             _promotionRepository = promotionRepository;
             _sessionRepository = sessionRepository;
+            _pricingStrategyFactory = pricingStrategyFactory;
             _now = now;
-            _strategyFactory = strategyFactory;
-            _calculator = calculator;
         }
 
         public async Task<Result> CreateSessionAsync(CreateSessionRequest request)
@@ -76,6 +73,7 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
             var existingStaffSessions = await _sessionRepository.GetSessionsByStaffAsync(request.StaffID);
             var existingRoomSessions = await _sessionRepository.GetSessionsByRoomAsync(request.ClinicID, request.SessionRoomID);
             var timeSlot = new TimeSlot(request.StartTime, request.EndTime);
+            
 
             await _sessionLock.WaitAsync();
             try
@@ -85,42 +83,20 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
                 DateOnly.FromDateTime(request.StartTime))
                 && !clientResult.Value.HasUsedBirthdayDiscountThisYear;
 
-                var strategies = _strategyFactory.BuildStrategies(
-                    clientResult.Value.ClientLoyaltyLevel,
-                    birthdayEligible,
-                    promotionResult?.Value
-                );
-
-                var totalPrice = await _calculator.Calculate(
-                    sessionTypeResult.Value.SessionTypePrice,
-                    strategies
-                );
-
-                if (birthdayEligible)
-                {
-                    var birthdayPrice = new BirthdayPricingStrategy().Apply(
-                        sessionTypeResult.Value.SessionTypePrice);
-
-                    if (birthdayPrice == totalPrice)
-                    {
-                        clientResult.Value.MarkBirthdayDiscountUsed(
-                            DateOnly.FromDateTime(request.StartTime));
-                        await _clientRepository.UpdateClientAsync(clientResult.Value);
-                    }
-                }
                 try
                 {
                     var session = Session.Create(
-                        clientResult.Value.Id,
+                        clientResult.Value,
                         staffResult.Value.Id,
-                        sessionTypeResult.Value.Id,
+                        sessionTypeResult.Value,
                         roomResult.Value.Id,
                         timeSlot,
-                        totalPrice,
-                        promotionResult?.Value?.Id,
+                        request.SessionTotalPrice,
+                        promotionResult?.Value,
                         existingClientSessions,
                         existingStaffSessions,
-                        existingRoomSessions);
+                        existingRoomSessions,
+                        _pricingStrategyFactory);
                     await _sessionRepository.CreateSessionAsync(session);
                 }
                 catch (DomainException ex)

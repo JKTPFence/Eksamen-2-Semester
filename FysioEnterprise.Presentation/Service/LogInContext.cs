@@ -25,10 +25,17 @@ namespace FysioEnterprise.Presentation.Service
             ClinicName = clinicName;
             StaffId = staffId;
             StaffName = staffName;
-            await _storage.SetAsync("clinicId", clinicId.ToString());
-            await _storage.SetAsync("clinicName", clinicName);
-            await _storage.SetAsync("staffId", staffId.ToString());
-            await _storage.SetAsync("staffName", staffName);
+            try
+            {
+                await _storage.SetAsync("clinicId", clinicId.ToString());
+                await _storage.SetAsync("clinicName", clinicName);
+                await _storage.SetAsync("staffId", staffId.ToString());
+                await _storage.SetAsync("staffName", staffName);
+            }
+            catch
+            {
+
+            }
             OnChange?.Invoke();
         }
 
@@ -50,7 +57,10 @@ namespace FysioEnterprise.Presentation.Service
                 if (staffName.Success)
                     StaffName = staffName.Value ?? string.Empty;
             }
-            catch { }
+            catch (InvalidOperationException ex)
+            {
+                Console.WriteLine($"[Storage Error] Failing to load session storage: {ex.Message}");
+            }
 
             OnChange?.Invoke();
         }

@@ -132,7 +132,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                 .Select(styp => new SessionTypeDTO(
                     styp.Id,
                     styp.SessionTypeName,
-                    styp.SessionTypePrice,
+                    styp.SessionTypePrice.Value,
                     styp.SessionTypeMaxAmount,
                     styp.SessionTypeTimeSpan))
                 .ToListAsync();

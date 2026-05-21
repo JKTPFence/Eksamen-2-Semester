@@ -16,7 +16,32 @@
     --color-closed-hours: rgba(190, 210, 245, 0.3);
     --color-hover-cell: rgba(45, 106, 79, 0.04);
     --color-gutter-brand-bg: #E1EBE1;
+    --color-modal-bg: #ffffff;
+    --color-modal-overlay: rgba(0, 0, 0, 0.4);
+    --color-modal-header-bg: #f9fafb;
+    --color-modal-text-primary: var(--color-text-primary, #111827);
+    --color-modal-text-muted: var(--color-text-muted, #6b7280);
+    --color-modal-icon: #6b7280;
+    --color-modal-close-icon: #9ca3af;
+    --color-modal-close-icon-hover: #4b5563;
+    --color-btn-update-bg: #ffffff;
+    --color-btn-update-border: var(--color-border-strong, #d1d5db);
+    --color-btn-update-text: #374151;
+    --color-btn-update-hover: #f3f4f6;
+    --color-btn-complete-bg: #dcfce7;
+    --color-btn-complete-border: #bbf7d0;
+    --color-btn-complete-text: #166534;
+    --color-btn-complete-hover: #bbf7d0;
+    --color-btn-noshow-bg: #fef9c3;
+    --color-btn-noshow-border: #fef08a;
+    --color-btn-noshow-text: #854d0e;
+    --color-btn-noshow-hover: #fef08a;
+    --color-btn-cancel-bg: #fee2e2;
+    --color-btn-cancel-border: #fecaca;
+    --color-btn-cancel-text: #991b1b;
+    --color-btn-cancel-hover: #fecaca;
 }
+
 
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -157,3 +182,5 @@ h1:focus {
         justify-content: center !important;
         margin: 0 !important;
     }
+
+

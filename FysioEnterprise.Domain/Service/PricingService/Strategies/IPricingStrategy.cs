@@ -1,11 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using FysioEnterprise.Domain.Entities;
+using FysioEnterprise.Domain.ValueObjects;
 
 namespace FysioEnterprise.Domain.Service.PricingService.Strategies
 {
     public interface IPricingStrategy
     {
-        decimal Apply(decimal basePrice);
+        string Name { get; }
+        Price calculatePrice(Client client,
+            Promotion? promotion,
+            SessionType sessionType);
     }
 }

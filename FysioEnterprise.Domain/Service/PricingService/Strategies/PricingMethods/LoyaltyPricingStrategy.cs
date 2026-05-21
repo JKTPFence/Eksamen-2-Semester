@@ -1,20 +1,18 @@
-﻿using FysioEnterprise.Domain.ValueObjects;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using FysioEnterprise.Domain.Entities;
+using FysioEnterprise.Domain.ValueObjects;
 
 namespace FysioEnterprise.Domain.Service.PricingService.Strategies.PricingMethods
 {
     public class LoyaltyPricingStrategy : IPricingStrategy
     {
-        private readonly LoyaltyLevel _loyaltyLevel;
+        public string Name => "Loyalty Level Discount";
 
-        public LoyaltyPricingStrategy(LoyaltyLevel loyaltyLevel)
+        public Price calculatePrice(Client client,
+            Promotion? promotion,
+            SessionType sessionType)
         {
-            _loyaltyLevel = loyaltyLevel;
+            var discount = sessionType.SessionTypePrice.Value * Convert.ToDouble(client.ClientLoyaltyLevel.LoyaltyLevelDiscountPercentage / 100);
+            return new Price(discount);
         }
-
-        public decimal Apply(decimal basePrice)
-            => basePrice * (1 - _loyaltyLevel.LoyaltyLevelDiscountPercentage / 100);
     }
 }

@@ -26,7 +26,7 @@ namespace FysioEnterprise.Facade.RequestModels
         public record MarkNoShowSessionRequest(
             Guid SessionID);
         public record EndSessionRequest(
-            Guid SessionId, string Note);
+            Guid SessionId);
         public record CancelSessionRequest(
             Guid SessionId);
 

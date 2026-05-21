@@ -2,9 +2,12 @@
 using FysioEnterprise.Domain.Enums;
 using FysioEnterprise.Facade.DTOs;
 using FysioEnterprise.Facade.Queries;
+using FysioEnterprise.Facade.UseCase.SessionUseCase;
 using FysioEnterprise.Presentation.Service;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using static System.Runtime.InteropServices.JavaScript.JSType;
+using static FysioEnterprise.Facade.RequestModels.SessionRequests;
 
 namespace FysioEnterprise.Presentation.Components.Pages;
 
@@ -15,6 +18,9 @@ public partial class SessionBookingPage : ComponentBase
     [Inject] private IClientQueries ClientQueries { get; set; } = default!;
     [Inject] private LogInContext Context { get; set; } = default!;
     [Inject] private NavigationManager Nav { get; set; } = default!;
+    [Inject] private IEndSessionUseCase EndSessionUseCase { get; set; } = default!;
+    [Inject] private ICancelSessionUseCase CancelSessionUseCase { get; set; } = default!;
+    [Inject] private IMarkSessionAsNoShowUseCase MarkSessionAsNoShowUseCase { get; set; } = default!;
 
     public static readonly CultureInfo DanishCulture = new("da-DK");
     private string View { get; set; } = "week";
@@ -32,9 +38,9 @@ public partial class SessionBookingPage : ComponentBase
     private List<SessionTypeDTO> _sessionTypes = [];
     private ClinicDTO? _clinic;
     private const int SlotHeight = 30;
-    private const int TotalDayHeight = 24 * 4 * SlotHeight;
     private int SessionTimeInMinutes;
     private string clinicName = string.Empty;
+    private bool HideCancelled { get; set; } = false;
     private record SessionLayout(double Top, double Height, double Left, double Width);
 
     private double TimeToPixels(DateTime time)
@@ -74,6 +80,10 @@ public partial class SessionBookingPage : ComponentBase
             var startDay = first.DayOfWeek == DayOfWeek.Sunday ? first.AddDays(-6) : first.AddDays(-(int)first.DayOfWeek + 1);
             return Enumerable.Range(0, 42).Select(i => startDay.AddDays(i)).ToList();
         }
+    }
+    private void ToggleCancelledSessions()
+    {
+        HideCancelled = !HideCancelled;
     }
     private List<SessionDTO> FilteredSessions => string.IsNullOrWhiteSpace(SearchQuery)
     ? _sessions
@@ -141,6 +151,7 @@ public partial class SessionBookingPage : ComponentBase
         _staff = staffTask.OrderBy(s => s.StaffFirstName).ToList();
         _sessionTypes = typesTask.OrderBy(s => s.SessionTypeName).ToList();
         _clinic = clinicTask;
+
         if (!string.IsNullOrEmpty(_clinic?.ClinicAddress))
         {
             var clinicsplit = _clinic.ClinicAddress.Split(',');
@@ -159,47 +170,16 @@ public partial class SessionBookingPage : ComponentBase
             clinicName = "Klinik";
         }
     }
-    private List<SessionDTO> GetSessionsForSlot(DateTime day, int hour)
-        => FilteredSessions.Where(s =>
-            s.timeSlot.From.Date == day.Date &&
-            s.timeSlot.From.Hour == hour)
-        .ToList();
 
     private List<SessionDTO> GetSessionsForDay(DateTime day)
      => FilteredSessions.Where(s => s.timeSlot.From.Date == day.Date).ToList();
 
-    private string GetClientName(string clientName)
+    private string GetStaffAuthorisationType(Guid staffID)
     {
-        var client = _clients.FirstOrDefault(c => c.ClientFirstName + " " + c.ClientLastName == clientName);
-        if (client is null)
-            throw new ArgumentNullException("Client does not exist in system: ", nameof(client));
-        return $"{client.ClientFirstName}  {client.ClientLastName}";
-    }
-
-    private string GetStaffAuthorisationType(string staffName)
-    {
-        var staffType = _staff.Where(s => s.StaffFirstName + " " + s.StaffLastName == staffName).Select(s => s.StaffAuthorisationType).FirstOrDefault();
+        var staffType = _staff.Where(s => s.StaffID == staffID).Select(s => s.StaffAuthorisationType).FirstOrDefault();
         if (staffType is null)
             throw new ArgumentNullException("Staff member has no authorisationType: ", nameof(staffType));
         return staffType;
-    }
-
-    private string GetSessionTypeName(string sessionType)
-    {
-        if (string.IsNullOrEmpty(sessionType))
-            throw new ArgumentNullException($"Session skal have et navn");
-        var sessiontypeName = _sessionTypes.FirstOrDefault(t => t.SessionTypeName == sessionType)?.ToString();
-        if (string.IsNullOrEmpty(sessiontypeName))
-        {
-            return "Andet";
-        }
-        return sessiontypeName;
-    }
-
-    private int GetStaffColorIndex(string staffName)
-    {
-        var idx = _staff.FindIndex(s => s.StaffFirstName + " " + s.StaffLastName == staffName);
-        return idx < 0 ? 0 : idx % StaffColors.Length;
     }
 
     private string GetDynamicColorClass(SessionDTO session)
@@ -226,12 +206,6 @@ public partial class SessionBookingPage : ComponentBase
         if (oh is null || oh.IsClosed) return true;
         return hour < oh.From.Hour || hour >= oh.To.Hour;
     }
-    private void SelectRow(int hour)
-    {
-        SelectedRow = SelectedRow == hour ? null : hour;
-        SelectedCell = null;
-        StateHasChanged();
-    }
 
     private void OnCellClick(DateTime day, int hour)
     {
@@ -250,9 +224,6 @@ public partial class SessionBookingPage : ComponentBase
         if (Guid.TryParse(e.Value?.ToString(), out var id))
             SelectedSessionTypeId = id;
     }
-
-    private void OnSessionClick(SessionDTO session)
-        => Nav.NavigateTo($"/createsession?sessionId={session.SessionID}");
 
     private void GoToCreateSession()
         => Nav.NavigateTo("/createsession");
@@ -416,13 +387,112 @@ public partial class SessionBookingPage : ComponentBase
         HideWeekends = !HideWeekends;
     }
 
-    private IEnumerable<DateTime> GetActiveVisibleDays()
+    private SessionDTO? SelectedViewSession { get; set; }
+
+    private void OnSessionClick(SessionDTO session)
     {
-        if (HideWeekends)
+        SelectedViewSession = session;
+    }
+
+    private void CloseSessionDetails()
+    {
+        SelectedViewSession = null;
+
+    }
+
+    private async void HandleUpdate()
+    {
+       if (SelectedViewSession == null) return;
+        Nav.NavigateTo($"/createsession?sessionId={SelectedViewSession.SessionID}");
+    }
+
+    private async Task HandleComplete()
+    {
+        if (SelectedViewSession == null) return;
+        var result = await EndSessionUseCase.EndSessionAsync(new EndSessionRequest(SelectedViewSession.SessionID));
+        if (result.Errors == null || result.Errors.Count == 0)
         {
-            return VisibleDays.Where(d => d.DayOfWeek != DayOfWeek.Saturday && d.DayOfWeek != DayOfWeek.Sunday);
+            var masterSessionItem = _sessions.FirstOrDefault(s => s.SessionID == SelectedViewSession.SessionID);
+
+            if (masterSessionItem != null)
+            {
+                var index = _sessions.IndexOf(masterSessionItem);
+
+                _sessions[index] = masterSessionItem with { SessionStatus = "Completed" };
+            }
+
+            var dayofsession = SelectedViewSession.timeSlot.From.Date;
+            var sessionsfortheday = GetSessionsForDay(dayofsession);
+            CalculateColumns(sessionsfortheday);
+            CloseSessionDetails();
+            StateHasChanged();
         }
-        return VisibleDays;
+        else
+        {
+           
+        }
+        StateHasChanged();
+    }
+
+    private async Task HandleNoShow()
+    {
+        if (SelectedViewSession == null) return;
+        var result = await MarkSessionAsNoShowUseCase.MarkSessionAsNoShowAsync(new MarkNoShowSessionRequest(SelectedViewSession.SessionID));
+        if (result.Errors == null || result.Errors.Count == 0)
+        {
+            var masterSessionItem = _sessions.FirstOrDefault(s => s.SessionID == SelectedViewSession.SessionID);
+
+            if (masterSessionItem != null)
+            {
+                var index = _sessions.IndexOf(masterSessionItem);
+
+                _sessions[index] = masterSessionItem with { SessionStatus = "NoShow" };
+            }
+
+            var dayofsession = SelectedViewSession.timeSlot.From.Date;
+            var sessionsfortheday = GetSessionsForDay(dayofsession);
+            CalculateColumns(sessionsfortheday);
+            CloseSessionDetails();
+            StateHasChanged();
+        }
+        else
+        {
+
+        }
+        StateHasChanged();
+    }
+
+    private async Task HandleCancel()
+    {
+        if (SelectedViewSession == null) return;
+        var result = await CancelSessionUseCase.CancelSessionAsync(new CancelSessionRequest(SelectedViewSession.SessionID));
+        if (result.Errors == null || result.Errors.Count == 0)
+        {
+            var masterSessionItem = _sessions.FirstOrDefault(s => s.SessionID == SelectedViewSession.SessionID);
+
+            if (masterSessionItem != null)
+            {
+                var index = _sessions.IndexOf(masterSessionItem);
+
+                _sessions[index] = masterSessionItem with { SessionStatus = "Cancelled" };
+            }
+
+            var dayofsession = SelectedViewSession.timeSlot.From.Date;
+            var sessionsfortheday = GetSessionsForDay(dayofsession);
+            CalculateColumns(sessionsfortheday);
+            CloseSessionDetails();
+            StateHasChanged();
+        }
+        else
+        {
+
+        }
+        StateHasChanged();
+    }
+    private void ClearPopupSelection()
+    {
+        SelectedCell = null;
+        SelectedSessionTypeId = Guid.Empty;
     }
 
 }
