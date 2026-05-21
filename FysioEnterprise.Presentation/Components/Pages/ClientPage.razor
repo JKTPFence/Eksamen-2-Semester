@@ -59,7 +59,7 @@
                                     <td>@client.ClientAddress</td>
 									<td>@client.ClientBirthDate.ToString("dd/MM/yyyy")</td>
 									<td>@client.ClientNote</td>
-                                    <td>@GetStaffNameById(client.ClientPrefferedStaffID)</td>
+                                    <td>@_staff.FirstOrDefault(s => s.StaffID == client.ClientPrefferedStaffID)?.StaffFirstName @_staff.FirstOrDefault(s => s.StaffID == client.ClientPrefferedStaffID)?.StaffLastName</td>
                                     <td>
                                         <button class="btn btn-sm btn-warning" @onclick="() => OpenEditModal(client)">
                                             <i class="bi bi-pencil"></i> Rediger

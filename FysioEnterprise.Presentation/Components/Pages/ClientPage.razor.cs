@@ -20,8 +20,6 @@ namespace FysioEnterprise.Presentation.Components.Pages
         [Inject] private IDeleteClientUseCase DeleteClientUseCase { get; set; } = default!;
         [Inject] private LogInContext Context { get; set; } = default!;
 
-        private Dictionary<Guid, string> staffLookup = new();
-
         public static readonly CultureInfo DanishCulture = new("da-DK");
 
         private class ClientEditModel
@@ -65,16 +63,6 @@ namespace FysioEnterprise.Presentation.Components.Pages
         private async Task LoadStaff()
         {
             _staff = await SimpleQueries.GetAllStaffByClinicAsync(Context.ClinicId);
-
-            staffLookup = _staff.ToDictionary(s => s.StaffID, s => $"{s.StaffFirstName} {s.StaffLastName}");
-
-        }
-
-        private string GetStaffNameById(Guid staffId)
-        {
-            return staffId == Guid.Empty
-                ? "Ikke valgt"
-                : (staffLookup.TryGetValue(staffId, out var name) ? name : "Ukendt personale");
         }
 
         private void FilterClients()
