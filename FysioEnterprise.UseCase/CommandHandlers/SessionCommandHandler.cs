@@ -66,14 +66,11 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
             var sessionTypeResult = await _sessionTypeRepository.GetSessionTypeAsync(request.SessionInstanceTypeID);
             if (sessionTypeResult.IsFailed)
                 return Result.Fail("Session type not found.");
-
-            Result<Promotion> promotionResult = null;
-            if (request.PromotionID != Guid.Empty)
-            {
-                promotionResult = await _promotionRepository.GetPromotionAsync(request.PromotionID);
+            
+            var promotionResult = await _promotionRepository.GetPromotionAsync(request.PromotionID);
                 if (promotionResult.IsFailed)
                     return Result.Fail("Promotion not found.");
-            }
+    
 
             var existingClientSessions = await _sessionRepository.GetSessionsByClientAsync(request.ClientID);
             var existingStaffSessions = await _sessionRepository.GetSessionsByStaffAsync(request.StaffID);
@@ -94,7 +91,7 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
                     promotionResult?.Value
                 );
 
-                var totalPrice = _calculator.Calculate(
+                var totalPrice = await _calculator.Calculate(
                     sessionTypeResult.Value.SessionTypePrice,
                     strategies
                 );
@@ -154,6 +151,7 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
             var existingRoomSessions = await _sessionRepository.GetSessionsByRoomAsync(request.ClinicID, request.SessionRoomID);
             var timeSlot = new TimeSlot(request.StartTime, request.EndTime);
 
+            await _sessionLock.WaitAsync();
             try
             {
                   session.UpdateSessionTime(
@@ -164,6 +162,8 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
                     existingRoomSessions.Where(s => s.Id != session.Id)
                     );
 
+                await _sessionRepository.UpdateSessionAsync(session);
+                return Result.Ok();
             }
 
             catch (DomainException ex)
@@ -171,8 +171,11 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
                 return Result.Fail(ex.Message);
             }
 
-            await _sessionRepository.UpdateSessionAsync(session);
-            return Result.Ok();
+         finally
+          {
+            _sessionLock.Release();
+          }
+
         }
 
         public async Task<Result> EndSessionAsync(EndSessionRequest request)

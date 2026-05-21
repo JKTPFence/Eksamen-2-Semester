@@ -12,27 +12,27 @@ namespace FysioEnterprise.Testing.Domain
         private readonly PriceCalculator _calculator = new PriceCalculator();
 
         [Fact]
-        public void Calculate_NoStrategies_ReturnsBasePrice()
+        public async Task Calculate_NoStrategies_ReturnsBasePrice()
         {
-            var result = _calculator.Calculate(BasePrice, new List<IPricingStrategy>());
+            var result = await _calculator.Calculate(BasePrice, new List<IPricingStrategy>());
             Assert.Equal(BasePrice, result);
         }
 
         [Fact]
-        public void Calculate_OnlyLoyalty_AppliesLoyaltyDiscount()
+        public async Task Calculate_OnlyLoyalty_AppliesLoyaltyDiscount()
         {
             var strategies = new List<IPricingStrategy>
         {
             new LoyaltyPricingStrategy(LoyaltyLevel.Gold) 
         };
 
-            var result = _calculator.Calculate(BasePrice, strategies);
+            var result = await _calculator.Calculate(BasePrice, strategies);
 
             Assert.Equal(85m, result);
         }
 
         [Fact]
-        public void Calculate_BirthdayBeatLoyalty_AppliesBirthdayDiscount()
+        public async Task Calculate_BirthdayBeatLoyalty_AppliesBirthdayDiscount()
         {
             var strategies = new List<IPricingStrategy>
         {
@@ -40,13 +40,13 @@ namespace FysioEnterprise.Testing.Domain
             new BirthdayPricingStrategy()                    
         };
 
-            var result = _calculator.Calculate(BasePrice, strategies);
+            var result = await _calculator.Calculate(BasePrice, strategies);
 
             Assert.Equal(75m, result);
         }
 
         [Fact]
-        public void Calculate_PromotionBeatsAll_AppliesPromotionDiscount()
+        public async Task Calculate_PromotionBeatsAll_AppliesPromotionDiscount()
         {
             var strategies = new List<IPricingStrategy>
         {
@@ -55,13 +55,13 @@ namespace FysioEnterprise.Testing.Domain
             new PromotionPricingStrategy(40m)               
         };
 
-            var result = _calculator.Calculate(BasePrice, strategies);
+            var result = await _calculator.Calculate(BasePrice, strategies);
 
             Assert.Equal(60m, result);
         }
 
         [Fact]
-        public void Calculate_AlwaysPicksLowestPrice()
+        public async Task Calculate_AlwaysPicksLowestPrice()
         {
             var strategies = new List<IPricingStrategy>
         {
@@ -69,20 +69,20 @@ namespace FysioEnterprise.Testing.Domain
             new PromotionPricingStrategy(5m)                
         };
 
-            var result = _calculator.Calculate(BasePrice, strategies);
+            var result = await _calculator.Calculate(BasePrice, strategies);
 
             Assert.Equal(90m, result);
         }
 
         [Fact]
-        public void Calculate_PromotionZeroPercent_ReturnsBasePrice()
+        public async Task Calculate_PromotionZeroPercent_ReturnsBasePrice()
         {
             var strategies = new List<IPricingStrategy>
         {
             new PromotionPricingStrategy(0m)
         };
 
-            var result = _calculator.Calculate(BasePrice, strategies);
+            var result = await _calculator.Calculate(BasePrice, strategies);
 
             Assert.Equal(BasePrice, result);
         }

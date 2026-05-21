@@ -15,7 +15,7 @@
                 <RadzenIcon Icon="business" Style="font-size: 18px;" />
                 Klinik
             </label>
-            <select class="form-select" @onchange="@((ChangeEventArgs e) => OnClinicChanged(e))">
+            <select class="form-select" @onchange="OnClinicChanged">
                 <option value="" disabled selected hidden>— Vælg en klinik —</option>
                 @foreach (var clinic in _clinics)
                 {
@@ -23,26 +23,26 @@
                 }
             </select>
         </section>
-
-        <section class="form-field">
-            <label for="staff" class="field-label">
-                <RadzenIcon Icon="person_outline" Style="font-size: 18px;" />
-                Receptionist
-            </label>
-            <select id="staff"
-                    class="form-select"
-                    @onchange="OnStaffChanged"
-                    disabled="@(_selectedClinicId == Guid.Empty)">
-                <option value="" disabled selected hidden>— Vælg receptionist —</option>
-                @if (_receptionistsInClinic != null)
-                {
-                    @foreach (var r in _receptionistsInClinic)
+            <section class="form-field">
+                <label for="staff" class="field-label">
+                    <RadzenIcon Icon="person_outline" Style="font-size: 18px;" />
+                    Receptionist
+                </label>
+                <select id="staff"
+                        class="form-select"
+                        value="@_selectedStaffValue"
+                        @onchange="OnStaffChanged"
+                        disabled="@(_selectedClinicId == Guid.Empty)">
+                    <option value="" disabled selected hidden>— Vælg receptionist —</option>
+                    @if (_receptionistsInClinic != null)
                     {
-                        <option value="@r.StaffID.ToString()">@r.StaffFirstName @r.StaffLastName</option>
+                        @foreach (var r in _receptionistsInClinic)
+                        {
+                            <option value="@r.StaffID.ToString()">@r.StaffFirstName @r.StaffLastName</option>
+                        }
                     }
-                }
-            </select>
-        </section>
+                </select>
+            </section>
 
         <footer class="action-footer">
             <button class="submit-button" @onclick="Proceed" disabled="@(!CanProceed)">

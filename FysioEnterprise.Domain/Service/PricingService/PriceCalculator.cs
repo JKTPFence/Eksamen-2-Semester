@@ -7,14 +7,15 @@ namespace FysioEnterprise.Domain.Service.PricingService
 {
     public class PriceCalculator
     {
-        public decimal Calculate(decimal basePrice, IEnumerable<IPricingStrategy> strategies)
+        public async Task<decimal> Calculate(decimal basePrice, IEnumerable<IPricingStrategy> strategies)
         {
             if (!strategies.Any())
                 return basePrice;
 
-            return strategies
-                .Select(s => s.Apply(basePrice))
-                .Min();
+            var results = await Task.WhenAll(
+                strategies.Select(s => Task.Run(() => s.Apply(basePrice))));
+
+            return results.Min();
         }
     }
 }
