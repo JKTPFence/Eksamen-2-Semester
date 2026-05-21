@@ -1,8 +1,174 @@
-﻿@rendermode InteractiveServer
-@page "/clients"
+﻿@page "/Clients"
+@rendermode InteractiveServer
 
-<h3>ClientPage</h3>
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h2>Klienter</h2>
+        </div>
+        <div class="col-md-4 text-end">
+            <button class="btn btn-primary" @onclick="OpenCreateModal">
+                <i class="bi bi-plus-circle"></i> Opret klient
+            </button>
+        </div>
+    </div>
 
-@code {
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <input type="text" 
+                   class="form-control" 
+                   placeholder="Søg på navn, email eller telefon..." 
+                   @bind="searchTerm" 
+                   @oninput="OnSearchChanged" />
+        </div>
+    </div>
 
-}
+    <div class="row">
+        <div class="col-12">
+            @if (filteredClients == null)
+            {
+                <p><em>Indlæser...</em></p>
+            }
+            else if (filteredClients.Count == 0)
+            {
+                <div class="alert alert-info">Ingen klienter fundet.</div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Navn</th>
+                                <th>Email</th>
+                                <th>Telefon</th>
+                                <th>Adresse</th>
+                                <th>Fødselsdato</th>
+                                <th>Note</th>
+                                <th>Foretrukket personale</th>
+                                <th>Handlinger</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var client in filteredClients)
+                            {
+                                <tr>
+                                    <td>@client.ClientFirstName @client.ClientLastName</td>
+                                    <td>@client.ClientEmail</td>
+                                    <td>@client.ClientPhoneNumber</td>
+                                    <td>@client.ClientAddress</td>
+									<td>@client.ClientBirthDate.ToString("dd/MM/yyyy")</td>
+									<td>@client.ClientNote</td>
+                                    <td>@_staff.FirstOrDefault(s => s.StaffID == client.ClientPrefferedStaffID)?.StaffFirstName @_staff.FirstOrDefault(s => s.StaffID == client.ClientPrefferedStaffID)?.StaffLastName</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-warning" @onclick="() => OpenEditModal(client)">
+                                            <i class="bi bi-pencil"></i> Rediger
+                                        </button>
+                                        <button class="btn btn-sm btn-danger" @onclick="() => OpenDeleteConfirm(client)">
+                                            <i class="bi bi-trash"></i> Slet
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<div class="modal @(showModal ? "show d-block" : "")" tabindex="-1" role="dialog" style="background-color: @(showModal ? "rgba(0,0,0,0.5)" : "")">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@(isEditMode ? "Rediger Client" : "Opret ny Client")</h5>
+                <button type="button" class="btn-close" @onclick="CloseModal"></button>
+            </div>
+            <div class="modal-body">
+                @if (showError && !string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        @errorMessage
+                        <button type="button" class="btn-close" @onclick="() => showError = false"></button>
+                    </div>
+                }
+                <EditForm Model="currentClient" OnValidSubmit="SaveClient">
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Navn *</label>
+                        <InputText id="name" class="form-control" @bind-Value="currentClient.ClientFirstName" />
+                        <ValidationMessage For="() => currentClient.ClientFirstName" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="lastname" class="form-label">Efternavn</label>
+                        <InputText id="lastname" class="form-control" @bind-Value="currentClient.ClientLastName" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email *</label>
+                        <InputText id="email" class="form-control" type="email" @bind-Value="currentClient.ClientEmail" />
+                        <ValidationMessage For="() => currentClient.ClientEmail" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">Telefonnummer</label>
+                        <InputText id="phone" class="form-control" @bind-Value="currentClient.ClientPhoneNumber" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Adresse</label>
+                        <InputText id="address" class="form-control" @bind-Value="currentClient.ClientAddress" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="birthdate" class="form-label">Fødselsdato</label>
+                        <InputDate id="birthdate" class="form-control" @bind-Value="currentClient.ClientBirthDate" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="note" class="form-label">Note</label>
+                        <InputTextArea id="note" class="form-control" @bind-Value="currentClient.ClientNote" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="staff" class="form-label">Foretrukket personale</label>
+                        <InputSelect id="staff" class="form-control" @bind-Value="currentClient.ClientPrefferedStaffID">
+                            <option value="@Guid.Empty">-- Vælg personale --</option>
+                            @foreach (var staff in _staff)
+                            {
+                                <option value="@staff.StaffID">@staff.StaffFirstName @staff.StaffLastName</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" @onclick="CloseModal">Annuller</button>
+                        <button type="submit" class="btn btn-primary">Gem</button>
+                    </div>
+                </EditForm>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal @(showDeleteConfirm ? "show d-block" : "")" tabindex="-1" role="dialog" style="background-color: @(showDeleteConfirm ? "rgba(0,0,0,0.5)" : "")">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Bekræft</h5>
+                <button type="button" class="btn-close" @onclick="CloseDeleteConfirm"></button>
+            </div>
+            <div class="modal-body">
+                <p>Er du sikker på, at du vil slette <strong>@clientToDelete?.ClientFirstName @clientToDelete?.ClientLastName</strong>?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="CloseDeleteConfirm">Annuller</button>
+                <button type="button" class="btn btn-danger" @onclick="DeleteClient">Slet</button>
+            </div>
+        </div>
+    </div>
+</div>
