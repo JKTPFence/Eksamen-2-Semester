@@ -6,7 +6,7 @@ namespace FysioEnterprise.UseCase.IRepositories
     public interface IPromotionRepository
     {
             Task<Result> CreatePromotionAsync(Promotion promotion);
-            Task<Promotion> GetPromotionAsync(Guid ID);
+            Task<Result<Promotion>> GetPromotionAsync(Guid ID);
             Task<Result> UpdatePromotionAsync(Promotion promotion);
             Task<Promotion> DeletePromotionAsync(Guid ID);
     }
