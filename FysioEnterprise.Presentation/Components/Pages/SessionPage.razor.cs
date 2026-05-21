@@ -46,8 +46,6 @@ namespace FysioEnterprise.Presentation.Components.Pages
         private string _errorMessage = string.Empty;
         private string _successMessage = string.Empty;
 
-        private int SessionTimeInMinutes;
-
         private bool CanSubmit =>
             _selectedClientId != Guid.Empty &&
             _selectedClinicId != Guid.Empty &&
@@ -140,14 +138,15 @@ namespace FysioEnterprise.Presentation.Components.Pages
 
         private int GetSessionTypeInMinutes(SessionTypeDTO sessionType)
         {
+            int minutes = 0;
+
             if (sessionType.SessionTypeTimeSpan.Hour > 0)
             {
-                var hourCount = sessionType.SessionTypeTimeSpan.Hour;
-                SessionTimeInMinutes = hourCount * 60;
+                minutes = sessionType.SessionTypeTimeSpan.Hour * 60;
             }
-            var totalMinuteCount = sessionType.SessionTypeTimeSpan.Minute + SessionTimeInMinutes;
-            SessionTimeInMinutes = 0;
-            return totalMinuteCount;
+
+            minutes += sessionType.SessionTypeTimeSpan.Minute;
+            return minutes;
         }
 
         private void OnRoomChanged(ChangeEventArgs e)
