@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using FysioEnterprise.Domain;
 using FysioEnterprise.Domain.Entities;
 using FysioEnterprise.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +13,7 @@ namespace FysioEnterprise.Infrastructure.Database
         public AppDBContext(DbContextOptions<AppDBContext> options) : base(options) { }
 
         public DbSet<Entity.Session> Sessions { get; set; }
-        public DbSet<Entity.Staff> Staff {  get; set; }
+        public DbSet<Entity.Staff> Staff { get; set; }
         public DbSet<Entity.Client> Clients { get; set; }
         public DbSet<Entity.Promotion> Promotions { get; set; }
         public DbSet<Entity.Clinic> Clinics { get; set; }
@@ -23,15 +24,14 @@ namespace FysioEnterprise.Infrastructure.Database
             if (await Clinics.AnyAsync()) return;
 
             var clinics = SeedData.ClinicSeed.GetSeedData();
+            var promotion = SeedData.PromotionSeed.GetSeedData();
             var sessionTypes = SeedData.SessionTypeSeed.GetSeedData().ToList();
             var staff = SeedData.StaffSeed.GetSeedData(clinics);
             var clients = SeedData.ClientSeed.GetSeedData(staff);
-            var sessions = SeedData.SessionSeed.GetSeedData(clients, staff, sessionTypes, clinics);
-
-            var promotion = SeedData.PromotionSeed.GetSeedData();
+            var sessions = SeedData.SessionSeed.GetSeedData(clients, staff, sessionTypes, clinics, promotion);
 
             await Clinics.AddRangeAsync(clinics);
-            await SessionTypes.AddRangeAsync(sessionTypes); 
+            await SessionTypes.AddRangeAsync(sessionTypes);
             await Staff.AddRangeAsync(staff);
             await Clients.AddRangeAsync(clients);
             await Sessions.AddRangeAsync(sessions);
@@ -42,13 +42,19 @@ namespace FysioEnterprise.Infrastructure.Database
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<SessionType>().HasData(SessionTypeSeed.GetSeedData());
-            modelBuilder.Entity<Promotion>().HasData(PromotionSeed.GetSeedData());
 
+            modelBuilder.Entity<Session>(entity =>
+            {
+                entity.Property(s => s.SessionStatus)
+                    .HasConversion<string>();
 
-            modelBuilder.Entity<Entity.Session>()
-                .Property(s => s.SessionStatus)
-                .HasConversion<string>();
+                entity.OwnsOne(s => s.priceTotal, price =>
+                {
+                    price.Property(p => p.Value)
+                            .HasColumnName("PriceTotal")
+                            .IsRequired();
+                });
+            });
 
             modelBuilder.Entity<Entity.Session>()
             .OwnsOne(s => s.SessionTimeSlot, ts =>
@@ -83,6 +89,15 @@ namespace FysioEnterprise.Infrastructure.Database
                 assignment.Property(a => a.ClinicId);
             });
 
+            modelBuilder.Entity<SessionType>(entity =>
+            {
+                entity.OwnsOne(st => st.SessionTypePrice, price =>
+                {
+                    price.Property(p => p.Value)
+                         .HasColumnName("SessionTypePrice")
+                         .IsRequired();
+                });
+            });
 
 
             base.OnModelCreating(modelBuilder);

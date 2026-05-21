@@ -41,7 +41,7 @@ namespace FysioEnterprise.UseCase.CommandHandlers.PromotionCommands
                         request.StartDate,
                         request.EndDate);
 
-                return await _promotionRepository.CreatePromotionAsync(promotion);
+                return await _promotionRepository.CreatePromotionAsync(promotion.Value);
             }
             catch (DomainException ex)
             {
@@ -71,13 +71,13 @@ namespace FysioEnterprise.UseCase.CommandHandlers.PromotionCommands
             if (promotion == null)
                 return Result.Fail("Promotion not found.");
                 
-            promotion.UpdatePromotion(
+            promotion.Value.UpdatePromotion(
                     request.Name,
                     request.DiscountPercentage,
                     request.StartDate,
                     request.EndDate);
                 
-            await _promotionRepository.UpdatePromotionAsync(promotion);
+            await _promotionRepository.UpdatePromotionAsync(promotion.Value);
             return Result.Ok();
         }
         public async Task<Result> DeletePromotionAsync(DeletePromotionRequest request)

@@ -1,5 +1,7 @@
 ﻿using FysioEnterprise.Domain.Entities;
+using FysioEnterprise.Domain.Service.PricingService;
 using FysioEnterprise.Domain.ValueObjects;
+using Microsoft.IdentityModel.Tokens;
 
 namespace FysioEnterprise.Infrastructure.Database
 {
@@ -7,27 +9,20 @@ namespace FysioEnterprise.Infrastructure.Database
     {
         public static class SessionTypeSeed
         {
-            public static IEnumerable<SessionType> GetSeedData() => new List<SessionType>
+            public static List<SessionType> GetSeedData()
             {
-                // Fysioterapi
-                new SessionType("Fysioterapi 30 min.",  395, 1, new TimeOnly(0, 30)),
-                new SessionType("Fysioterapi 45 min.",  589, 1, new TimeOnly(0, 45)),
-                new SessionType("Fysioterapi 60 min.",  745, 1, new TimeOnly(1, 0)),
+                var sessiontype1 = new SessionType("Fysioterapi", new Price(395), 1, new TimeOnly(0, 30), new List<int> {44444});
+                var sessiontype2 = new SessionType("Fysioterapi", new Price(589), 1, new TimeOnly(0, 45), new List<int> {44444});
+                var sessiontype3 = new SessionType("Fysioterapi", new Price(745), 1, new TimeOnly(1, 0), new List<int> {44444});
+                var sessiontype4 = new SessionType("Sportsmassage", new Price(350), 1, new TimeOnly(0, 30), new List<int> { 44444, 33333 });
+                var sessiontype5 = new SessionType("Sportsmassage", new Price(699), 1, new TimeOnly(1, 0), new List<int> { 44444, 33333 });
+                var sessiontype6 = new SessionType("Akupunktur", new Price(550), 1, new TimeOnly(0, 45), new List<int> { 11111 });
+                var sessiontype7 = new SessionType("Kostvejledning førstegang", new Price(799), 1, new TimeOnly(1, 0), new List<int> { 55555 });
+                var sessiontype8 = new SessionType("Kostvejledning opfølgning", new Price(450), 1, new TimeOnly(0, 30), new List<int> { 55555 });
+                var sessiontype9 = new SessionType("Holdtræning/genoptræning", new Price(150), 6, new TimeOnly(1, 0), new List<int> { 44444, 66666});
 
-                // Sportsmassage
-                new SessionType("Sportsmassage 30 min.", 350, 1, new TimeOnly(0, 30)),
-                new SessionType("Sportsmassage 60 min.", 699, 1, new TimeOnly(1, 0)),
-
-                // Akupunktur
-                new SessionType("Akupunktur 45 min.", 550, 1, new TimeOnly(0, 45)),
-
-                // Kostvejledning
-                new SessionType("Kostvejledning førstegang",  799, 1, new TimeOnly(1, 0)),
-                new SessionType("Kostvejledning opfølgning",  450, 1, new TimeOnly(0, 30)),
-
-                // Holdtræning
-                new SessionType("Holdtræning/genoptræning 60 min.", 150, 6, new TimeOnly(1, 0)),
-            };
+                return new List<SessionType> { sessiontype1, sessiontype2, sessiontype3, sessiontype4, sessiontype5, sessiontype6, sessiontype7, sessiontype8, sessiontype9 };
+            }
         }
 
         public static class ClinicSeed
@@ -93,29 +88,55 @@ namespace FysioEnterprise.Infrastructure.Database
         {
             public static List<Staff> GetSeedData(List<Clinic> clinics)
             {
-                var staff1 = new Staff("Anders", "Nielsen", "anders@bookright.dk", "Fysioterapeut", 444444, new List<Clinic> {});
+                var staff1 = new Staff("Anders", "Nielsen", "anders@bookright.dk", "Fysioterapeut", 44444, new List<Clinic> {});
                 var staff2 = new Staff("Maria", "Hansen", "maria@bookright.dk", "Massør", 33333, new List<Clinic> {});
                 var staff3 = new Staff("Lars", "Pedersen", "lars@fysio.dk", "Akupunktør", 11111, new List<Clinic> {});
                 var staff4 = new Staff("Sofie", "Jensen", "jense@bookright.dk", "Kostvejleder", 55555, new List<Clinic> {});
-                var staff5 = new Staff("Karl", "Lennart", "KarlL@bookright.dk", "Fysioterapeut", 444444, new List<Clinic> { });
+                var staff5 = new Staff("Karl", "Lennart", "KarlL@bookright.dk", "Fysioterapeut", 44444, new List<Clinic> { });
+                var staff6 = new Staff("Mette", "Larsen", "metteJHL@bookright.dk", "Træner", 66666, new List<Clinic> { });
+                var staff7 = new Staff("Thomas", "Christensen", "thomas@bookright.dk", "Fysioterapeut", 44444, new List<Clinic> { });
+                var staff8 = new Staff("Camilla", "Møller", "camilla@bookright.dk", "Massør", 33333, new List<Clinic> { });
+                var staff9 = new Staff("Rasmus", "Andersen", "rasmus@bookright.dk", "Akupunktør", 11111, new List<Clinic> { });
+                var staff10 = new Staff("Louise", "Thomsen", "louise@bookright.dk", "Kostvejleder", 55555, new List<Clinic> { });
+                var staff11 = new Staff("Mikkel", "Kristensen", "mikkel@bookright.dk", "Træner", 66666, new List<Clinic> { });
+                var staff12 = new Staff("Stine", "Rasmussen", "stine@bookright.dk", "Fysioterapeut", 44444, new List<Clinic> { });
 
-                var receptionist1 = new Staff("Sofie", "Jørgensen", "smj01@bookwell.dk", "Receptionist", 22222, new List<Clinic> {});
-                var receptionist2 = new Staff("Emilie", "Hansen", "erh97@bookwell.dk", "Receptionist", 22222, new List<Clinic> { });
-                var receptionist3 = new Staff("Jan", "Krabbe", "jk85@bookwell.dk", "Receptionist", 22222, new List<Clinic> { });
+                var receptionist1 = new Staff("Sofie", "Jørgensen", "smj01@bookright.dk", "Receptionist", 22222, new List<Clinic> {});
+                var receptionist2 = new Staff("Emilie", "Hansen", "erh97@bookright.dk", "Receptionist", 22222, new List<Clinic> { });
+                var receptionist3 = new Staff("Jan", "Krabbe", "jk85@bookright.dk", "Receptionist", 22222, new List<Clinic> { });
+                var receptionist4 = new Staff("Lone", "Madsen", "lm54@bookright.dk", "Receptionist", 22222, new List<Clinic> { });
+                var receptionist5 = new Staff("Peter", "Andersen", "pa98@bookright.dk", "Receptionist", 22222, new List<Clinic> { });
 
                 staff1.AssignToClinic(clinics[0].Id);
+                staff1.AssignToClinic(clinics[1].Id);
                 staff2.AssignToClinic(clinics[0].Id);
                 staff2.AssignToClinic(clinics[1].Id);
                 staff3.AssignToClinic(clinics[1].Id);
                 staff4.AssignToClinic(clinics[2].Id);
                 staff5.AssignToClinic(clinics[2].Id);
+                staff6.AssignToClinic(clinics[1].Id);
+                staff6.AssignToClinic(clinics[2].Id);
+                staff7.AssignToClinic(clinics[0].Id);
+                staff8.AssignToClinic(clinics[0].Id);
+                staff8.AssignToClinic(clinics[2].Id);
+                staff9.AssignToClinic(clinics[1].Id);
+                staff10.AssignToClinic(clinics[2].Id);
+                staff10.AssignToClinic(clinics[0].Id);
+                staff11.AssignToClinic(clinics[0].Id);
+                staff11.AssignToClinic(clinics[1].Id);
+                staff11.AssignToClinic(clinics[2].Id);
+                staff12.AssignToClinic(clinics[2].Id);
 
                 receptionist1.AssignToClinic(clinics[0].Id);
+                receptionist1.AssignToClinic(clinics[1].Id);
                 receptionist2.AssignToClinic(clinics[1].Id);
                 receptionist3.AssignToClinic(clinics[2].Id);
+                receptionist4.AssignToClinic(clinics[2].Id);
+                receptionist5.AssignToClinic(clinics[1].Id);
+                receptionist5.AssignToClinic(clinics[0].Id);
 
 
-                return new List<Staff> { staff1, staff2, staff3, staff4, staff5, receptionist1, receptionist2, receptionist3};
+                return new List<Staff> { staff1, staff2, staff3, staff4, staff5, staff6, staff7, staff8, staff9, staff10, staff11, staff12, receptionist1, receptionist2, receptionist3, receptionist4, receptionist5};
             }
         }
 
@@ -144,13 +165,57 @@ namespace FysioEnterprise.Infrastructure.Database
 
         public class SessionSeed
         {
-            public static List<Session> GetSeedData(List<Client> clients, List<Staff> staff, List<SessionType> sessionTypes, List<Clinic> clinics)
+            public static List<Session> GetSeedData(List<Client> clients, List<Staff> staff, List<SessionType> sessionTypes, List<Clinic> clinics, List<Promotion> promotions)
             {
-                var session1 = Session.Create(clients[0].Id, staff[0].Id, sessionTypes[0].Id, clinics[0].ClinicRooms[0].Id, new TimeSlot(DateTime.UtcNow.AddDays(1), DateTime.UtcNow.AddDays(1).AddMinutes(30)), 395, null, new List<Session>(), new List<Session>(), new List<Session>());
-                var session2 = Session.Create(clients[1].Id, staff[1].Id, sessionTypes[4].Id, clinics[0].ClinicRooms[1].Id, new TimeSlot(DateTime.UtcNow.AddDays(2), DateTime.UtcNow.AddDays(2).AddHours(1)), 699, null, new List<Session>(), new List<Session>(), new List<Session>());
-                var session3 = Session.Create(clients[2].Id, staff[2].Id, sessionTypes[5].Id, clinics[1].ClinicRooms[0].Id, new TimeSlot(DateTime.UtcNow.AddDays(3), DateTime.UtcNow.AddDays(3).AddMinutes(45)), 550, null, new List<Session>(), new List<Session>(), new List<Session>());
+                var dummyPricingFactory = new SeedPricingFactory();
 
-                return new List<Session> { session1,  session2, session3 };
+                var session1 = Session.Create(clients[0], staff[0].Id, sessionTypes[0], clinics[0].ClinicRooms[0].Id, new TimeSlot(DateTime.UtcNow.AddDays(1), DateTime.UtcNow.AddDays(1).AddMinutes(30)), 395, promotions[1], new List<Session>(), new List<Session>(), new List<Session>(), dummyPricingFactory);
+                var session2 = Session.Create(clients[1], staff[1].Id, sessionTypes[4], clinics[0].ClinicRooms[1].Id, new TimeSlot(DateTime.UtcNow.AddDays(2), DateTime.UtcNow.AddDays(2).AddHours(1)), 699, null, new List<Session>(), new List<Session>(), new List<Session>(), dummyPricingFactory);
+                var session3 = Session.Create(clients[2], staff[2].Id, sessionTypes[5], clinics[1].ClinicRooms[0].Id, new TimeSlot(DateTime.UtcNow.AddDays(3), DateTime.UtcNow.AddDays(3).AddMinutes(45)), 550, promotions[0], new List<Session>(), new List<Session>(), new List<Session>(), dummyPricingFactory);
+                
+                //More extensive seed data to validate and test the functionality of the Calendar (Especially when sessions overlap)
+                DateTime today = DateTime.UtcNow.Date;
+                int daysUntilMonday = ((int)DayOfWeek.Monday - (int)today.DayOfWeek + 7) % 7;
+                if (daysUntilMonday == 0 && today.DayOfWeek != DayOfWeek.Monday) daysUntilMonday = 7;
+
+                DateTime nextMonday = today.AddDays(daysUntilMonday);
+                DateTime nextTuesday = nextMonday.AddDays(1);
+                DateTime nextWednesday = nextMonday.AddDays(2);
+                DateTime nextThursday = nextMonday.AddDays(3);
+                DateTime nextFriday = nextMonday.AddDays(4);
+
+                var session4 = Session.Create(clients[2], staff[0].Id, sessionTypes[0], clinics[0].ClinicRooms[0].Id, new TimeSlot(nextMonday.AddHours(13).AddMinutes(0), nextMonday.AddHours(14).AddMinutes(0)), 450, promotions[0], new List<Session>(), new List<Session>(), new List<Session>(), dummyPricingFactory);
+                var session5 = Session.Create(clients[1], staff[1].Id, sessionTypes[3], clinics[0].ClinicRooms[0].Id, new TimeSlot(nextMonday.AddHours(13).AddMinutes(15), nextMonday.AddHours(14).AddMinutes(0)), 450, null, new List<Session>(), new List<Session>(), new List<Session>(), dummyPricingFactory);
+                var session6 = Session.Create(clients[0], staff[2].Id, sessionTypes[4], clinics[1].ClinicRooms[1].Id, new TimeSlot(nextTuesday.AddHours(14).AddMinutes(0), nextTuesday.AddHours(15).AddMinutes(0)), 699, null, new List<Session>(), new List<Session>(), new List<Session>(), dummyPricingFactory);
+                var session7 = Session.Create(clients[1], staff[0].Id, sessionTypes[1], clinics[0].ClinicRooms[1].Id, new TimeSlot(nextTuesday.AddHours(15).AddMinutes(0), nextTuesday.AddHours(16).AddMinutes(0)), 395, null, new List<Session>(), new List<Session>(), new List<Session>(), dummyPricingFactory);
+                var session8 = Session.Create(clients[2], staff[1].Id, sessionTypes[2], clinics[0].ClinicRooms[0].Id, new TimeSlot(nextWednesday.AddHours(8).AddMinutes(0), nextWednesday.AddHours(9).AddMinutes(0)), 550, promotions[0], new List<Session>(), new List<Session>(), new List<Session>(), dummyPricingFactory);
+                var session9 = Session.Create(clients[1], staff[1].Id, sessionTypes[0], clinics[0].ClinicRooms[0].Id, new TimeSlot(nextWednesday.AddHours(9).AddMinutes(0), nextWednesday.AddHours(9).AddMinutes(45)), 395, null, new List<Session>(), new List<Session>(), new List<Session>(), dummyPricingFactory);
+                var session10 = Session.Create(clients[2], staff[0].Id, sessionTypes[5], clinics[0].ClinicRooms[1].Id, new TimeSlot(nextWednesday.AddHours(11).AddMinutes(0), nextWednesday.AddHours(12).AddMinutes(0)), 850, null, new List<Session>(), new List<Session>(), new List<Session>(), dummyPricingFactory);
+                var session11 = Session.Create(clients[0], staff[0].Id, sessionTypes[1], clinics[0].ClinicRooms[0].Id, new TimeSlot(nextWednesday.AddHours(11).AddMinutes(30), nextWednesday.AddHours(12).AddMinutes(30)), 699, null, new List<Session>(), new List<Session>(), new List<Session>(), dummyPricingFactory);
+                var session12 = Session.Create(clients[1], staff[2].Id, sessionTypes[3], clinics[1].ClinicRooms[0].Id, new TimeSlot(nextThursday.AddHours(13).AddMinutes(0), nextThursday.AddHours(14).AddMinutes(0)), 450, null, new List<Session>(), new List<Session>(), new List<Session>(), dummyPricingFactory);
+                var session13 = Session.Create(clients[2], staff[0].Id, sessionTypes[4], clinics[0].ClinicRooms[1].Id, new TimeSlot(nextThursday.AddHours(14).AddMinutes(0), nextThursday.AddHours(14).AddMinutes(30)), 395, null, new List<Session>(), new List<Session>(), new List<Session>(), dummyPricingFactory);
+                var session14 = Session.Create(clients[2], staff[1].Id, sessionTypes[2], clinics[0].ClinicRooms[0].Id, new TimeSlot(nextThursday.AddHours(14).AddMinutes(30), nextThursday.AddHours(15).AddMinutes(30)), 550, promotions[0], new List<Session>(), new List<Session>(), new List<Session>(), dummyPricingFactory);
+                var session15 = Session.Create(clients[0], staff[2].Id, sessionTypes[0], clinics[1].ClinicRooms[1].Id, new TimeSlot(nextFriday.AddHours(8).AddMinutes(30), nextFriday.AddHours(9).AddMinutes(30)), 395, null, new List<Session>(), new List<Session>(), new List<Session>(), dummyPricingFactory);
+                var session16 = Session.Create(clients[0], staff[0].Id, sessionTypes[1], clinics[0].ClinicRooms[0].Id, new TimeSlot(nextFriday.AddHours(11).AddMinutes(0), nextFriday.AddHours(12).AddMinutes(0)), 699, promotions[1], new List<Session>(), new List<Session>(), new List<Session>(), dummyPricingFactory);
+                var session17 = Session.Create(clients[1], staff[1].Id, sessionTypes[5], clinics[0].ClinicRooms[1].Id, new TimeSlot(nextFriday.AddHours(11).AddMinutes(15), nextFriday.AddHours(12).AddMinutes(15)), 850, null, new List<Session>(), new List<Session>(), new List<Session>(), dummyPricingFactory);
+                var session18 = Session.Create(clients[2], staff[2].Id, sessionTypes[2], clinics[1].ClinicRooms[0].Id, new TimeSlot(nextFriday.AddHours(11).AddMinutes(30), nextFriday.AddHours(12).AddMinutes(30)), 550, null, new List<Session>(), new List<Session>(), new List<Session>(), dummyPricingFactory);
+                var session19 = Session.Create(clients[2], staff[0].Id, sessionTypes[3], clinics[0].ClinicRooms[0].Id, new TimeSlot(nextFriday.AddHours(12).AddMinutes(30), nextFriday.AddHours(13).AddMinutes(30)), 450, null, new List<Session>(), new List<Session>(), new List<Session>(), dummyPricingFactory);
+                var session20 = Session.Create(clients[1], staff[1].Id, sessionTypes[4], clinics[0].ClinicRooms[1].Id, new TimeSlot(nextFriday.AddHours(13).AddMinutes(0), nextFriday.AddHours(14).AddMinutes(0)), 699, promotions[1], new List<Session>(), new List<Session>(), new List<Session>(), dummyPricingFactory);
+                var session21 = Session.Create(clients[0], staff[0].Id, sessionTypes[0], clinics[0].ClinicRooms[0].Id, new TimeSlot(nextMonday.AddHours(8).AddMinutes(0), nextMonday.AddHours(8).AddMinutes(30)), 395, null, new List<Session>(), new List<Session>(), new List<Session>(), dummyPricingFactory);
+                var session22 = Session.Create(clients[1], staff[1].Id, sessionTypes[1], clinics[0].ClinicRooms[1].Id, new TimeSlot(nextMonday.AddHours(9).AddMinutes(0), nextMonday.AddHours(10).AddMinutes(0)), 699, null, new List<Session>(), new List<Session>(), new List<Session>(), dummyPricingFactory);
+                var session23 = Session.Create(clients[2], staff[2].Id, sessionTypes[2], clinics[1].ClinicRooms[0].Id, new TimeSlot(nextMonday.AddHours(7).AddMinutes(30), nextMonday.AddHours(8).AddMinutes(15)), 550, null, new List<Session>(), new List<Session>(), new List<Session>(), dummyPricingFactory);
+                var session24 = Session.Create(clients[2], staff[1].Id, sessionTypes[2], clinics[0].ClinicRooms[0].Id, new TimeSlot(nextWednesday.AddHours(9).AddMinutes(0), nextWednesday.AddHours(10).AddMinutes(0)), 550, promotions[0], new List<Session>(), new List<Session>(), new List<Session>(), dummyPricingFactory);
+
+
+                return new List<Session> { session1,  session2, session3, session4, session5, session6, session7, session8, session9, session10, session11, session12, session13, session14, session15, session16, session17, session18, session19, session20, session21, session22, session23};
+            }
+        }
+        private class SeedPricingFactory : IPricingStrategyFactory
+        {
+            public Price BuildStrategies(Client client, Promotion? promotion, SessionType sessionType)
+            {
+                // Fallback default value object returned to bypass domain creation invariants smoothly
+                return new Price(450);
             }
         }
     }

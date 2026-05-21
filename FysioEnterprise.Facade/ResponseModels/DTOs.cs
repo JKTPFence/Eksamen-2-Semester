@@ -4,6 +4,11 @@ namespace FysioEnterprise.Facade.DTOs
 {
     public record SessionDTO(
         Guid SessionID,
+        Guid ClientID,
+        Guid StaffID,
+        Guid SessionTypeID,
+        Guid RoomID,
+        Guid? PromotionID,
         string ClientFirstName,
         string ClientLastName,
         string StaffFirstName,
@@ -12,7 +17,7 @@ namespace FysioEnterprise.Facade.DTOs
         string SessionTypeName,
         string? PromotionName,
         TimeSlot timeSlot,
-        decimal? SessionTotalPrice,
+        Price SessionTotalPrice,
         string SessionStatus);
 
     public record ClientDTO(
@@ -58,16 +63,17 @@ namespace FysioEnterprise.Facade.DTOs
         int? RoomNumber);
 
     public record SessionTypeDTO(
+        Guid SessionTypeID,
         string SessionTypeName,
-        decimal SessionTypePrice,
+        double SessionTypePrice,
         int SessionTypeMaxAmount,
         TimeOnly SessionTypeTimeSpan);
 
     public record EarningsReportDTO(
         DateTime From,
         DateTime To,
-        decimal TotalEarnings,
+        double TotalEarnings,
         int TotalSessions,
-        decimal AveragePerSession);
+        double AveragePerSession);
 }
 

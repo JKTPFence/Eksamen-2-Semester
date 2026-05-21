@@ -20,6 +20,11 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                 .Where(s => s.Id == sessionId)
                 .Select(s => new SessionDTO(
                     s.Id,
+                    s.SessionClientID,
+                    s.SessionStaffID,
+                    s.SessionInstanceTypeID,
+                    s.SessionRoomID,
+                    s.SessionPromotion,
                     _context.Clients
                     .Where(c => c.Id == s.SessionClientID).Select(c => c.ClientFirstName).FirstOrDefault() ?? "",
                     _context.Clients
@@ -38,7 +43,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     _context.Promotions
                     .Where(p => p.Id == s.SessionPromotion).Select(p => p.PromotionName).FirstOrDefault() ?? "",
                     s.SessionTimeSlot,
-                    s.SessionTotalPrice,
+                    s.priceTotal,
                     s.SessionStatus.ToString()))
                     .FirstOrDefaultAsync();
         }
@@ -50,6 +55,11 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                 .Where(s => s.SessionClientID == clientId)
                 .Select(s => new SessionDTO(
                     s.Id,
+                    s.SessionClientID,
+                    s.SessionStaffID,
+                    s.SessionInstanceTypeID,
+                    s.SessionRoomID,
+                    s.SessionPromotion,
                     _context.Clients
                     .Where(c => c.Id == s.SessionClientID).Select(c => c.ClientFirstName).FirstOrDefault() ?? "",
                     _context.Clients
@@ -68,7 +78,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     _context.Promotions
                     .Where(p => p.Id == s.SessionPromotion).Select(p => p.PromotionName).FirstOrDefault() ?? "",
                     s.SessionTimeSlot,
-                    s.SessionTotalPrice,
+                    s.priceTotal,
                     s.SessionStatus.ToString()))
                     .ToListAsync();
         }
@@ -80,6 +90,11 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                 .Where(s => s.SessionClientID == clientId && s.SessionStatus == SessionStatusEnum.Active)
                 .Select(s => new SessionDTO(
                     s.Id,
+                    s.SessionClientID,
+                    s.SessionStaffID,
+                    s.SessionInstanceTypeID,
+                    s.SessionRoomID,
+                    s.SessionPromotion,
                     _context.Clients
                     .Where(c => c.Id == s.SessionClientID).Select(c => c.ClientFirstName).FirstOrDefault() ?? "",
                     _context.Clients
@@ -98,7 +113,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     _context.Promotions
                     .Where(p => p.Id == s.SessionPromotion).Select(p => p.PromotionName).FirstOrDefault() ?? "",
                     s.SessionTimeSlot,
-                    s.SessionTotalPrice,
+                    s.priceTotal,
                     s.SessionStatus.ToString()))
                     .ToListAsync();
         }
@@ -110,6 +125,11 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                 .Where(s => s.SessionStaffID == staffId && s.SessionStatus == SessionStatusEnum.Active)
                 .Select(s => new SessionDTO(
                     s.Id,
+                    s.SessionClientID,
+                    s.SessionStaffID,
+                    s.SessionInstanceTypeID,
+                    s.SessionRoomID,
+                    s.SessionPromotion,
                     _context.Clients
                     .Where(c => c.Id == s.SessionClientID).Select(c => c.ClientFirstName).FirstOrDefault() ?? "",
                     _context.Clients
@@ -128,7 +148,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     _context.Promotions
                     .Where(p => p.Id == s.SessionPromotion).Select(p => p.PromotionName).FirstOrDefault() ?? "",
                     s.SessionTimeSlot,
-                    s.SessionTotalPrice,
+                    s.priceTotal,
                     s.SessionStatus.ToString()))
                     .ToListAsync();
         }
@@ -143,6 +163,11 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     .Any(r => r.Id == s.SessionRoomID))
                 .Select(s => new SessionDTO(
                     s.Id,
+                    s.SessionClientID,
+                    s.SessionStaffID,
+                    s.SessionInstanceTypeID,
+                    s.SessionRoomID,
+                    s.SessionPromotion,
                     _context.Clients
                         .Where(c => c.Id == s.SessionClientID)
                         .Select(c => c.ClientFirstName).FirstOrDefault() ?? "",
@@ -167,7 +192,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                         .Where(p => p.Id == s.SessionPromotion)
                         .Select(p => p.PromotionName).FirstOrDefault() ?? "",
                     s.SessionTimeSlot,
-                    s.SessionTotalPrice,
+                    s.priceTotal,
                     s.SessionStatus.ToString()
                 ))
                 .ToListAsync();

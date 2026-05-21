@@ -23,7 +23,8 @@ namespace FysioEnterprise.Facade.RequestModels
             string PhoneNumber,
             DateOnly DateOfBirth,
             string Address,
-            string Note);
+            string Note,
+            Guid StaffID);
         public record DeleteClientRequest(
             Guid ClientID);
 

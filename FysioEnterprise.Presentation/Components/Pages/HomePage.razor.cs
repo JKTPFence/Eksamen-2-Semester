@@ -1,12 +1,8 @@
-﻿using FluentResults;
-using FysioEnterprise.Domain.Entities;
-using FysioEnterprise.Facade.DTOs;
+﻿using FysioEnterprise.Facade.DTOs;
 using FysioEnterprise.Facade.Queries;
 using FysioEnterprise.Presentation.Service;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
-using Radzen.Blazor.Markdown;
 
 namespace FysioEnterprise.Presentation.Components.Pages
 {
@@ -20,8 +16,9 @@ namespace FysioEnterprise.Presentation.Components.Pages
         private List<StaffDTO> _staff = [];
         private List<StaffDTO> _receptionistsInClinic = [];
 
+        private string _selectedStaffValue = "";
         private Guid _selectedClinicId;
-        private Guid _selectedStaffId;
+        private Guid _selectedStaffId = Guid.Empty;
 
         private bool CanProceed =>
             _selectedClinicId != Guid.Empty &&
@@ -29,10 +26,12 @@ namespace FysioEnterprise.Presentation.Components.Pages
 
         protected override async Task OnInitializedAsync()
         {
-            _clinics = await Queries.GetAllClinicsAsync();
+            var fetchedClinics = await Queries.GetAllClinicsAsync();
+
+            _clinics = fetchedClinics.OrderBy(c => c.ClinicAddress).ToList();
         }
 
-        private async void OnClinicChanged(ChangeEventArgs e)
+        private async Task OnClinicChanged(ChangeEventArgs e)
         {
             var value = e.Value?.ToString();
             try
@@ -40,21 +39,25 @@ namespace FysioEnterprise.Presentation.Components.Pages
                 if (!string.IsNullOrEmpty(value) && Guid.TryParse(value, out var clinicId))
                 {
 
-                        _selectedClinicId = clinicId;
-                        _selectedStaffId = Guid.Empty;
+                    _selectedClinicId = clinicId;
 
-                        var staffResult = await Queries.GetAllStaffByClinicAsync(_selectedClinicId);
-                        _staff = staffResult ?? new List<StaffDTO>();
+                    var staffResult = await Queries.GetAllStaffByClinicAsync(_selectedClinicId);
+                    _staff = staffResult.OrderBy(s => s.StaffFirstName).ToList();
 
-                        if (_staff.IsNullOrEmpty() || _staff.Count() == 0)
-                            throw new ArgumentNullException();
+                    if (_staff.IsNullOrEmpty())
+                        throw new ArgumentNullException();
 
-                        _receptionistsInClinic = _staff
-                            .Where(s => s.StaffAuthorisationNumber == 22222 || s.StaffAuthorisationType == "Receptionist")
-                            .ToList();
+                    _receptionistsInClinic = _staff
+                        .Where(s => s.StaffAuthorisationNumber == 22222 || s.StaffAuthorisationType == "Receptionist")
+                        .OrderBy(s => s.StaffFirstName)
+                        .ToList();
 
-                        if (_receptionistsInClinic.Count() == 0)
-                            throw new ArgumentNullException();
+                    if (_receptionistsInClinic.Count() == 0 || _receptionistsInClinic == null)
+                        throw new ArgumentNullException();
+
+                    // Workaround to Reset staff selection when clinic changes
+                    _selectedStaffValue = "";
+                    _selectedStaffId = Guid.Empty;
 
                     StateHasChanged();
                 }
@@ -68,21 +71,29 @@ namespace FysioEnterprise.Presentation.Components.Pages
         private void OnStaffChanged(ChangeEventArgs e)
         {
             var value = e.Value?.ToString();
+            if (string.IsNullOrEmpty(value) || value == "— Vælg receptionist —")
+            {
+                _selectedStaffId = Guid.Empty;
+                _selectedStaffValue = "— Vælg receptionist —";
+                StateHasChanged();
+                return;
+            }
             if (!string.IsNullOrEmpty(value) && Guid.TryParse(value, out var staffId))
             {
                 _selectedStaffId = staffId;
+                _selectedStaffValue = value;
             }
             StateHasChanged();
         }
 
-        private void Proceed()
+        private async Task Proceed()
         {
             if (!CanProceed) return;
 
             var clinic = _clinics.First(c => c.ClinicID == _selectedClinicId);
             var staff = _staff.First(s => s.StaffID == _selectedStaffId);
 
-            Context.SetSession(
+            await Context.SetSessionAsync(
                 clinic.ClinicID,
                 clinic.ClinicAddress,
                 staff.StaffID,

@@ -28,15 +28,15 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
             return Result.Ok();
         }
 
-        public async Task<Promotion> GetPromotionAsync(Guid promotionId)
+        public async Task<Result<Promotion>> GetPromotionAsync(Guid promotionId)
         {
             var promotion = await _context.Promotions
                 .FirstOrDefaultAsync(p => p.Id == promotionId);
 
             if (promotion == null)
-                throw new KeyNotFoundException($"Promotion with ID {promotionId} was not found.");
+                return Result.Fail<Promotion>($"Promotion with ID {promotionId} was not found.");
 
-            return promotion;
+            return Result.Ok(promotion);
         }
 
         public async Task<Result> UpdatePromotionAsync(Promotion promotion)
@@ -57,9 +57,9 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
         public async Task<Promotion> DeletePromotionAsync(Guid promotionId)
         {
             var promotion = await GetPromotionAsync(promotionId);
-            _context.Promotions.Remove(promotion);
+            _context.Promotions.Remove(promotion.Value);
             await _context.SaveChangesAsync();
-            return promotion;
+            return promotion.Value;
         }
     }
 }

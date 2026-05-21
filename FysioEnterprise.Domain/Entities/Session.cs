@@ -3,6 +3,7 @@ using System.Net.NetworkInformation;
 using FysioEnterprise.Domain.Enums;
 using FysioEnterprise.Domain.Exceptions;
 using FysioEnterprise.Domain.Service;
+using FysioEnterprise.Domain.Service.PricingService;
 using FysioEnterprise.Domain.ValueObjects;
 
 namespace FysioEnterprise.Domain.Entities
@@ -16,9 +17,8 @@ namespace FysioEnterprise.Domain.Entities
         public Guid SessionInstanceTypeID { get; private set; }
         public Guid? SessionPromotion { get; private set; }
         public TimeSlot SessionTimeSlot { get; private set; } = null!;
-        public decimal? SessionTotalPrice { get; private set; }
         public SessionStatusEnum SessionStatus { get; private set; }
-
+        public Price priceTotal { get; private set; } = new(0);
         public bool IsActive => SessionStatus == SessionStatusEnum.Active;
 
         private Session() { } // EF Core
@@ -29,6 +29,7 @@ namespace FysioEnterprise.Domain.Entities
             Guid sessionTypeId,
             Guid roomId,
             Guid? promotionId,
+            decimal totalPrice,
             TimeSlot sessionTimeSlot
         )
         {
@@ -39,7 +40,7 @@ namespace FysioEnterprise.Domain.Entities
             if (staffId == Guid.Empty) throw new DomainException(nameof(staffId));
             SessionStaffID = staffId;
             if (sessionTypeId == Guid.Empty) throw new DomainException(nameof(sessionTypeId));
-            SessionRoomID = roomId;
+            SessionInstanceTypeID = sessionTypeId;
             if (roomId == Guid.Empty) throw new DomainException(nameof(roomId));
             SessionRoomID = roomId;
             SessionPromotion = promotionId;
@@ -48,21 +49,26 @@ namespace FysioEnterprise.Domain.Entities
         }
 
         public static Session Create(
-            Guid clientId,
+            Client client,
             Guid staffId,
-            Guid sessionTypeId,
+            SessionType sessionType,
             Guid roomId,
             TimeSlot sessionTimeSlot,
             decimal totalPrice,
-            Guid? promotionId,
+            Promotion? promotion,
             IEnumerable<Session> existingClientSessions,
             IEnumerable<Session> existingStaffSessions,
-            IEnumerable<Session> existingRoomSessions)
+            IEnumerable<Session> existingRoomSessions,
+            IPricingStrategyFactory pricingStrategyFactory)
         {
 
-            var newSession = new Session(clientId, staffId, sessionTypeId, roomId, promotionId, sessionTimeSlot);
+            var newSession = new Session(client.Id, staffId, sessionType.Id, roomId, promotion?.Id, totalPrice, sessionTimeSlot);
 
             ValidateOverlap(newSession.SessionTimeSlot, existingClientSessions, existingStaffSessions, existingRoomSessions);
+            newSession.priceTotal =
+            pricingStrategyFactory.BuildStrategies(client,
+                promotion,
+                sessionType);
 
             return newSession;
         }

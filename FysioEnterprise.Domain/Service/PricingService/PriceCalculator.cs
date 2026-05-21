@@ -1,20 +1,28 @@
-﻿using FysioEnterprise.Domain.Service.PricingService.Strategies;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using FysioEnterprise.Domain.Entities;
+using FysioEnterprise.Domain.Service.PricingService.Strategies;
+using FysioEnterprise.Domain.ValueObjects;
 
 namespace FysioEnterprise.Domain.Service.PricingService
 {
-    public class PriceCalculator
+   public class PriceCalculator : IPricingStrategyFactory
     {
-        public decimal Calculate(decimal basePrice, IEnumerable<IPricingStrategy> strategies)
-        {
-            if (!strategies.Any())
-                return basePrice;
+        private readonly IEnumerable<IPricingStrategy> _strategies;
 
-            return strategies
-                .Select(s => s.Apply(basePrice))
-                .Min();
+        public PriceCalculator(IEnumerable<IPricingStrategy> strategies)
+        {
+            _strategies = strategies;
+        }
+        public Price BuildStrategies(Client client,
+            Promotion? promotion,
+            SessionType sessionType)
+        {
+            var discounts = _strategies.Select(a => a.calculatePrice(client, promotion, sessionType));
+            var bestDiscount = discounts.MaxBy(a => a.Value) ?? new Price(0);
+
+            var result = sessionType.SessionTypePrice.Value - bestDiscount.Value;
+            result = Math.Max(0, result);
+
+            return new Price(result);
         }
     }
 }

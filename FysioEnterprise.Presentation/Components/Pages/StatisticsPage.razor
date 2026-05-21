@@ -1,6 +1,180 @@
-﻿@page "/Statistics"
-<h3>StatisticsPage</h3>
+﻿@rendermode InteractiveServer
+@page "/Statistics"
+@using System.Globalization
+@using Radzen.Blazor
 
-@code {
+<section class="stats-page">
 
-}
+    <header class="stats-header">
+        <h1 class="stats-title">Statistik</h1>
+    </header>
+
+    <header class="stats-toolbar">
+        <nav class="toolbar-left" aria-label="Statistik navigation">
+            <menu class="view-toggle">
+                <li><button class="@(View == "week" ? "active" : "")"   @onclick='() => SetView("week")'>Uge</button></li>
+                <li><button class="@(View == "month" ? "active" : "")"  @onclick='() => SetView("month")'>Måned</button></li>
+                <li><button class="@(View == "year" ? "active" : "")"   @onclick='() => SetView("year")'>År</button></li>
+            </menu>
+
+            <nav class="nav-arrows" aria-label="Naviger perioder">
+                <button @onclick="NavigateBack" aria-label="Forrige"><RadzenIcon Icon="chevron_left" /></button>
+                <strong class="current-range">@GetRangeLabel()</strong>
+                <button @onclick="NavigateForward" aria-label="Næste"><RadzenIcon Icon="chevron_right" /></button>
+            </nav>
+
+            <button class="btn-today" @onclick="GoToThisYear">Dette år</button>
+        </nav>
+    </header>
+
+    @if (_loading)
+    {
+        <p class="loading-text">Indlæser data...</p>
+    }
+    else
+    {
+        <section class="stats-summary" aria-label="Nøgletal">
+            <article class="summary-card">
+                <span class="summary-label">Total omsætning</span>
+                <strong class="summary-value">@_totalRevenue.ToString("N0", DanishCulture) kr.</strong>
+            </article>
+            <article class="summary-card">
+                <span class="summary-label">Antal sessioner</span>
+                <strong class="summary-value">@_totalSessions</strong>
+            </article>
+            <article class="summary-card">
+                <span class="summary-label">Gns. pr. session</span>
+                <strong class="summary-value">@_avgRevenue.ToString("N0", DanishCulture) kr.</strong>
+            </article>
+            <article class="summary-card">
+                <span class="summary-label">Fuldførte</span>
+                <strong class="summary-value color-completed">@_completedCount</strong>
+            </article>
+            <article class="summary-card">
+                <span class="summary-label">Annullerede</span>
+                <strong class="summary-value color-cancelled">@_cancelledCount</strong>
+            </article>
+            <article class="summary-card">
+                <span class="summary-label">No-shows</span>
+                <strong class="summary-value color-noshow">@_noShowCount</strong>
+            </article>
+        </section>
+
+        <section class="charts-wrap" aria-label="Grafer">
+
+            <article class="chart-card" aria-label="Omsætning graf">
+                <header class="chart-header">
+                    <h2 class="chart-title">Omsætning</h2>
+                    <span class="chart-subtitle">@GetChartSubtitle()</span>
+                </header>
+                <figure class="chart-figure" aria-label="Søjlediagram over omsætning">
+                    @{
+                        var maxRev = _revenueData.Any() ? _revenueData.Max(d => d.Value) : 1;
+                    }
+                    <figcaption class="chart-y-axis" aria-hidden="true">
+                        @for (var i = 4; i >= 0; i--)
+                        {
+                            <span>@((maxRev * i / 4).ToString("N0", DanishCulture))</span>
+                        }
+                    </figcaption>
+                    <ol class="bar-chart" aria-label="Omsætning søjler">
+                        @foreach (var point in _revenueData)
+                        {
+                            var heightPct = maxRev > 0 ? point.Value / maxRev * 100 : 0;
+                            <li class="bar-item">
+                                <span class="bar-tooltip">@point.Value.ToString("N0", DanishCulture) kr.</span>
+                                <span class="bar-fill revenue-bar"
+                                      style="height: @(heightPct.ToString("F1", CultureInfo.InvariantCulture))%">
+                                </span>
+                                <span class="bar-label">@point.Label</span>
+                            </li>
+                        }
+                    </ol>
+                </figure>
+            </article>
+
+            <article class="chart-card" aria-label="Session status graf">
+                <header class="chart-header">
+                    <h2 class="chart-title">Session status</h2>
+                    <span class="chart-subtitle">@GetChartSubtitle()</span>
+                </header>
+                <figure class="chart-figure" aria-label="Søjlediagram over session status">
+                    @{
+                        var maxStatus = _statusData.Any()
+                            ? _statusData.Max(d => d.Completed + d.Cancelled + d.NoShow + d.Active)
+                            : 1;
+                    }
+                    <figcaption class="chart-y-axis" aria-hidden="true">
+                        @for (var i = 4; i >= 0; i--)
+                        {
+                            <span>@(maxStatus * i / 4)</span>
+                        }
+                    </figcaption>
+                    <ol class="bar-chart stacked" aria-label="Status søjler">
+                        @foreach (var point in _statusData)
+                        {
+                            var total = point.Completed + point.Cancelled + point.NoShow + point.Active;
+                            var compPct    = maxStatus > 0 ? point.Completed / (double)maxStatus * 100 : 0;
+                            var cancPct    = maxStatus > 0 ? point.Cancelled / (double)maxStatus * 100 : 0;
+                            var noShowPct  = maxStatus > 0 ? point.NoShow    / (double)maxStatus * 100 : 0;
+                            var activePct  = maxStatus > 0 ? point.Active    / (double)maxStatus * 100 : 0;
+
+                            <li class="bar-item">
+                                <span class="bar-tooltip">
+                                    Fuldført: @point.Completed |
+                                    Annulleret: @point.Cancelled |
+                                    No-show: @point.NoShow |
+                                    Aktiv: @point.Active
+                                </span>
+                                <span class="bar-stack">
+                                    <span class="bar-segment active-bar"    style="height:@(activePct.ToString("F1",   CultureInfo.InvariantCulture))%"></span>
+                                    <span class="bar-segment noshow-bar"    style="height:@(noShowPct.ToString("F1",   CultureInfo.InvariantCulture))%"></span>
+                                    <span class="bar-segment cancelled-bar" style="height:@(cancPct.ToString("F1",     CultureInfo.InvariantCulture))%"></span>
+                                    <span class="bar-segment completed-bar" style="height:@(compPct.ToString("F1",     CultureInfo.InvariantCulture))%"></span>
+                                </span>
+                                <span class="bar-label">@point.Label</span>
+                            </li>
+                        }
+                    </ol>
+                </figure>
+                <footer class="chart-legend">
+                    <span class="legend-item"><span class="legend-dot completed-dot"></span>Fuldført</span>
+                    <span class="legend-item"><span class="legend-dot cancelled-dot"></span>Annulleret</span>
+                    <span class="legend-item"><span class="legend-dot noshow-dot"></span>No-show</span>
+                    <span class="legend-item"><span class="legend-dot active-dot"></span>Aktiv</span>
+                </footer>
+            </article>
+
+        </section>
+
+        <section class="export-section" aria-label="Eksport">
+            <header class="export-header">
+                <h2 class="export-title">Eksportér rapport</h2>
+                <p class="export-desc">Vælg en periode og download en Excel-rapport med omsætning og session status.</p>
+            </header>
+            <form class="export-form" @onsubmit:preventDefault>
+                <fieldset class="export-fields">
+                    <legend class="sr-only">Vælg eksport periode</legend>
+                    <label class="export-label">
+                        Fra
+                        <input type="date" class="export-input"
+                               @bind="ExportFrom"
+                               max="@ExportTo.ToString("yyyy-MM-dd")" />
+                    </label>
+                    <span class="export-sep">→</span>
+                    <label class="export-label">
+                        Til
+                        <input type="date" class="export-input"
+                               @bind="ExportTo"
+                               min="@ExportFrom.ToString("yyyy-MM-dd")" />
+                    </label>
+                </fieldset>
+                <button type="button" class="btn-export" @onclick="ExportToExcel" disabled="@_exporting">
+                    <RadzenIcon Icon="@(_exporting ? "hourglass_empty" : "download")" />
+                    @(_exporting ? "Genererer..." : "Download Excel")
+                </button>
+            </form>
+        </section>
+    }
+
+</section>
