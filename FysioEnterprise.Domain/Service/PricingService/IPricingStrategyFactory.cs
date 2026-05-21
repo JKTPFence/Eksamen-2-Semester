@@ -7,8 +7,8 @@ namespace FysioEnterprise.Domain.Service.PricingService
     public interface IPricingStrategyFactory
     {
         IEnumerable<IPricingStrategy> BuildStrategies(
-            LoyaltyLevel loyaltyLevel,
-            bool isBirthdayMonth,
-            Promotion? promotion);
+            Client client,
+            Promotion? promotion,
+            SessionType sessionType);
     }
 }

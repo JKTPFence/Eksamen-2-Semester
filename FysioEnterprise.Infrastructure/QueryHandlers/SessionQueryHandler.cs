@@ -24,6 +24,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     s.SessionStaffID,
                     s.SessionInstanceTypeID,
                     s.SessionRoomID,
+                    s.SessionPromotion,
                     _context.Clients
                     .Where(c => c.Id == s.SessionClientID).Select(c => c.ClientFirstName).FirstOrDefault() ?? "",
                     _context.Clients
@@ -58,6 +59,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     s.SessionStaffID,
                     s.SessionInstanceTypeID,
                     s.SessionRoomID,
+                    s.SessionPromotion,
                     _context.Clients
                     .Where(c => c.Id == s.SessionClientID).Select(c => c.ClientFirstName).FirstOrDefault() ?? "",
                     _context.Clients
@@ -92,6 +94,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     s.SessionStaffID,
                     s.SessionInstanceTypeID,
                     s.SessionRoomID,
+                    s.SessionPromotion,
                     _context.Clients
                     .Where(c => c.Id == s.SessionClientID).Select(c => c.ClientFirstName).FirstOrDefault() ?? "",
                     _context.Clients
@@ -126,6 +129,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     s.SessionStaffID,
                     s.SessionInstanceTypeID,
                     s.SessionRoomID,
+                    s.SessionPromotion,
                     _context.Clients
                     .Where(c => c.Id == s.SessionClientID).Select(c => c.ClientFirstName).FirstOrDefault() ?? "",
                     _context.Clients
@@ -163,6 +167,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     s.SessionStaffID,
                     s.SessionInstanceTypeID,
                     s.SessionRoomID,
+                    s.SessionPromotion,
                     _context.Clients
                         .Where(c => c.Id == s.SessionClientID)
                         .Select(c => c.ClientFirstName).FirstOrDefault() ?? "",

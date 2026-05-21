@@ -1,21 +1,28 @@
-﻿using FysioEnterprise.Domain.Service.PricingService.Strategies;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using FysioEnterprise.Domain.Entities;
+using FysioEnterprise.Domain.Service.PricingService.Strategies;
 
 namespace FysioEnterprise.Domain.Service.PricingService
 {
-    public class PriceCalculator
+    public class PriceCalculator : IPricingStrategyFactory
     {
-        public async Task<decimal> Calculate(decimal basePrice, IEnumerable<IPricingStrategy> strategies)
+        private readonly IEnumerable<IPricingStrategy> _strategies;
+
+        public PriceCalculator(IEnumerable<IPricingStrategy> strategies)
         {
-            if (!strategies.Any())
-                return basePrice;
+            _strategies = strategies;
+        }
+        public async Task<decimal> BuildStrategies(Client client,
+            Promotion promotion,
+            SessionType sessionType)
+        {
+            var rabatter = _rabatStrategier.Select(a => a.Beregn(tidspunkt, behandlingstype, patient));
+            var bedsteRabat = rabatter.MaxBy(a => a.Beløb) ?? new BeregnetRabat(0);
 
-            var results = await Task.WhenAll(
-                strategies.Select(s => Task.Run(() => s.Apply(basePrice))));
+            var resultatBeløb = behandlingstype.EgenbetalingsBeløb.Beløb - bedsteRabat.Beløb;
 
-            return results.Min();
+            resultatBeløb = Math.Max(0, resultatBeløb);
+
+            return new EgenbetalingsBeløb(resultatBeløb);
         }
     }
 }

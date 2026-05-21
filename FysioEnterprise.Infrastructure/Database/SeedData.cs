@@ -1,8 +1,5 @@
 ﻿using FysioEnterprise.Domain.Entities;
 using FysioEnterprise.Domain.ValueObjects;
-using Microsoft.EntityFrameworkCore;
-using System.Collections;
-using static System.Collections.Specialized.BitVector32;
 
 namespace FysioEnterprise.Infrastructure.Database
 {
@@ -203,6 +200,8 @@ namespace FysioEnterprise.Infrastructure.Database
                 var session21 = Session.Create(clients[0].Id, staff[0].Id, sessionTypes[0].Id, clinics[0].ClinicRooms[0].Id, new TimeSlot(nextMonday.AddHours(8).AddMinutes(0), nextMonday.AddHours(8).AddMinutes(30)), 395, null, new List<Session>(), new List<Session>(), new List<Session>());
                 var session22 = Session.Create(clients[1].Id, staff[1].Id, sessionTypes[1].Id, clinics[0].ClinicRooms[1].Id, new TimeSlot(nextMonday.AddHours(9).AddMinutes(0), nextMonday.AddHours(10).AddMinutes(0)), 699, null, new List<Session>(), new List<Session>(), new List<Session>());
                 var session23 = Session.Create(clients[2].Id, staff[2].Id, sessionTypes[2].Id, clinics[1].ClinicRooms[0].Id, new TimeSlot(nextMonday.AddHours(7).AddMinutes(30), nextMonday.AddHours(8).AddMinutes(15)), 550, null, new List<Session>(), new List<Session>(), new List<Session>());
+                var session24 = Session.Create(clients[2].Id, staff[1].Id, sessionTypes[2].Id, clinics[0].ClinicRooms[0].Id, new TimeSlot(nextWednesday.AddHours(9).AddMinutes(0), nextWednesday.AddHours(10).AddMinutes(0)), 550, promotions[0].Id, new List<Session>(), new List<Session>(), new List<Session>());
+
 
                 return new List<Session> { session1,  session2, session3, session4, session5, session6, session7, session8, session9, session10, session11, session12, session13, session14, session15, session16, session17, session18, session19, session20, session21, session22, session23};
             }

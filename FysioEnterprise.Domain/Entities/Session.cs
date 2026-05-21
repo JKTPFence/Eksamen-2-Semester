@@ -29,6 +29,7 @@ namespace FysioEnterprise.Domain.Entities
             Guid sessionTypeId,
             Guid roomId,
             Guid? promotionId,
+            decimal totalPrice,
             TimeSlot sessionTimeSlot
         )
         {
@@ -43,6 +44,7 @@ namespace FysioEnterprise.Domain.Entities
             if (roomId == Guid.Empty) throw new DomainException(nameof(roomId));
             SessionRoomID = roomId;
             SessionPromotion = promotionId;
+            SessionTotalPrice = totalPrice;
             SessionStatus = SessionStatusEnum.Active;
 
         }
@@ -60,7 +62,7 @@ namespace FysioEnterprise.Domain.Entities
             IEnumerable<Session> existingRoomSessions)
         {
 
-            var newSession = new Session(clientId, staffId, sessionTypeId, roomId, promotionId, sessionTimeSlot);
+            var newSession = new Session(clientId, staffId, sessionTypeId, roomId, promotionId, totalPrice, sessionTimeSlot);
 
             ValidateOverlap(newSession.SessionTimeSlot, existingClientSessions, existingStaffSessions, existingRoomSessions);
 

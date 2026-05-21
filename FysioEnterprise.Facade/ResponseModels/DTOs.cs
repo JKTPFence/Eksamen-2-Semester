@@ -8,6 +8,7 @@ namespace FysioEnterprise.Facade.DTOs
         Guid StaffID,
         Guid SessionTypeID,
         Guid RoomID,
+        Guid? PromotionID,
         string ClientFirstName,
         string ClientLastName,
         string StaffFirstName,

@@ -59,7 +59,7 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
         {
             var clinic = await _context.Clinics
                 .AsNoTracking()
-                .Include(c => c.ClinicRooms)  // ← brug ClinicRooms i stedet for GetRoom
+                .Include(c => c.ClinicRooms)
                 .FirstOrDefaultAsync(c => c.Id == clinicId);
 
             if (clinic is null)
@@ -72,14 +72,14 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
             var sessions = await _context.Sessions
                 .AsNoTracking()
                 .Where(s => s.SessionRoomID == roomId)
-                .ToListAsync();  // ← fjern Include
+                .ToListAsync(); 
 
             return sessions;
         }
 
         public async Task UpdateSessionAsync(Session session)
         {
-            _context.Sessions.Update(session);
+            var sessionCompleted = _context.Sessions.Update(session);
             await _context.SaveChangesAsync();
         }
 

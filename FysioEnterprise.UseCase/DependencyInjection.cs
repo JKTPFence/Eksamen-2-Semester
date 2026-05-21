@@ -31,8 +31,8 @@ namespace FysioEnterprise.UseCase.DependencyInjection
             services.AddScoped<ICreateSessionUseCase, SessionCommandHandler>();
             services.AddScoped<IUpdateSessionUseCase, SessionCommandHandler>();
             services.AddScoped<IMarkSessionAsNoShowUseCase, SessionCommandHandler>();
-            services.AddScoped<ICreateSessionUseCase, SessionCommandHandler>();
-            services.AddScoped<ICreateSessionUseCase, SessionCommandHandler>();
+            services.AddScoped<IEndSessionUseCase, SessionCommandHandler>();
+            services.AddScoped<ICancelSessionUseCase, SessionCommandHandler>();
             services.AddScoped<IPricingStrategyFactory, PricingStrategyFactoryService>();
             services.AddScoped<PriceCalculator>();
             services.AddScoped<ITimeNow, CurrentDateTime>();

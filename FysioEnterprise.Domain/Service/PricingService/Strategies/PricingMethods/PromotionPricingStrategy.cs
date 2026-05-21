@@ -1,18 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using FysioEnterprise.Domain.Entities;
 
 namespace FysioEnterprise.Domain.Service.PricingService.Strategies.PricingMethods
 {
     public class PromotionPricingStrategy : IPricingStrategy
     {
-        private readonly decimal _discountPercentage;
+        private decimal _discountPercentage;
+        public string Name => "Promotion Discount";
 
-        public PromotionPricingStrategy(decimal discountPercentage)
+        public decimal calculatePrice(Client client,
+            Promotion promotion,
+            SessionType sessionType)
         {
-            _discountPercentage = discountPercentage;
+            _discountPercentage = promotion.PromotionDiscountPercent;
+            return sessionType.SessionTypePrice * (1 - _discountPercentage / 100);
         }
-
-        public decimal Apply(decimal basePrice) => basePrice * (1 - _discountPercentage / 100);
     }
 }

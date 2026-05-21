@@ -54,6 +54,13 @@
             <button class="btn-today" @onclick="GoToToday">i dag</button>
         </nav>
 
+        <menu class="calendar-controls-toolbar">
+            <button class="toolbar-btn toggle-cancelled-btn @(HideCancelled ? "active" : "")" @onclick="ToggleCancelledSessions">
+                <RadzenIcon Icon="event_busy" />
+                @(HideCancelled ? "Vis Aflyste" : "Fjern Aflyste")
+            </button>
+        </menu>
+
         <aside class="toolbar-right" style="min-width: auto;">
             <button class="btn-secondary @(HideWeekends ? "weekend-hidden-active" : "")"
                     @onclick="ToggleWeekends"
@@ -102,6 +109,12 @@
                 {
                     var isWeekend = day.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
                     var daySessions = GetSessionsForDay(day);
+
+                    if (HideCancelled)
+                    {
+                        daySessions = daySessions.Where(s => s.SessionStatus.ToString() != "Cancelled").ToList();
+                    }
+
                     var columns = CalculateColumns(daySessions);
 
                     <section class="day-column
@@ -137,12 +150,23 @@
                                      @onclick:stopPropagation="true"
                                      @onclick="() => OnSessionClick(session)"
                                      title="@session.ClientFirstName @session.ClientLastName — @session.SessionTypeName">
+
+                                <span class="session-status-badge">
+                                    <RadzenIcon Icon="@(session.SessionStatus.ToString() switch {
+                                        "Active" => "schedule",
+                                        "Completed" => "check_circle",
+                                        "Cancelled" => "cancel",
+                                        "NoShow" => "person_off",
+                                        _ => "help"
+                                    })" />
+                                </span>
+
                                 <time class="session-time">
                                     @session.timeSlot.From.ToString("HH:mm") – @session.timeSlot.To.ToString("HH:mm")
                                 </time>
                                 @if (CurrentViewMode == CalendarViewMode.Staff)
                                 {
-                                    <strong class="session-client">@session.StaffFirstName @session.StaffLastname - @GetStaffAuthorisationType(session.StaffFirstName + " " + session.StaffLastname)</strong>
+                                    <strong class="session-client">@session.StaffFirstName @session.StaffLastname</strong>
                                 }
                                 else
                                 {
@@ -180,6 +204,94 @@
                 }
             </section>
         </article>
+        @if (SelectedViewSession != null)
+{
+    <section class="modal-overlay" @onclick="CloseSessionDetails">
+        <article class="session-details-card" @onclick:stopPropagation="true">
+            <header class="card-header">
+                <h3>Booking Detaljer</h3>
+                <button class="close-card-btn" @onclick="CloseSessionDetails">
+                    <RadzenIcon Icon="close" />
+                </button>
+            </header>
+
+            <fieldset class="card-body-content">
+                <section class="info-row">
+                    <RadzenIcon Icon="person" />
+                    <p>
+                        <label>Klient</label>
+                        <strong>@SelectedViewSession.ClientFirstName @SelectedViewSession.ClientLastName</strong>
+                    </p>
+                </section>
+
+                <section class="info-row">
+                    <RadzenIcon Icon="badge" />
+                    <p>
+                        <label>Behandler</label>
+                        <strong>@SelectedViewSession.StaffFirstName @SelectedViewSession.StaffLastname</strong>
+                    </p>
+                </section>
+
+                <section class="info-row">
+                    <RadzenIcon Icon="schedule" />
+                    <p>
+                        <label>Tidspunkt</label>
+                        <strong>@SelectedViewSession.timeSlot.From.ToString("HH:mm") – @SelectedViewSession.timeSlot.To.ToString("HH:mm")</strong>
+                    </p>
+                </section>
+
+                <section class="info-row">
+                    <RadzenIcon Icon="meeting_room" />
+                    <p>
+                        <label>Lokale</label>
+                        <strong>Stue @SelectedViewSession.RoomNumber</strong>
+                    </p>
+                </section>
+
+                <section class="info-row">
+                    <RadzenIcon Icon="layers" />
+                    <p>
+                        <label>Ydelse</label>
+                        <strong>@SelectedViewSession.SessionTypeName</strong>
+                    </p>
+                </section>
+
+                <section class="info-row">
+                    <RadzenIcon Icon="payments" />
+                    <p>
+                        <label>Pris</label>
+                        <strong>@string.Format(DanishCulture, "{0:C}", SelectedViewSession.SessionTotalPrice)</strong>
+                    </p>
+                </section>
+
+                <section class="info-row">
+                    <RadzenIcon Icon="info" />
+                    <p>
+                        <label>Status</label>
+                        <span class="status-indicator status-@SelectedViewSession.SessionStatus.ToLower()">
+                            @SelectedViewSession.SessionStatus
+                        </span>
+                    </p>
+                </section>
+            </fieldset>
+
+            <footer class="card-actions-footer">
+                <button class="action-btn btn-update" @onclick="HandleUpdate">
+                    <RadzenIcon Icon="edit" /> Rediger
+                </button>
+                <button class="action-btn btn-complete" @onclick="HandleComplete">
+                    <RadzenIcon Icon="check_circle" /> Færdiggør
+                </button>
+                <button class="action-btn btn-noshow" @onclick="HandleNoShow">
+                    <RadzenIcon Icon="person_off" /> NoShow
+                </button>
+                <button class="action-btn btn-cancel" @onclick="HandleCancel">
+                    <RadzenIcon Icon="block" /> Aflys
+                </button>
+            </footer>
+        </article>
+    </section>
+}
     }
 
     @if (View == "month")
@@ -219,11 +331,11 @@
                                             
                                             @if (CurrentViewMode == CalendarViewMode.Staff)
                                             {
-                                                <strong class="session-month">@session.StaffFirstName @session.StaffLastname - @GetStaffAuthorisationType(session.StaffFirstName + " " + session.StaffLastname)</strong>
+                                                <strong class="session-month">@session.StaffFirstName @session.StaffLastname</strong>
                                             }
                                             else
                                             {
-                                                <strong class="session-month">@GetClientName(session.ClientFirstName + " " + session.ClientLastName)</strong>
+                                                <strong class="session-month">@session.ClientFirstName @session.ClientLastName</strong>
                                             }
                                             <span class="session-type">@session.SessionTypeName</span>
                                         </article>
