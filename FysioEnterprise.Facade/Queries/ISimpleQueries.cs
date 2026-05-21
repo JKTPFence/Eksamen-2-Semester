@@ -41,6 +41,13 @@ namespace FysioEnterprise.Facade.Queries
         Task<List<ClinicDTO>> GetAllClinicsAsync();
 
         /// <summary>
+        ///     Som receptionist vil jeg kunne se alle rum for at kunne vælge dem i bookingsprocessen
+        /// </summary>
+        /// <param name="clinicId"></param>
+        /// <returns></returns>
+        Task<List<RoomDTO>> GetRoomsByClinicIdAsync(Guid ClinicId);
+
+        /// <summary>
         ///     Som receptionist vil jeg kunne se alle sessionstyper, så jeg ikke behøver huske dem alle i hovedet.
         /// </summary>
         /// <returns></returns>

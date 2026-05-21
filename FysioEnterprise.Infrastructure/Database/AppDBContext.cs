@@ -41,9 +41,6 @@ namespace FysioEnterprise.Infrastructure.Database
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Entity<SessionType>().HasData(SessionTypeSeed.GetSeedData());
-            modelBuilder.Entity<Promotion>().HasData(PromotionSeed.GetSeedData());
-
 
             modelBuilder.Entity<Entity.Session>()
                 .Property(s => s.SessionStatus)
