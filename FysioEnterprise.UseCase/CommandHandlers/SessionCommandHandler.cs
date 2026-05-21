@@ -19,6 +19,7 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
         private readonly IPromotionRepository _promotionRepository;
         private readonly ISessionRepository _sessionRepository;
         private readonly ISessionTypeRepository _sessionTypeRepository;
+        private readonly IPricingStrategyFactory _pricingStrategyFactory;
         private readonly ITimeNow _now;
         private static readonly SemaphoreSlim _sessionLock = new(1, 1);
 
@@ -29,6 +30,7 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
             IPromotionRepository promotionRepository,
             ISessionRepository sessionRepository,
             ISessionTypeRepository sessionTypeRepository,
+            IPricingStrategyFactory pricingStrategyFactory,
             ITimeNow now)
         {
             _clientRepository = clientRepository;
@@ -38,6 +40,7 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
             _clinicRepository = clinicRepository;
             _promotionRepository = promotionRepository;
             _sessionRepository = sessionRepository;
+            _pricingStrategyFactory = pricingStrategyFactory;
             _now = now;
         }
 
@@ -83,16 +86,17 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
                 try
                 {
                     var session = Session.Create(
-                        clientResult.Value.Id,
+                        clientResult.Value,
                         staffResult.Value.Id,
-                        sessionTypeResult.Value.Id,
+                        sessionTypeResult.Value,
                         roomResult.Value.Id,
                         timeSlot,
                         request.SessionTotalPrice,
-                        promotionResult?.Value?.Id,
+                        promotionResult?.Value,
                         existingClientSessions,
                         existingStaffSessions,
-                        existingRoomSessions);
+                        existingRoomSessions,
+                        _pricingStrategyFactory);
                     await _sessionRepository.CreateSessionAsync(session);
                 }
                 catch (DomainException ex)
@@ -105,7 +109,6 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
             {
                 _sessionLock.Release();
             }
-            return Result.Ok();
         }
 
         public async Task<Result> UpdateSessionAsync(UpdateSessionRequest request)

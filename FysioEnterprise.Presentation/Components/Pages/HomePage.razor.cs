@@ -31,7 +31,7 @@ namespace FysioEnterprise.Presentation.Components.Pages
             _clinics = fetchedClinics.OrderBy(c => c.ClinicAddress).ToList();
         }
 
-        private async void OnClinicChanged(ChangeEventArgs e)
+        private async Task OnClinicChanged(ChangeEventArgs e)
         {
             var value = e.Value?.ToString();
             try
@@ -55,7 +55,7 @@ namespace FysioEnterprise.Presentation.Components.Pages
                     if (_receptionistsInClinic.Count() == 0 || _receptionistsInClinic == null)
                         throw new ArgumentNullException();
 
-                    // Reset staff selection when clinic changes
+                    // Workaround to Reset staff selection when clinic changes
                     _selectedStaffValue = "";
                     _selectedStaffId = Guid.Empty;
 

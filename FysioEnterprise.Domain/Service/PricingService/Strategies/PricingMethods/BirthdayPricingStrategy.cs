@@ -9,10 +9,10 @@ namespace FysioEnterprise.Domain.Service.PricingService.Strategies.PricingMethod
         public string Name => "Sessiontype price";
 
         public Price calculatePrice(Client client,
-            Promotion promotion,
+            Promotion? promotion,
             SessionType sessionType)
         {
-            return new Price(sessionType.SessionTypePrice);
+            return sessionType.SessionTypePrice;
         }
     }
 }

@@ -6,11 +6,12 @@ namespace FysioEnterprise.Domain.ValueObjects
 {
     public record Price
     {
-        public decimal Value { get; init; }
+        public double Value { get; init; }
         private Price() // Empty constructor for EF Core
         {
+
         }
-        public Price(decimal value)
+        public Price(double value)
         {
             if (value < 0) throw new ArgumentException("Amount cannot be negative.", nameof(value));
             Value = value;

@@ -1,7 +1,10 @@
 ﻿using System.Collections;
+using System.Net;
+using System.Numerics;
 using FysioEnterprise.Domain.Entities;
 using FysioEnterprise.Domain.Enums;
 using FysioEnterprise.Domain.Exceptions;
+using FysioEnterprise.Domain.Service.PricingService;
 using FysioEnterprise.Domain.ValueObjects;
 using Xunit;
 
@@ -14,11 +17,30 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
                 DateTime? end = null)
             {
                 var s = start ?? DateTime.UtcNow.AddHours(1);
-                var timeSlot = new TimeSlot(s, end ?? s.AddHours(1));
+            var dummyPriceCalculator = new SeedPricingFactory();
+            var sessionType = new SessionType(
+            "Standard Session",
+            new Price (100),
+            4,
+            TimeOnly.FromTimeSpan(TimeSpan.FromHours(1)),
+            new List<int>()
+            );
+            var client = Client.Create(
+                "Johanne",
+                "Jensen",
+                "johanne@example.com",
+                "71362851",
+                new DateOnly(1995, 5, 15),
+                "Valløesgade 37, 2. th, 7100 Vejle",
+                clientNote: null,
+                clientPrefferedStaffID: Guid.NewGuid(),
+                clientLoyaltyLevel: LoyaltyLevel.Gold
+            );
+            var timeSlot = new TimeSlot(s, end ?? s.AddHours(1));
                 return Session.Create(
-                    Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
+                    client, Guid.NewGuid(), sessionType, Guid.NewGuid(),
                     timeSlot,
-                    totalPrice: 100m, promotionId: null, [], [], []);
+                    totalPrice: 100m, promotion: null, [], [], [], dummyPriceCalculator);
             }
 
             [Fact]
@@ -32,25 +54,40 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
             }
 
             [Theory]
-            [InlineData("clientId")]
             [InlineData("staffId")]
-            [InlineData("sessionTypeId")]
             [InlineData("roomId")]
             public void Create_EmptyGuid_ThrowsArgumentNullException(string paramName)
             {
-                var ids = new Dictionary<string, Guid>
+            var dummyPriceCalculator = new SeedPricingFactory();
+            var sessionType = new SessionType(
+            "Standard Session",
+            new Price(100),
+            4,
+            TimeOnly.FromTimeSpan(TimeSpan.FromHours(1)),
+            new List<int>()
+            );
+            var client = Client.Create(
+                "Johanne",
+                "Jensen",
+                "johanne@example.com",
+                "71362851",
+                new DateOnly(1995, 5, 15),
+                "Valløesgade 37, 2. th, 7100 Vejle",
+                clientNote: null,
+                clientPrefferedStaffID: Guid.NewGuid(),
+                clientLoyaltyLevel: LoyaltyLevel.Gold
+            );
+            var ids = new Dictionary<string, Guid>
                 {
-                    ["clientId"] = Guid.NewGuid(),
                     ["staffId"] = Guid.NewGuid(),
-                    ["sessionTypeId"] = Guid.NewGuid(),
                     ["roomId"] = Guid.NewGuid(),
                 };
                 ids[paramName] = Guid.Empty;
 
                 var ex = Assert.Throws<ArgumentNullException>(() => Session.Create(
-                    ids["clientId"], ids["staffId"], ids["sessionTypeId"], ids["roomId"],
+                    client, ids["staffId"], sessionType, ids["roomId"],
                     new TimeSlot(DateTime.UtcNow.AddHours(1), DateTime.UtcNow.AddHours(2)),
-                    100m, null, [], [], []));
+                    100m, null, [], [], [], dummyPriceCalculator));
 
                 Assert.Equal(paramName, ex.ParamName);
             }
@@ -62,19 +99,58 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
                 var start = DateTime.UtcNow.AddHours(2);
                 var end = DateTime.UtcNow.AddHours(1);
                 var timeSlot = new TimeSlot(start, end);
+            var dummyPriceCalculator = new SeedPricingFactory();
+            var sessionType = new SessionType(
+            "Standard Session",
+            new Price(100),
+            4,
+            TimeOnly.FromTimeSpan(TimeSpan.FromHours(1)),
+            new List<int>()
+            );
+            var client = Client.Create(
+                "Johanne",
+                "Jensen",
+                "johanne@example.com",
+                "71362851",
+                new DateOnly(1995, 5, 15),
+                "Valløesgade 37, 2. th, 7100 Vejle",
+                clientNote: null,
+                clientPrefferedStaffID: Guid.NewGuid(),
+                clientLoyaltyLevel: LoyaltyLevel.Gold
+            );
 
-                Assert.Throws<DomainException>(() => Session.Create(
-                    Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
-                    timeSlot, 100m, null, [], [], []));
+            Assert.Throws<DomainException>(() => Session.Create(
+                    client, Guid.NewGuid(), sessionType, Guid.NewGuid(),
+                    timeSlot, 100m, null, [], [], [], dummyPriceCalculator));
             }
 
             [Fact]
             public void Create_StartInPast_ThrowsDomainException()
             {
-                Assert.Throws<DomainException>(() => Session.Create(
-                    Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
+            var dummyPriceCalculator = new SeedPricingFactory();
+            var sessionType = new SessionType(
+            "Standard Session",
+            new Price(100),
+            4,
+            TimeOnly.FromTimeSpan(TimeSpan.FromHours(1)),
+            new List<int>()
+            );
+            var client = Client.Create(
+                "Johanne",
+                "Jensen",
+                "johanne@example.com",
+                "71362851",
+                new DateOnly(1995, 5, 15),
+                "Valløesgade 37, 2. th, 7100 Vejle",
+                clientNote: null,
+                clientPrefferedStaffID: Guid.NewGuid(),
+                clientLoyaltyLevel: LoyaltyLevel.Gold
+            );
+
+            Assert.Throws<DomainException>(() => Session.Create(
+                    client, Guid.NewGuid(), sessionType, Guid.NewGuid(),
                     new TimeSlot(DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow.AddHours(1)),
-                    100m, null, [], [], []));
+                    100m, null, [], [], [], dummyPriceCalculator));
             }
 
             //Overlap validation tests
@@ -85,10 +161,29 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
                 var end = start.AddHours(1);
                 var timeSlot = new TimeSlot(start, end);
                 var existing = BuildSession(start, end);
+                var dummyPriceCalculator = new SeedPricingFactory();
+                var sessionType = new SessionType(
+                "Standard Session",
+                new Price(100),
+                4,
+                TimeOnly.FromTimeSpan(TimeSpan.FromHours(1)),
+                new List<int>()
+                );
+                var client = Client.Create(
+                    "Johanne",
+                    "Jensen",
+                    "johanne@example.com",
+                    "71362851",
+                    new DateOnly(1995, 5, 15),
+                    "Valløesgade 37, 2. th, 7100 Vejle",
+                    clientNote: null,
+                    clientPrefferedStaffID: Guid.NewGuid(),
+                    clientLoyaltyLevel: LoyaltyLevel.Gold
+                );
 
-                Assert.Throws<DomainException>(() => Session.Create(
-                    existing.SessionClientID, Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(),
-                    timeSlot, 100m, null, [existing], [], []));
+            Assert.Throws<DomainException>(() => Session.Create(
+                    client, Guid.NewGuid(), sessionType, Guid.NewGuid(),
+                    timeSlot, 100m, null, [existing], [], [], dummyPriceCalculator));
             }
 
             [Fact]
@@ -98,10 +193,29 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
                 var end = start.AddHours(1);
                 var timeSlot = new TimeSlot(start, end);
                 var existing = BuildSession(start, end);
+                var dummyPriceCalculator = new SeedPricingFactory();
+                var sessionType = new SessionType(
+                "Standard Session",
+                new Price(100),
+                4,
+                TimeOnly.FromTimeSpan(TimeSpan.FromHours(1)),
+                new List<int>()
+                );
+                var client = Client.Create(
+                    "Johanne",
+                    "Jensen",
+                    "johanne@example.com",
+                    "71362851",
+                    new DateOnly(1995, 5, 15),
+                    "Valløesgade 37, 2. th, 7100 Vejle",
+                    clientNote: null,
+                    clientPrefferedStaffID: Guid.NewGuid(),
+                    clientLoyaltyLevel: LoyaltyLevel.Gold
+                );
 
-                Assert.Throws<DomainException>(() => Session.Create(
-                    Guid.NewGuid(), existing.SessionStaffID, Guid.NewGuid(), Guid.NewGuid(),
-                    timeSlot, 100m, null, [], [existing], []));
+            Assert.Throws<DomainException>(() => Session.Create(
+                    client, existing.SessionStaffID, sessionType, Guid.NewGuid(),
+                    timeSlot, 100m, null, [], [existing], [], dummyPriceCalculator));
             }
 
             //Update Session Validation tests
@@ -170,6 +284,13 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
 
                 Assert.Equal(SessionStatusEnum.NoShow, session.SessionStatus);
             }
-
+        private class SeedPricingFactory : IPricingStrategyFactory
+        {
+            public Price BuildStrategies(Client client, Promotion? promotion, SessionType sessionType)
+            {
+                // Fallback default value object returned to bypass domain creation invariants smoothly
+                return new Price(450);
+            }
+        }
     }
 }

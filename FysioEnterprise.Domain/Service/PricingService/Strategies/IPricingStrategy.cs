@@ -7,7 +7,7 @@ namespace FysioEnterprise.Domain.Service.PricingService.Strategies
     {
         string Name { get; }
         Price calculatePrice(Client client,
-            Promotion promotion,
+            Promotion? promotion,
             SessionType sessionType);
     }
 }

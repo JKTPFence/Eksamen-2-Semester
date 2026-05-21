@@ -43,7 +43,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     _context.Promotions
                     .Where(p => p.Id == s.SessionPromotion).Select(p => p.PromotionName).FirstOrDefault() ?? "",
                     s.SessionTimeSlot,
-                    s.SessionTotalPrice,
+                    s.priceTotal,
                     s.SessionStatus.ToString()))
                     .FirstOrDefaultAsync();
         }
@@ -78,7 +78,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     _context.Promotions
                     .Where(p => p.Id == s.SessionPromotion).Select(p => p.PromotionName).FirstOrDefault() ?? "",
                     s.SessionTimeSlot,
-                    s.SessionTotalPrice,
+                    s.priceTotal,
                     s.SessionStatus.ToString()))
                     .ToListAsync();
         }
@@ -113,7 +113,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     _context.Promotions
                     .Where(p => p.Id == s.SessionPromotion).Select(p => p.PromotionName).FirstOrDefault() ?? "",
                     s.SessionTimeSlot,
-                    s.SessionTotalPrice,
+                    s.priceTotal,
                     s.SessionStatus.ToString()))
                     .ToListAsync();
         }
@@ -148,7 +148,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     _context.Promotions
                     .Where(p => p.Id == s.SessionPromotion).Select(p => p.PromotionName).FirstOrDefault() ?? "",
                     s.SessionTimeSlot,
-                    s.SessionTotalPrice,
+                    s.priceTotal,
                     s.SessionStatus.ToString()))
                     .ToListAsync();
         }
@@ -192,7 +192,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                         .Where(p => p.Id == s.SessionPromotion)
                         .Select(p => p.PromotionName).FirstOrDefault() ?? "",
                     s.SessionTimeSlot,
-                    s.SessionTotalPrice,
+                    s.priceTotal,
                     s.SessionStatus.ToString()
                 ))
                 .ToListAsync();

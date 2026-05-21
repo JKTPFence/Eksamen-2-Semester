@@ -5,15 +5,16 @@ namespace FysioEnterprise.Domain.Service.PricingService.Strategies.PricingMethod
 {
     public class PromotionPricingStrategy : IPricingStrategy
     {
-        private decimal _discountPercentage;
         public string Name => "Promotion Discount";
 
         public Price calculatePrice(Client client,
-            Promotion promotion,
+            Promotion? promotion,
             SessionType sessionType)
         {
-            _discountPercentage = promotion.PromotionDiscountPercent;
-            return new Price(sessionType.SessionTypePrice * (1 - _discountPercentage / 100));
+            if (promotion is null)
+                return sessionType.SessionTypePrice;
+            var savings = sessionType.SessionTypePrice.Value * Convert.ToDouble(promotion.PromotionDiscountPercent / 100);
+            return new Price (savings);
         }
     }
 }

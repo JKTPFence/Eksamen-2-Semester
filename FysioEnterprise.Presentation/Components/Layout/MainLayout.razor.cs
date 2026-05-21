@@ -8,26 +8,35 @@ namespace FysioEnterprise.Presentation.Components.Layout
         [Inject] private LogInContext context { get; set; } = default!;
 
         [Inject] private NavigationManager Nav { get; set; } = default!;
-        private bool _isInitialized = false;
+        
+        protected override void OnInitialized()
+        {
+            Context.OnChange += HandleContextChanged;
+        }
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
         {
             if (firstRender)
             {
-                await context.LoadFromStorageAsync();
-                _isInitialized = true;
-                StateHasChanged();
+                try
+                {
+                    await context.LoadFromStorageAsync();
+                }
+                catch (InvalidOperationException ex)
+                {
+
+                }
             }
         }
 
-        protected override void OnInitialized()
+        private void HandleContextChanged()
         {
-            context.OnChange += StateHasChanged;
+            InvokeAsync(StateHasChanged);
         }
 
         public void Dispose()
         {
-            context.OnChange -= StateHasChanged;
+            Context.OnChange -= HandleContextChanged;
         }
 
         private async Task Logout()

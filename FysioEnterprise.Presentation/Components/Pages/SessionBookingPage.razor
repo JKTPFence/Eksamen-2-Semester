@@ -179,6 +179,8 @@
                         @if (SelectedCell.HasValue && SelectedCell.Value.Date == day.Date)
                         {
                             var popupTop = TimeToPixels(SelectedCell.Value);
+                            @* FIXED: Backdrop overlay catches clicks outside the popup to clear selection *@
+                            <section class="popup-backdrop" @onclick="ClearPopupSelection"></section>
                             <aside class="cell-popup"
                                    style="top:@(popupTop.ToString("F0", System.Globalization.CultureInfo.InvariantCulture))px;"
                                    @onclick:stopPropagation="true">
@@ -260,7 +262,7 @@
                     <RadzenIcon Icon="payments" />
                     <p>
                         <label>Pris</label>
-                        <strong>@string.Format(DanishCulture, "{0:C}", SelectedViewSession.SessionTotalPrice)</strong>
+                        <strong>@string.Format(DanishCulture, "{0:C}", SelectedViewSession.SessionTotalPrice.Value)</strong>
                     </p>
                 </section>
 

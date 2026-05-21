@@ -13,7 +13,7 @@
 
         <span class="spacer"></span>
 
-        @if (!Context.IsLoggedIn && !NavManager.Uri.EndsWith("/"))
+        @if (Context.IsLoggedIn)
         {
             <aside class="top-right">
                 <details class="profile-dropdown">
@@ -41,7 +41,7 @@
     </nav>
 </header>
 
-@if (!Context.IsLoggedIn && !NavManager.Uri.EndsWith("/"))
+@if (Context.IsLoggedIn)
 {
     <div class="subnav-container">
         <nav class="subnav-bar" aria-label="Side navigation">

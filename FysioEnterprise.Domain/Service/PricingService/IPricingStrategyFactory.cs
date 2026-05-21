@@ -8,7 +8,7 @@ namespace FysioEnterprise.Domain.Service.PricingService
     {
         Price BuildStrategies(
             Client client,
-            Promotion promotion,
+            Promotion? promotion,
             SessionType sessionType);
     }
 }

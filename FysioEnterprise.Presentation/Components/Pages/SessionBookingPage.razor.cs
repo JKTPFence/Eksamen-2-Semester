@@ -489,5 +489,10 @@ public partial class SessionBookingPage : ComponentBase
         }
         StateHasChanged();
     }
+    private void ClearPopupSelection()
+    {
+        SelectedCell = null;
+        SelectedSessionTypeId = Guid.Empty;
+    }
 
 }

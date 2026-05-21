@@ -27,15 +27,15 @@ public partial class StatisticsPage : ComponentBase
     private DateTime ExportFrom { get; set; } = DateTime.Today.AddMonths(-1);
     private DateTime ExportTo { get; set; } = DateTime.Today;
 
-    private decimal _totalRevenue;
+    private double _totalRevenue;
     private int _totalSessions;
-    private decimal _avgRevenue;
+    private double _avgRevenue;
     private int _completedCount;
     private int _cancelledCount;
     private int _noShowCount;
     private int _activeCount;
 
-    private record RevenuePoint(string Label, decimal Value);
+    private record RevenuePoint(string Label, double Value);
     private record StatusPoint(string Label, int Completed, int Cancelled, int NoShow, int Active);
 
     private List<RevenuePoint> _revenueData = [];
@@ -55,23 +55,35 @@ public partial class StatisticsPage : ComponentBase
     private async Task LoadData()
     {
         _loading = true;
-        var (from, to) = GetCurrentRange();
+        StateHasChanged();
 
-        var sessions = await SessionQueries.GetAllActiveSessionsByClincIdAsync(Context.ClinicId);
-        var inRange = sessions.Where(s =>
-            s.timeSlot.From.Date >= from &&
-            s.timeSlot.From.Date <= to).ToList();
+        try
+        {
+            var (from, to) = GetCurrentRange();
 
-        _totalSessions = inRange.Count;
-        _totalRevenue = inRange.Sum(s => s.SessionTotalPrice ?? 0);
-        _avgRevenue = _totalSessions > 0 ? _totalRevenue / _totalSessions : 0;
-        _completedCount = inRange.Count(s => s.SessionStatus == "Completed");
-        _cancelledCount = inRange.Count(s => s.SessionStatus == "Cancelled");
-        _noShowCount = inRange.Count(s => s.SessionStatus == "NoShow");
-        _activeCount = inRange.Count(s => s.SessionStatus == "Active");
+            var sessions = await SessionQueries.GetAllActiveSessionsByClincIdAsync(Context.ClinicId);
+            var inRange = sessions.Where(s =>
+                s.timeSlot.From.Date >= from &&
+                s.timeSlot.From.Date <= to).ToList();
 
-        BuildChartData(inRange, from, to);
-        _loading = false;
+            _totalSessions = inRange.Count;
+            _totalRevenue = inRange.Sum(s => s.SessionTotalPrice.Value);
+            _avgRevenue = _totalSessions > 0 ? _totalRevenue / _totalSessions : 0;
+            _completedCount = inRange.Count(s => s.SessionStatus == "Completed");
+            _cancelledCount = inRange.Count(s => s.SessionStatus == "Cancelled");
+            _noShowCount = inRange.Count(s => s.SessionStatus == "NoShow");
+            _activeCount = inRange.Count(s => s.SessionStatus == "Active");
+
+            BuildChartData(inRange, from, to);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Statistics load error: {ex.Message}");
+        }
+        finally
+        {
+            _loading = false;
+        }
     }
 
     private void BuildChartData(List<SessionDTO> sessions, DateTime from, DateTime to)
@@ -87,7 +99,7 @@ public partial class StatisticsPage : ComponentBase
                     var day = d;
                     var daySessions = sessions.Where(s => s.timeSlot.From.Date == day.Date).ToList();
                     var label = day.ToString("ddd d/M", DanishCulture);
-                    _revenueData.Add(new(label, daySessions.Sum(s => s.SessionTotalPrice ?? 0)));
+                    _revenueData.Add(new(label, daySessions.Sum(s => s.SessionTotalPrice.Value)));
                     _statusData.Add(new(label,
                         daySessions.Count(s => s.SessionStatus == "Completed"),
                         daySessions.Count(s => s.SessionStatus == "Cancelled"),
@@ -107,7 +119,7 @@ public partial class StatisticsPage : ComponentBase
                         s.timeSlot.From.Date >= ws.Date &&
                         s.timeSlot.From.Date <= we.Date).ToList();
                     var label = $"Uge {weekNum}";
-                    _revenueData.Add(new(label, weekSessions.Sum(s => s.SessionTotalPrice ?? 0)));
+                    _revenueData.Add(new(label, weekSessions.Sum(s => s.SessionTotalPrice.Value)));
                     _statusData.Add(new(label,
                         weekSessions.Count(s => s.SessionStatus == "Completed"),
                         weekSessions.Count(s => s.SessionStatus == "Cancelled"),
@@ -127,7 +139,7 @@ public partial class StatisticsPage : ComponentBase
                         s.timeSlot.From.Month == month).ToList();
                     var label = new DateTime(CurrentDate.Year, month, 1)
                         .ToString("MMM", DanishCulture);
-                    _revenueData.Add(new(label, monthSessions.Sum(s => s.SessionTotalPrice ?? 0)));
+                    _revenueData.Add(new(label, monthSessions.Sum(s => s.SessionTotalPrice.Value)));
                     _statusData.Add(new(label,
                         monthSessions.Count(s => s.SessionStatus == "Completed"),
                         monthSessions.Count(s => s.SessionStatus == "Cancelled"),
@@ -138,14 +150,15 @@ public partial class StatisticsPage : ComponentBase
         }
     }
 
-    private void SetView(string view)
+    private async Task SetView(string view)
     {
         View = view;
         CurrentDate = DateTime.Today;
-        _ = LoadData();
+        await LoadData();
+        StateHasChanged();
     }
 
-    private void NavigateBack()
+    private async Task NavigateBack()
     {
         CurrentDate = View switch
         {
@@ -153,10 +166,11 @@ public partial class StatisticsPage : ComponentBase
             "month" => CurrentDate.AddMonths(-1),
             _ => CurrentDate.AddDays(-7)
         };
-        _ = LoadData();
+        await LoadData();
+        StateHasChanged();
     }
 
-    private void NavigateForward()
+    private async Task NavigateForward()
     {
         CurrentDate = View switch
         {
@@ -164,14 +178,16 @@ public partial class StatisticsPage : ComponentBase
             "month" => CurrentDate.AddMonths(1),
             _ => CurrentDate.AddDays(7)
         };
-        _ = LoadData();
+        await LoadData();
+        StateHasChanged();
     }
 
-    private void GoToThisYear()
+    private async Task GoToThisYear()
     {
         CurrentDate = DateTime.Today;
         View = "year";
-        _ = LoadData();
+        await LoadData();
+        StateHasChanged();
     }
     private (DateTime From, DateTime To) GetCurrentRange() => View switch
     {
@@ -245,7 +261,7 @@ public partial class StatisticsPage : ComponentBase
                 revenueSheet.Cell(row, 3).Value = $"{s.StaffFirstName} {s.StaffLastname}";
                 revenueSheet.Cell(row, 4).Value = s.SessionTypeName;
                 revenueSheet.Cell(row, 5).Value = s.SessionStatus;
-                revenueSheet.Cell(row, 6).Value = s.SessionTotalPrice ?? 0;
+                revenueSheet.Cell(row, 6).Value = s.SessionTotalPrice.Value;
                 revenueSheet.Cell(row, 6).Style.NumberFormat.Format = "#,##0.00";
 
                 var rowColor = s.SessionStatus switch
@@ -310,8 +326,7 @@ public partial class StatisticsPage : ComponentBase
             var base64 = Convert.ToBase64String(bytes);
             var filename = $"FysioFunc_Rapport_{ExportFrom:yyyyMMdd}_{ExportTo:yyyyMMdd}.xlsx";
 
-            await JS.InvokeVoidAsync("downloadBase64File", base64, filename,
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            await JS.InvokeVoidAsync("downloadBase64File", filename, base64);
         }
         finally
         {
