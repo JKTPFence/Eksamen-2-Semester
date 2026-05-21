@@ -114,7 +114,7 @@ namespace FysioEnterprise.Testing.UseCase
 
         private SessionType CreateMockSessionType(Guid sessionTypeId)
         {
-            var sessionType = new SessionType("Massage", 100m, 60, new TimeOnly(1, 0));
+            var sessionType = new SessionType("Massage", 100m, 60, new TimeOnly(1, 0), new List<int>());
             sessionType.GetType().GetProperty("Id")?.SetValue(sessionType, sessionTypeId);
             return sessionType;
         }
@@ -418,7 +418,7 @@ namespace FysioEnterprise.Testing.UseCase
                 .Returns(mockStrategies);
 
             _mockCalculator.Setup(c => c.Calculate(It.IsAny<decimal>(), mockStrategies))
-                .Returns(100m); // Birthday discounted price
+                .Returns(Task.FromResult(100m)); // Birthday discounted price
 
             var request = new CreateSessionRequest(
                 ClientID: clientId,
