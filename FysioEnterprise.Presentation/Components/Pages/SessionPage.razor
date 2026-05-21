@@ -9,7 +9,6 @@
 	</header>
 
 	<article class="selection-card">
-		<p>SessionTypes: @_sessionTypes.Count</p>
 
 		@if (!string.IsNullOrEmpty(_errorMessage))
 		{
@@ -29,10 +28,11 @@
 				Klient
 			</label>
 			<select class="form-select" @onchange="OnClientChanged">
-				<option value="" disabled selected hidden>- Vælg klient -</option>
+				<option value="" disabled selected hidden>- Vælg Klient -</option>
 				@foreach (var client in _clients)
 				{
-					<option value="@client.ClientID">
+					<option value="@client.ClientID"
+							selected="@(client.ClientID == _selectedClientId)">
 						@client.ClientFirstName @client.ClientLastName
 					</option>
 				}
@@ -51,34 +51,25 @@
 		</section>
 
 		<!-- Sluttid -->
-		<section class="form-field">
-			<label class="field-label">
-				<RadzenIcon Icon="schedule" Style="font-size: 18px;" />
-				Sluttid
-			</label>
-			<input type="datetime-local" class="form-select"
-				   value="@_endTime?.ToString("yyyy-MM-ddTHH:mm")"
-				   @onchange="OnEndTimeChanged" />
-		</section>
+		@if (_endTime.HasValue)
+		{
+			<section class="form-field">
+				<label class="field-label">
+					<RadzenIcon Icon="schedule" Style="font-size: 18px;"/>
+					Sluttid: @_endTime.Value.ToString("dd/MM/yyyy HH:mm")
+					<button class="edit-btn" @onclick="ToggleEndTimeEdit" type="button">
+						<RadzenIcon Icon="@(_editEndTime ? "close" : "edit")" Style="font-size: 16px;"/>
+					</button>
+				</label>
 
-
-		<!-- Behandler -->
-		<section class="form-field"> 
-			<label class="field-label">
-				<RadzenIcon Icon="medical_services" Style="font-size: 18px;" />
-				Behandler
-			</label>
-			<select class="form-select" @onchange="OnStaffChanged"
-					disabled="@(_selectedClinicId == Guid.Empty)">
-				<option value="" disabled selected hidden>- Vælg Behandler -</option>
-				@foreach (var staff in _staffInClinic)
+				@if (_editEndTime)
 				{
-					<option value="@staff.StaffID">
-						@staff.StaffFirstName @staff.StaffLastName - @staff.StaffAuthorisationType
-					</option>
+					<input type="datetime-local" class="form-select"
+							value="@_endTime?.ToString("yyyy-MM-ddTHH:mm")"
+							@onchange="OnEndTimeChanged" />
 				}
-			</select>
-		</section>
+			</section>
+		}
 
 		<!-- Behandslingstype -->
 		<section class="form-field">
@@ -88,15 +79,36 @@
 			</label>
 			<select class="session-select" @onchange="OnSessionTypeChanged"
 					disabled="@(!_startTime.HasValue)">
-				<option value="" disabled selected hidden>— Vælg behandlingstype —</option>
+				<option value="" disabled selected hidden>— Vælg Behandlingstype —</option>
 				@foreach (var type in _sessionTypes)
 				{
-					<option value="@type.SessionTypeID">
+					<option value="@type.SessionTypeID"
+						selected="@(type.SessionTypeID == _selectedSessionTypeId)">
 						@type.SessionTypeName - @GetSessionTypeInMinutes(type) min. -  @type.SessionTypePrice kr.
 					</option>
 				}
 			</select>
 		</section>
+
+		<!-- Behandler -->
+		<section class="form-field">
+			<label class="field-label">
+				<RadzenIcon Icon="medical_services" Style="font-size: 18px;" />
+				Behandler
+			</label>
+			<select class="form-select" @onchange="OnStaffChanged"
+					disabled="@(_selectedClinicId == Guid.Empty)">
+				<option value="" disabled selected hidden>- Vælg Behandler -</option>
+				@foreach (var staff in _staffInClinic)
+				{
+					<option value="@staff.StaffID"
+						selected="@(staff.StaffID == _selectedStaffId)">
+						@staff.StaffFirstName @staff.StaffLastName - @staff.StaffAuthorisationType
+					</option>
+				}
+			</select>
+		</section>
+
 
 		<!-- Rum -->
 		<section class="form-field">
@@ -106,10 +118,11 @@
 			</label>
 			<select class="form-select" @onchange="OnRoomChanged"
 					disabled="@(_selectedClinicId == Guid.Empty)">
-				<option value="" disabled selected hidden>— Vælg rum —</option>
+				<option value="" disabled selected hidden>— Vælg Rum —</option>
 				@foreach (var room in _rooms)
 				{
-					<option value="@room.RoomID">
+					<option value="@room.RoomID"
+						selected="@(room.RoomID == _selectedRoomId)">
 						Rum @room.RoomNumber
 					</option>
 				}

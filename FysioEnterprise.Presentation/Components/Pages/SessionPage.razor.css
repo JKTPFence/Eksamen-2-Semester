@@ -18,6 +18,26 @@
     cursor: pointer;
 }
 
+.session-select:disabled{
+    background-color: #f3f3f6;
+    color: #9ca3af;
+    cursor: not-allowed;
+}
+
+.edit-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #6b7280;
+    padding: 0 4px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.edit-btn:hover {
+    color: #111827
+}
+
 .home-header {
     display: flex;
     flex-direction: column;

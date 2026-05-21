@@ -20,6 +20,10 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                 .Where(s => s.Id == sessionId)
                 .Select(s => new SessionDTO(
                     s.Id,
+                    s.SessionClientID,
+                    s.SessionStaffID,
+                    s.SessionInstanceTypeID,
+                    s.SessionRoomID,
                     _context.Clients
                     .Where(c => c.Id == s.SessionClientID).Select(c => c.ClientFirstName).FirstOrDefault() ?? "",
                     _context.Clients
@@ -50,6 +54,10 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                 .Where(s => s.SessionClientID == clientId)
                 .Select(s => new SessionDTO(
                     s.Id,
+                    s.SessionClientID,
+                    s.SessionStaffID,
+                    s.SessionInstanceTypeID,
+                    s.SessionRoomID,
                     _context.Clients
                     .Where(c => c.Id == s.SessionClientID).Select(c => c.ClientFirstName).FirstOrDefault() ?? "",
                     _context.Clients
@@ -80,6 +88,10 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                 .Where(s => s.SessionClientID == clientId && s.SessionStatus == SessionStatusEnum.Active)
                 .Select(s => new SessionDTO(
                     s.Id,
+                    s.SessionClientID,
+                    s.SessionStaffID,
+                    s.SessionInstanceTypeID,
+                    s.SessionRoomID,
                     _context.Clients
                     .Where(c => c.Id == s.SessionClientID).Select(c => c.ClientFirstName).FirstOrDefault() ?? "",
                     _context.Clients
@@ -110,6 +122,10 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                 .Where(s => s.SessionStaffID == staffId && s.SessionStatus == SessionStatusEnum.Active)
                 .Select(s => new SessionDTO(
                     s.Id,
+                    s.SessionClientID,
+                    s.SessionStaffID,
+                    s.SessionInstanceTypeID,
+                    s.SessionRoomID,
                     _context.Clients
                     .Where(c => c.Id == s.SessionClientID).Select(c => c.ClientFirstName).FirstOrDefault() ?? "",
                     _context.Clients
@@ -143,6 +159,10 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     .Any(r => r.Id == s.SessionRoomID))
                 .Select(s => new SessionDTO(
                     s.Id,
+                    s.SessionClientID,
+                    s.SessionStaffID,
+                    s.SessionInstanceTypeID,
+                    s.SessionRoomID,
                     _context.Clients
                         .Where(c => c.Id == s.SessionClientID)
                         .Select(c => c.ClientFirstName).FirstOrDefault() ?? "",

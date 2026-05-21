@@ -4,6 +4,10 @@ namespace FysioEnterprise.Facade.DTOs
 {
     public record SessionDTO(
         Guid SessionID,
+        Guid ClientID,
+        Guid StaffID,
+        Guid SessionTypeID,
+        Guid RoomID,
         string ClientFirstName,
         string ClientLastName,
         string StaffFirstName,

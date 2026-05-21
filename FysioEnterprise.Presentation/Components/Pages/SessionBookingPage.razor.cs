@@ -252,7 +252,7 @@ public partial class SessionBookingPage : ComponentBase
     }
 
     private void OnSessionClick(SessionDTO session)
-        => Nav.NavigateTo($"/sessions/{session.SessionID}");
+        => Nav.NavigateTo($"/createsession?sessionId={session.SessionID}");
 
     private void GoToCreateSession()
         => Nav.NavigateTo("/createsession");

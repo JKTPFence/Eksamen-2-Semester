@@ -5,6 +5,7 @@ using FysioEnterprise.Facade.UseCase.SessionUseCase;
 using FysioEnterprise.Presentation.Service;
 using static FysioEnterprise.Facade.RequestModels.SessionRequests;
 using Radzen;
+using System.Diagnostics.Eventing.Reader;
 
 namespace FysioEnterprise.Presentation.Components.Pages
 {
@@ -15,6 +16,7 @@ namespace FysioEnterprise.Presentation.Components.Pages
         [Inject] private ISimpleQueries SimpleQueries { get; set; } = default!;
         [Inject] private IClientQueries ClientQueries { get; set; } = default!;
         [Inject] private IPromotionQueries PromotionQueries { get; set; } = default!;
+        [Inject] private IUpdateSessionUseCase UpdateSession { get; set; } = default!;
         [Inject] private LogInContext Context { get; set; } = default!;
         [Inject] private NavigationManager Nav { get; set; } = default!;
 
@@ -35,9 +37,9 @@ namespace FysioEnterprise.Presentation.Components.Pages
         //Selected værdier
         private Guid _selectedClientId;
         private Guid _selectedClinicId;
-        private Guid _SelectedStaffId;
+        private Guid _selectedStaffId;
         private Guid _selectedSessionTypeId;
-        private Guid _selectedRoomid;
+        private Guid _selectedRoomId;
         private Guid _selectedPromotionId;
         private DateTime? _startTime;
         private DateTime? _endTime;
@@ -46,12 +48,14 @@ namespace FysioEnterprise.Presentation.Components.Pages
         private string _errorMessage = string.Empty;
         private string _successMessage = string.Empty;
 
+        private bool _editEndTime = false;
+
         private bool CanSubmit =>
             _selectedClientId != Guid.Empty &&
             _selectedClinicId != Guid.Empty &&
-            _SelectedStaffId != Guid.Empty &&
+            _selectedStaffId != Guid.Empty &&
             _selectedSessionTypeId != Guid.Empty &&
-            _selectedRoomid != Guid.Empty &&
+            _selectedRoomId != Guid.Empty &&
             _startTime.HasValue &&
             _endTime.HasValue &&
             _startTime < _endTime;
@@ -62,7 +66,6 @@ namespace FysioEnterprise.Presentation.Components.Pages
             if (firstRender)
             {
                 await LoadData();
-                ApplyUrlParameters();
                 StateHasChanged();
             }
         }
@@ -80,6 +83,8 @@ namespace FysioEnterprise.Presentation.Components.Pages
 
             _selectedClinicId = Context.ClinicId;
             await LoadStaffAndRooms();
+
+            await ApplyUrlParameters();
         }
 
         private async Task LoadStaffAndRooms()
@@ -96,7 +101,7 @@ namespace FysioEnterprise.Presentation.Components.Pages
                 .ToList();
         }
 
-        private void ApplyUrlParameters()
+        private async Task ApplyUrlParameters()
         {
             if (DateTime.TryParse(Date, out var date) && Hour.HasValue)
             {
@@ -106,8 +111,22 @@ namespace FysioEnterprise.Presentation.Components.Pages
             if (SessionTypeId.HasValue && SessionTypeId != Guid.Empty)
                 _selectedSessionTypeId = SessionTypeId.Value;
 
+            //Til Redigering af bookings
             if (SessionId.HasValue && SessionId != Guid.Empty)
+            {
                 _isEditMode = true;
+
+                var session = await SessionQueries.GetSessionByIdAsync(SessionId.Value);
+                if (session != null)
+                {
+                    _selectedClientId = session.ClientID;
+                    _selectedStaffId = session.StaffID;
+                    _selectedSessionTypeId = session.SessionTypeID;
+                    _selectedRoomId = session.RoomID;
+                    _startTime = session.timeSlot.From;
+                    _endTime = session.timeSlot.To;
+                }
+            }
         }
 
         private void OnClientChanged(ChangeEventArgs e)
@@ -119,7 +138,7 @@ namespace FysioEnterprise.Presentation.Components.Pages
         private void OnStaffChanged(ChangeEventArgs e)
         {
             if (Guid.TryParse(e.Value?.ToString(), out var id))
-                _SelectedStaffId = id;
+                _selectedStaffId = id;
         }
 
         private void OnSessionTypeChanged(ChangeEventArgs e)
@@ -152,7 +171,7 @@ namespace FysioEnterprise.Presentation.Components.Pages
         private void OnRoomChanged(ChangeEventArgs e)
         {
             if (Guid.TryParse(e.Value?.ToString(), out var id))
-                _selectedRoomid = id;
+                _selectedRoomId = id;
         }
 
         private void OnPromotionChanged(ChangeEventArgs e)
@@ -166,7 +185,18 @@ namespace FysioEnterprise.Presentation.Components.Pages
         private void OnStartTimeChanged(ChangeEventArgs e)
         {
             if (DateTime.TryParse(e.Value?.ToString(), out var startDt))
+            {
                 _startTime = startDt;
+
+
+                var sessionType = _sessionTypes.FirstOrDefault(s => s.SessionTypeID == _selectedSessionTypeId);
+
+                if (sessionType != null)
+                {
+                    _endTime = _startTime.Value.Add(sessionType.SessionTypeTimeSpan.ToTimeSpan());
+                    StateHasChanged();
+                }
+            }
         }
 
         private void OnEndTimeChanged(ChangeEventArgs e)
@@ -175,17 +205,49 @@ namespace FysioEnterprise.Presentation.Components.Pages
                 _endTime = endDt;
         }
 
+        private void ToggleEndTimeEdit()
+        {
+            _editEndTime = !_editEndTime;
+            StateHasChanged();
+        }
+
         private async Task Submit()
         {
             _errorMessage = string.Empty;
             _successMessage = string.Empty;
 
+            if (_isEditMode)
+            {
+                var updateRequest = new UpdateSessionRequest(
+                    SessionId!.Value,
+                    _selectedClientId,
+                    _selectedStaffId,
+                    _selectedClinicId,
+                    _selectedRoomId,
+                    _startTime!.Value,
+                    _endTime!.Value);
+
+                var result = await UpdateSession.UpdateSessionAsync(updateRequest);
+
+                if (result.IsSuccess)
+                {
+                    _successMessage = "Booking opdateret!";
+                    await Task.Delay(1500);
+                    Nav.NavigateTo("/calendar");
+                }
+                else
+                {
+                    _errorMessage = result.Errors.FirstOrDefault()?.Message ?? "Opdatering af session mislykkedes";
+                }
+            }
+            else
+            {
             var request = new CreateSessionRequest(
                 _selectedClientId,
-                _SelectedStaffId,
+                _selectedStaffId,
                 _selectedPromotionId,
                 _selectedClinicId,
-                _selectedRoomid,
+                _selectedRoomId,
                 _selectedSessionTypeId,
                 0,
                 _startTime.Value,
@@ -193,16 +255,18 @@ namespace FysioEnterprise.Presentation.Components.Pages
 
             var result = await CreateSession.CreateSessionAsync(request);
 
-            if (result.IsSuccess)
-            {
-                _successMessage = "Booking oprettet!";
-                await Task.Delay(1500);
-                Nav.NavigateTo("/calendar");
+                if (result.IsSuccess)
+                {
+                    _successMessage = "Booking oprettet!";
+                    await Task.Delay(1500);
+                    Nav.NavigateTo("/calendar");
+                }
+                else
+                {
+                    _errorMessage = result.Errors.FirstOrDefault()?.Message ?? "Oprettelse mislykkes";
+                }
             }
-            else
-            {
-                _errorMessage = result.Errors.FirstOrDefault()?.Message ?? "Oprettelse mislykkes";
-            }
+
         }
 
         private void Cancel()

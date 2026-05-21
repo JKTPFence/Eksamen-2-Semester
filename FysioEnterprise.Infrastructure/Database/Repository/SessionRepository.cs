@@ -27,7 +27,6 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
         public async Task<Result<Session>> GetSessionAsync(Guid sessionId)
         {
             var session = await _context.Sessions
-                .Include(s => s.SessionPromotion)
                 .FirstOrDefaultAsync(s => s.Id == sessionId);
 
             if (session == null)
@@ -40,7 +39,6 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
         {
             var sessions = await _context.Sessions
                 .AsNoTracking()
-                .Include(s => s.SessionPromotion)
                 .Where(s => s.SessionClientID == clientId)
                 .ToListAsync();
 
@@ -51,7 +49,6 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
         {
             var sessions = await _context.Sessions
                 .AsNoTracking()
-                .Include(s => s.SessionPromotion)
                 .Where(s => s.SessionStaffID == staffId)
                 .ToListAsync();
 
@@ -60,23 +57,22 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
 
         public async Task<List<Session>> GetSessionsByRoomAsync(Guid clinicId, Guid roomId)
         {
-            // First verify the room belongs to this clinic
             var clinic = await _context.Clinics
                 .AsNoTracking()
-                .Include(c => c.GetRoom(roomId))
+                .Include(c => c.ClinicRooms)  // ← brug ClinicRooms i stedet for GetRoom
                 .FirstOrDefaultAsync(c => c.Id == clinicId);
 
             if (clinic is null)
                 throw new NotFoundException($"Clinic {clinicId} not found");
 
-            if (clinic.ClinicRooms.Count() == 0)
+            var roomExists = clinic.ClinicRooms.Any(r => r.Id == roomId);
+            if (!roomExists)
                 throw new NotFoundException($"Room {roomId} does not belong to clinic {clinicId}");
 
             var sessions = await _context.Sessions
                 .AsNoTracking()
-                .Include(s => s.SessionPromotion)
                 .Where(s => s.SessionRoomID == roomId)
-                .ToListAsync();
+                .ToListAsync();  // ← fjern Include
 
             return sessions;
         }

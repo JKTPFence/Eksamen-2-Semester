@@ -26,23 +26,6 @@ namespace FysioEnterprise.Infrastructure
             return services;
         }
 
-        //Til brug til unittests
-        public static IServiceCollection AddInfrastructure(
-            this IServiceCollection services,
-            Action<DbContextOptionsBuilder> configureDb)
-        {
-            services.AddDbContext<AppDBContext>(options =>
-            {
-                options.LogTo(Console.WriteLine);
-                options.EnableSensitiveDataLogging();
-                options.EnableDetailedErrors();
-                configureDb(options);
-            });
-
-            RegisterRepositoriesAndQueries(services);
-            return services;
-        }
-
         private static void RegisterRepositoriesAndQueries(IServiceCollection services)
         {
             //Repos
