@@ -9,6 +9,7 @@
 	</header>
 
 	<article class="selection-card">
+		<p>SessionTypes: @_sessionTypes.Count</p>
 
 		@if (!string.IsNullOrEmpty(_errorMessage))
 		{
@@ -38,6 +39,29 @@
 			</select>
 		</section>
 
+		<!-- Starttid -->
+		<section class="form-field">
+			<label class="field-label">
+				<RadzenIcon Icon="schedule" Style="font-size: 18px;" />
+				Starttid
+			</label>
+			<input type="datetime-local" class="form-select"
+				   value="@_startTime?.ToString("yyyy-MM-ddTHH:mm")"
+				   @onchange="OnStartTimeChanged" />
+		</section>
+
+		<!-- Sluttid -->
+		<section class="form-field">
+			<label class="field-label">
+				<RadzenIcon Icon="schedule" Style="font-size: 18px;" />
+				Sluttid
+			</label>
+			<input type="datetime-local" class="form-select"
+				   value="@_endTime?.ToString("yyyy-MM-ddTHH:mm")"
+				   @onchange="OnEndTimeChanged" />
+		</section>
+
+
 		<!-- Behandler -->
 		<section class="form-field"> 
 			<label class="field-label">
@@ -60,14 +84,15 @@
 		<section class="form-field">
 			<label class="field-label">
 				<RadzenIcon Icon="healing" Style="font-size: 18px;" />
-				Behandslingstype
+				Behandlingstype
 			</label>
-			<select class="form-select" @onchange="OnSessionTypeChanged">
-				<option value="" disabled selectd hidden>- vælg behandlingstype -</option>
+			<select class="session-select" @onchange="OnSessionTypeChanged"
+					disabled="@(!_startTime.HasValue)">
+				<option value="" disabled selected hidden>— Vælg behandlingstype —</option>
 				@foreach (var type in _sessionTypes)
 				{
-					<option value="@type.SessionTypeID"
-							selected="@(type.SessionTypeID == _selectedSessionTypeId)">
+					<option value="@type.SessionTypeID">
+						@type.SessionTypeName - @GetSessionTypeInMinutes(type) min. -  @type.SessionTypePrice kr.
 					</option>
 				}
 			</select>
@@ -91,28 +116,6 @@
 			</select>
 		</section>
 
-		<!-- Starttid -->
-		<section class="form-field">
-			<label class="field-label">
-				<RadzenIcon Icon="schedule" Style="font-size: 18px;" />
-				Starttid
-			</label>
-			<input type="datetime-local" class="form-select"
-				   value="@_startTime?.ToString("yyyy-MM-ddTHH:mm")"
-				   @onchange="OnStartTimeChanged" />
-		</section>
-
-		<!-- Sluttid -->
-		<section class="form-field">
-			<label class="field-label">
-				<RadzenIcon Icon="schedule" Style="font-size: 18px;" />
-				Sluttid
-			</label>
-			<input type="datetime-local" class="form-select"
-				   value="@_endTime?.ToString("yyyy-MM-ddTHH:mm")"
-				   @onchange="OnEndTimeChanged" />
-		</section>
-
 		<!-- Promotion -->
 		<section class="form-field">
 			<label class="field-label">
@@ -134,7 +137,7 @@
 		<footer class="action-footer">
 			<button class="submit-button" @onclick="Cancel">
 				Annuller
-			</button>"
+			</button>
 			<button class="submit-button" @onclick="Submit"
 					disabled="@(!CanSubmit)">
 				@(_isEditMode ? "Gem ændringer" : "Opret booking")

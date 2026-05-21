@@ -46,6 +46,8 @@ namespace FysioEnterprise.Presentation.Components.Pages
         private string _errorMessage = string.Empty;
         private string _successMessage = string.Empty;
 
+        private int SessionTimeInMinutes;
+
         private bool CanSubmit =>
             _selectedClientId != Guid.Empty &&
             _selectedClinicId != Guid.Empty &&
@@ -61,14 +63,6 @@ namespace FysioEnterprise.Presentation.Components.Pages
         {
             if (firstRender)
             {
-                await Context.LoadFromStorageAsync();
-
-                if (!!Context.IsLoggedIn)
-                {
-                    Nav.NavigateTo("/");
-                    return;
-                }
-
                 await LoadData();
                 ApplyUrlParameters();
                 StateHasChanged();
@@ -137,8 +131,23 @@ namespace FysioEnterprise.Presentation.Components.Pages
                 _selectedSessionTypeId = id;
                 var sessionType = _sessionTypes.FirstOrDefault(s => s.SessionTypeID == id);
                 if (sessionType != null && _startTime.HasValue)
+                {
                     _endTime = _startTime.Value.Add(sessionType.SessionTypeTimeSpan.ToTimeSpan());
+                    StateHasChanged();
+                }
             }
+        }
+
+        private int GetSessionTypeInMinutes(SessionTypeDTO sessionType)
+        {
+            if (sessionType.SessionTypeTimeSpan.Hour > 0)
+            {
+                var hourCount = sessionType.SessionTypeTimeSpan.Hour;
+                SessionTimeInMinutes = hourCount * 60;
+            }
+            var totalMinuteCount = sessionType.SessionTypeTimeSpan.Minute + SessionTimeInMinutes;
+            SessionTimeInMinutes = 0;
+            return totalMinuteCount;
         }
 
         private void OnRoomChanged(ChangeEventArgs e)

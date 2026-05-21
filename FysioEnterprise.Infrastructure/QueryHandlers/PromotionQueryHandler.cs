@@ -16,8 +16,11 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
 
         public async Task<List<PromotionDTO>> GetAllPromotionsAsync()
         {
-            return await _context.Promotions
+            var promotions = await _context.Promotions
                 .AsNoTracking()
+                .ToListAsync();
+
+            return promotions
                 .Select(p => new PromotionDTO(
                     p.Id,
                     p.PromotionName,
@@ -25,13 +28,16 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     p.PromotionStartTime,
                     p.PromotionEndTime,
                     p.IsActive))
-                .ToListAsync();
+                .ToList();
         }
 
         public async Task<List<PromotionDTO>> GetAllActivePromotionsAsync()
         {
-            return await _context.Promotions
+            var promotions = await _context.Promotions
                 .AsNoTracking()
+                .ToListAsync();
+
+            return promotions
                 .Where(p => p.IsActive)
                 .Select(p => new PromotionDTO(
                     p.Id,
@@ -40,13 +46,16 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     p.PromotionStartTime,
                     p.PromotionEndTime,
                     p.IsActive))
-                .ToListAsync();
+                .ToList();
         }
 
         public async Task<List<PromotionDTO>> GetAllInActivePromotionsAsync()
         {
-            return await _context.Promotions
+            var promotions = await _context.Promotions
                 .AsNoTracking()
+                .ToListAsync();
+
+            return promotions
                 .Where(p => !p.IsActive)
                 .Select(p => new PromotionDTO(
                     p.Id,
@@ -55,13 +64,16 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     p.PromotionStartTime,
                     p.PromotionEndTime,
                     p.IsActive))
-                .ToListAsync();
+                .ToList();
         }
 
         public async Task<PromotionDTO?> GetPromotionByIdAsync(Guid promotionId)
         {
-            return await _context.Promotions
-                .AsNoTracking()
+            var promotions = await _context.Promotions
+                 .AsNoTracking()
+                 .ToListAsync();
+
+            return promotions
                 .Where(p => p.Id == promotionId)
                 .Select(p => new PromotionDTO(
                     p.Id,
@@ -70,7 +82,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     p.PromotionStartTime,
                     p.PromotionEndTime,
                     p.IsActive))
-                .FirstOrDefaultAsync();
+                .FirstOrDefault();
         }
     }
 }
