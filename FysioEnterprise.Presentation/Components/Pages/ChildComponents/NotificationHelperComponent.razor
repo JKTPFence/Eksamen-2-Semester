@@ -1,0 +1,27 @@
+﻿@using FysioEnterprise.Presentation.Service.Helpers
+@inject NotificationHelper Notification
+@implements IDisposable
+
+@if (_isVisible)
+{
+    <aside class="notification @(Notification.IsSuccess ? "success" : "error")">
+        <span>@Notification.Message</span>
+        <button @onclick="Notification.Clear">✕</button>
+    </aside>
+}
+
+@code {
+    private bool _isVisible = false;
+
+    protected override void OnInitialized()
+        => Notification.OnChange += HandleChange;
+
+    private async void HandleChange()
+    {
+        _isVisible = Notification.IsVisible;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+        => Notification.OnChange -= HandleChange;
+}
