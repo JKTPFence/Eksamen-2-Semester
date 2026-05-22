@@ -67,7 +67,8 @@ namespace FysioEnterprise.Facade.DTOs
         string SessionTypeName,
         double SessionTypePrice,
         int SessionTypeMaxAmount,
-        TimeOnly SessionTypeTimeSpan);
+        TimeOnly SessionTypeTimeSpan,
+        List<int> AllowedAuthorisationNumbers);
 
     public record EarningsReportDTO(
         DateTime From,

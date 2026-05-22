@@ -97,9 +97,9 @@
 				Behandler
 			</label>
 			<select class="form-select" @onchange="OnStaffChanged"
-					disabled="@(_selectedClinicId == Guid.Empty)">
+					disabled="@(_selectedSessionTypeId == Guid.Empty)">
 				<option value="" disabled selected hidden>- Vælg Behandler -</option>
-				@foreach (var staff in _staffInClinic)
+				@foreach (var staff in _filteredStaff)
 				{
 					<option value="@staff.StaffID"
 						selected="@(staff.StaffID == _selectedStaffId)">

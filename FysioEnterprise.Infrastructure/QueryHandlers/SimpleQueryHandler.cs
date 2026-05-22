@@ -134,7 +134,8 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                     styp.SessionTypeName,
                     styp.SessionTypePrice.Value,
                     styp.SessionTypeMaxAmount,
-                    styp.SessionTypeTimeSpan))
+                    styp.SessionTypeTimeSpan,
+                    styp.AllowedAuthorisationNumbers))
                 .ToListAsync();
         }
     }
