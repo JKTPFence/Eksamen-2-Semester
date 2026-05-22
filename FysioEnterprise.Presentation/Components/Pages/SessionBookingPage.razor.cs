@@ -1,12 +1,12 @@
-﻿using System.Globalization;
-using FysioEnterprise.Domain.Enums;
+﻿using DocumentFormat.OpenXml.Presentation;
 using FysioEnterprise.Facade.DTOs;
 using FysioEnterprise.Facade.Queries;
 using FysioEnterprise.Facade.UseCase.SessionUseCase;
 using FysioEnterprise.Presentation.Service;
+using FysioEnterprise.Presentation.Service.Helpers;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
-using static System.Runtime.InteropServices.JavaScript.JSType;
+using System.Globalization;
 using static FysioEnterprise.Facade.RequestModels.SessionRequests;
 
 namespace FysioEnterprise.Presentation.Components.Pages;
@@ -21,6 +21,7 @@ public partial class SessionBookingPage : ComponentBase
     [Inject] private IEndSessionUseCase EndSessionUseCase { get; set; } = default!;
     [Inject] private ICancelSessionUseCase CancelSessionUseCase { get; set; } = default!;
     [Inject] private IMarkSessionAsNoShowUseCase MarkSessionAsNoShowUseCase { get; set; } = default!;
+    [Inject] private NotificationHelper Notification { get; set; } = default!;
 
     public static readonly CultureInfo DanishCulture = new("da-DK");
     private string View { get; set; } = "week";
@@ -124,6 +125,9 @@ public partial class SessionBookingPage : ComponentBase
         {
             await Context.LoadFromStorageAsync();
 
+            var openingHour = _clinic?.ClinicOpeningHours.FirstOrDefault()?.From.Hour ?? 7;
+            await JS.InvokeVoidAsync("scrollToHour", openingHour);
+
             if (!Context.IsLoggedIn)
             {
                 Nav.NavigateTo("/");
@@ -133,7 +137,6 @@ public partial class SessionBookingPage : ComponentBase
             await LoadData();
             StateHasChanged();
         }
-        await JS.InvokeVoidAsync("scrollToHour", 7);
     }
 
     protected override Task OnInitializedAsync() => Task.CompletedTask;
@@ -424,12 +427,13 @@ public partial class SessionBookingPage : ComponentBase
             var dayofsession = SelectedViewSession.timeSlot.From.Date;
             var sessionsfortheday = GetSessionsForDay(dayofsession);
             CalculateColumns(sessionsfortheday);
+            Notification.ShowSuccess("Booking er markeret som færdiggjort");
             CloseSessionDetails();
             StateHasChanged();
         }
         else
         {
-           
+            Notification.ShowError("Fejl bruger kunne ikke markeres som færdiggjort: " + result.Errors.First().Message);
         }
         StateHasChanged();
     }
@@ -452,12 +456,13 @@ public partial class SessionBookingPage : ComponentBase
             var dayofsession = SelectedViewSession.timeSlot.From.Date;
             var sessionsfortheday = GetSessionsForDay(dayofsession);
             CalculateColumns(sessionsfortheday);
+            Notification.ShowSuccess("Booking er markeret som no-show");
             CloseSessionDetails();
             StateHasChanged();
         }
         else
         {
-
+            Notification.ShowError("Fejl bruger kunne ikke markeres som færdiggjort: " + result.Errors.First().Message);
         }
         StateHasChanged();
     }
@@ -480,12 +485,13 @@ public partial class SessionBookingPage : ComponentBase
             var dayofsession = SelectedViewSession.timeSlot.From.Date;
             var sessionsfortheday = GetSessionsForDay(dayofsession);
             CalculateColumns(sessionsfortheday);
+            Notification.ShowSuccess("Booking er markeret som annulleret");
             CloseSessionDetails();
             StateHasChanged();
         }
         else
         {
-
+            Notification.ShowError("Fejl bruger kunne ikke markeres som annulleret: " + result.Errors.First().Message);
         }
         StateHasChanged();
     }

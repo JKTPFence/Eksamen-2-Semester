@@ -1,4 +1,6 @@
-﻿namespace FysioEnterprise.Presentation.Service
+﻿using FysioEnterprise.Presentation.Service.Helpers;
+
+namespace FysioEnterprise.Presentation.Service
 {
     public static class DependencyInjection
     {
@@ -6,6 +8,7 @@
             this IServiceCollection services, IConfiguration config)
         {
             services.AddScoped<LogInContext>();
+            services.AddScoped<NotificationHelper>();
             return services;
         }
     }
