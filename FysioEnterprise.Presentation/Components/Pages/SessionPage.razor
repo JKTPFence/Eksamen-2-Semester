@@ -152,8 +152,15 @@
 				Annuller
 			</button>
 			<button class="submit-button" @onclick="Submit"
-					disabled="@(!CanSubmit)">
+					disabled="@(!CanSubmit || _isLoading)">
+				@if (_isLoading)
+				{
+					<span>"Gemmer..."</span>
+				}
+				else
+				{
 				@(_isEditMode ? "Gem ændringer" : "Opret booking")
+				}
 				</button>
 		</footer>
 

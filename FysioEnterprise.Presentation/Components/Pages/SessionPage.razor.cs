@@ -52,6 +52,8 @@ namespace FysioEnterprise.Presentation.Components.Pages
 
         private bool _editEndTime = false;
 
+        private bool _isLoading = false;
+
         private bool CanSubmit =>
             _selectedClientId != Guid.Empty &&
             _selectedClinicId != Guid.Empty &&
@@ -266,57 +268,69 @@ namespace FysioEnterprise.Presentation.Components.Pages
             _errorMessage = string.Empty;
             _successMessage = string.Empty;
 
-            if (_isEditMode)
+            if (_isLoading is false)
             {
-                var updateRequest = new UpdateSessionRequest(
-                    SessionId!.Value,
-                    _selectedClientId,
-                    _selectedStaffId,
-                    _selectedClinicId,
-                    _selectedRoomId,
-                    _startTime!.Value,
-                    _endTime!.Value);
+                _isLoading = true;
+                StateHasChanged();
 
-                var result = await UpdateSession.UpdateSessionAsync(updateRequest);
-
-                if (result.IsSuccess)
+                if (_isEditMode)
                 {
-                    _successMessage = "Booking opdateret!";
-                    await Task.Delay(1500);
-                    Nav.NavigateTo("/calendar");
+                    var updateRequest = new UpdateSessionRequest(
+                        SessionId!.Value,
+                        _selectedClientId,
+                        _selectedStaffId,
+                        _selectedClinicId,
+                        _selectedRoomId,
+                        _startTime!.Value,
+                        _endTime!.Value);
+
+                    var result = await UpdateSession.UpdateSessionAsync(updateRequest);
+
+                    if (result.IsSuccess)
+                    {
+                        _successMessage = "Booking opdateret!";
+                        await Task.Delay(1500);
+                        Nav.NavigateTo("/calendar");
+                    }
+                    else
+                    {
+                        _errorMessage = result.Errors.FirstOrDefault()?.Message ?? "Opdatering af session mislykkedes";
+                        _isLoading = false;
+                        StateHasChanged();
+
+                    }
                 }
                 else
                 {
-                    _errorMessage = result.Errors.FirstOrDefault()?.Message ?? "Opdatering af session mislykkedes";
+                    var request = new CreateSessionRequest(
+                        _selectedClientId,
+                        _selectedStaffId,
+                        _selectedPromotionId,
+                        _selectedClinicId,
+                        _selectedRoomId,
+                        _selectedSessionTypeId,
+                        0,
+                        _startTime.Value,
+                        _endTime.Value);
+
+                    var result = await CreateSession.CreateSessionAsync(request);
+
+                    if (result.IsSuccess)
+                    {
+                        _successMessage = "Booking oprettet!";
+                        await Task.Delay(1500);
+                        Nav.NavigateTo("/calendar");
+                    }
+                    else
+                    {
+                        _errorMessage = result.Errors.FirstOrDefault()?.Message ?? "Oprettelse mislykkes";
+                        _isLoading = false;
+                        StateHasChanged();
+                    }
+                    _isLoading = false;
+
                 }
             }
-            else
-            {
-            var request = new CreateSessionRequest(
-                _selectedClientId,
-                _selectedStaffId,
-                _selectedPromotionId,
-                _selectedClinicId,
-                _selectedRoomId,
-                _selectedSessionTypeId,
-                0,
-                _startTime.Value,
-                _endTime.Value);
-
-            var result = await CreateSession.CreateSessionAsync(request);
-
-                if (result.IsSuccess)
-                {
-                    _successMessage = "Booking oprettet!";
-                    await Task.Delay(1500);
-                    Nav.NavigateTo("/calendar");
-                }
-                else
-                {
-                    _errorMessage = result.Errors.FirstOrDefault()?.Message ?? "Oprettelse mislykkes";
-                }
-            }
-
         }
 
         private void Cancel()
