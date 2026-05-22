@@ -6,7 +6,7 @@ namespace FysioEnterprise.Domain.Service.PricingService
 {
     public interface IPricingStrategyFactory
     {
-        Price BuildStrategies(
+        Task<Price> BuildStrategies(
             Client client,
             Promotion? promotion,
             SessionType sessionType);

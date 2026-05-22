@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Net.NetworkInformation;
-using FysioEnterprise.Domain.Enums;
+﻿using FysioEnterprise.Domain.Enums;
 using FysioEnterprise.Domain.Exceptions;
 using FysioEnterprise.Domain.Service;
 using FysioEnterprise.Domain.Service.PricingService;
@@ -29,7 +27,6 @@ namespace FysioEnterprise.Domain.Entities
             Guid sessionTypeId,
             Guid roomId,
             Guid? promotionId,
-            decimal totalPrice,
             TimeSlot sessionTimeSlot
         )
         {
@@ -54,7 +51,6 @@ namespace FysioEnterprise.Domain.Entities
             SessionType sessionType,
             Guid roomId,
             TimeSlot sessionTimeSlot,
-            decimal totalPrice,
             Promotion? promotion,
             IEnumerable<Session> existingClientSessions,
             IEnumerable<Session> existingStaffSessions,
@@ -62,13 +58,14 @@ namespace FysioEnterprise.Domain.Entities
             IPricingStrategyFactory pricingStrategyFactory)
         {
 
-            var newSession = new Session(client.Id, staffId, sessionType.Id, roomId, promotion?.Id, totalPrice, sessionTimeSlot);
+            var newSession = new Session(client.Id, staffId, sessionType.Id, roomId, promotion?.Id, sessionTimeSlot);
 
             ValidateOverlap(newSession.SessionTimeSlot, existingClientSessions, existingStaffSessions, existingRoomSessions);
-            newSession.priceTotal =
-            pricingStrategyFactory.BuildStrategies(client,
+            TimeValidationService.ValidateTime(sessionType.SessionTypeName, newSession.SessionTimeSlot.From, newSession.SessionTimeSlot.To, DateTime.Now);
+
+            newSession.priceTotal = pricingStrategyFactory.BuildStrategies(client,
                 promotion,
-                sessionType);
+                sessionType).Result;
 
             return newSession;
         }
@@ -84,6 +81,7 @@ namespace FysioEnterprise.Domain.Entities
                 throw new UserInvalidInputException($"Cannot update time of an inactive session.");
 
             ValidateOverlap(newSessionTimeSlot, existingClientSessions, existingStaffSessions, existingRoomSessions, sessionId);
+            TimeValidationService.ValidateTime("New time", newSessionTimeSlot.From, newSessionTimeSlot.To, DateTime.Now);
 
             SessionTimeSlot = newSessionTimeSlot;
         }

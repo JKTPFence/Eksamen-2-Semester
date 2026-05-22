@@ -11,7 +11,7 @@ namespace FysioEnterprise.Domain.Service.PricingService.Strategies.PricingMethod
             Promotion? promotion,
             SessionType sessionType)
         {
-            return sessionType.SessionTypePrice;
+            return new Price(0);
         }
     }
 }

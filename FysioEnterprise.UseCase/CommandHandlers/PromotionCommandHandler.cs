@@ -29,7 +29,7 @@ namespace FysioEnterprise.UseCase.CommandHandlers.PromotionCommands
                 request.Name,
                 request.StartDate,
                 request.EndDate,
-                _timeNow);
+                DateTime.Now);
             if (validationResult.IsFailed)
                 return validationResult;
 
@@ -63,7 +63,7 @@ namespace FysioEnterprise.UseCase.CommandHandlers.PromotionCommands
                            request.Name,
                            request.StartDate,
                            request.EndDate,
-                           _timeNow);
+                           DateTime.Now);
             if (validationResult.IsFailed)
                 return validationResult;
 

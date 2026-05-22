@@ -8,12 +8,12 @@ namespace FysioEnterprise.Domain.Service
             string eventName,
             DateTime startTime,
             DateTime endTime,
-            ITimeNow currentTime)
+            DateTime currentTime)
         {
             if (startTime >= endTime)
                 return Result.Fail($"{eventName} must start before it ends.");
             
-            if (startTime < currentTime.Now())
+            if (startTime < currentTime)
                 return Result.Fail($"{eventName} start cannot be in the past.");
 
             return Result.Ok();

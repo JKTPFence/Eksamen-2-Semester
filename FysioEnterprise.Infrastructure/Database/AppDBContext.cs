@@ -45,6 +45,7 @@ namespace FysioEnterprise.Infrastructure.Database
 
             modelBuilder.Entity<Session>(entity =>
             {
+
                 entity.Property(s => s.SessionStatus)
                     .HasConversion<string>();
 
@@ -54,17 +55,28 @@ namespace FysioEnterprise.Infrastructure.Database
                             .HasColumnName("PriceTotal")
                             .IsRequired();
                 });
+
+                entity.OwnsOne(s => s.SessionTimeSlot, ts =>
+                {
+                    ts.Property(t => t.From).HasColumnName("SessionStartTime").IsRequired();
+                    ts.Property(t => t.To).HasColumnName("SessionEndTime").IsRequired();
+                });
             });
 
-            modelBuilder.Entity<Entity.Session>()
-            .OwnsOne(s => s.SessionTimeSlot, ts =>
+            modelBuilder.Entity<Entity.Client>(entity =>
             {
-                ts.Property(t => t.From);
-                ts.Property(t => t.To);
+                entity.OwnsOne(c => c.ClientLoyaltyLevel);
+                entity.HasIndex(c => c.ClientEmail).IsUnique();
             });
 
-            modelBuilder.Entity<Entity.Client>()
-                .OwnsOne(c => c.ClientLoyaltyLevel);
+            modelBuilder.Entity<Entity.Promotion>(entity =>
+            {
+                entity.HasIndex(p => p.PromotionName)
+                    .IsUnique();
+
+                entity.HasIndex(p => new { p.PromotionStartTime, p.PromotionEndTime })
+                    .IsUnique();
+            });
 
             modelBuilder.Entity<Entity.Clinic>()
             .OwnsMany(c => c.ClinicRooms, room =>

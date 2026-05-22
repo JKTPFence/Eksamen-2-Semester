@@ -11,10 +11,11 @@ namespace FysioEnterprise.Domain.Service.PricingService.Strategies.PricingMethod
             Promotion? promotion,
             SessionType sessionType)
         {
-            if (promotion is null)
-                return sessionType.SessionTypePrice;
+            if (promotion is null || !promotion.IsActive)
+                return new Price(0);
+
             var savings = sessionType.SessionTypePrice.Value * Convert.ToDouble(promotion.PromotionDiscountPercent / 100);
-            return new Price (savings);
+            return new Price(savings);
         }
     }
 }

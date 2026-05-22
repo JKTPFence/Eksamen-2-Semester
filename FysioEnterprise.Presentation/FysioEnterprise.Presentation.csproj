@@ -9,6 +9,10 @@
 
   <ItemGroup>
     <PackageReference Include="ClosedXML" Version="0.105.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.8">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
     <PackageReference Include="Radzen.Blazor" Version="10.4.3" />
   </ItemGroup>
 

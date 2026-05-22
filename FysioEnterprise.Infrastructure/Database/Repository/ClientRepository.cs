@@ -16,7 +16,7 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
 
         public async Task<Result> CreateClientAsync(Client client)
         {
-            var exists = await _context.Clients
+            var exists = await _context.Clients 
                 .AnyAsync(c => c.ClientEmail == client.ClientEmail);
 
             if (exists)
