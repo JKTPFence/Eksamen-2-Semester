@@ -157,7 +157,8 @@ namespace FysioEnterprise.Testing.UseCase
                 "0987654321",
                 new DateOnly(1995, 5, 5),
                 "456 Oak Ave",
-                "Note");
+                "Note",
+                Guid.NewGuid());
 
             _mockClientRepository.Setup(x => x.GetClientAsync(clientId))
                 .ReturnsAsync(Result.Ok(client));
@@ -182,7 +183,8 @@ namespace FysioEnterprise.Testing.UseCase
                 "0987654321",
                 new DateOnly(1995, 5, 5),
                 "456 Oak Ave",
-                "Note");
+                "Note",
+                Guid.NewGuid());
 
             var result = await _handler.UpdateClientAsync(request);
 
@@ -202,7 +204,8 @@ namespace FysioEnterprise.Testing.UseCase
                 "0987654321",
                 new DateOnly(1995, 5, 5),
                 "456 Oak Ave",
-                "Note");
+                "Note",
+                Guid.NewGuid());
 
             _mockClientRepository.Setup(x => x.GetClientAsync(clientId))
                 .ReturnsAsync(Result.Fail("Client not found"));

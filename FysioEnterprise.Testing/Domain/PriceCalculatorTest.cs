@@ -41,50 +41,46 @@ namespace FysioEnterprise.Domain.Tests
         }
 
         [Fact]
-        public void Calculate_NoStrategies_ReturnsBasePrice()
+        public async Task Calculate_NoStrategies_ReturnsBasePrice()
         {
             var (client, sessionType) = CreateBaseDomainContext(LoyaltyLevel.None);
-            var strategies = new List<IPricingStrategy>();
-            var calculator = new PriceCalculator(strategies);
+            var calculator = new PriceCalculator(new List<IPricingStrategy>());
 
-            var result = calculator.BuildStrategies(client, null, sessionType);
+            var result = await calculator.BuildStrategies(client, null, sessionType);
 
             Assert.Equal(BasePriceValue.Value, result.Value);
         }
 
         [Fact]
-        public void Calculate_OnlyLoyalty_AppliesLoyaltyDiscount()
+        public async Task Calculate_OnlyLoyalty_AppliesLoyaltyDiscount()
         {
             var (client, sessionType) = CreateBaseDomainContext(LoyaltyLevel.Gold);
+            var calculator = new PriceCalculator(new List<IPricingStrategy> { new LoyaltyPricingStrategy() });
 
-            var strategies = new List<IPricingStrategy> { new LoyaltyPricingStrategy() };
-            var calculator = new PriceCalculator(strategies);
-
-            var result = calculator.BuildStrategies(client, null, sessionType);
+            var result = await calculator.BuildStrategies(client, null, sessionType);
 
             Assert.Equal(85D, result.Value);
         }
 
         [Fact]
-        public void Calculate_BirthdayBeatLoyalty_AppliesBirthdayDiscount()
+        public async Task Calculate_BirthdayBeatLoyalty_AppliesBirthdayDiscount()
         {
-            var birthday = DateOnly.FromDateTime(DateTime.Today);
+            var birthday = new DateOnly(1995, DateTime.Today.Month, 1);
             var (client, sessionType) = CreateBaseDomainContext(LoyaltyLevel.Bronze, birthday);
 
-            var strategies = new List<IPricingStrategy>
+            var calculator = new PriceCalculator(new List<IPricingStrategy>
             {
                 new LoyaltyPricingStrategy(),
                 new BirthdayPricingStrategy()
-            };
-            var calculator = new PriceCalculator(strategies);
+            });
 
-            var result = calculator.BuildStrategies(client, null, sessionType);
+            var result = await calculator.BuildStrategies(client, null, sessionType);
 
             Assert.Equal(75D, result.Value);
         }
 
         [Fact]
-        public void Calculate_PromotionBeatsAll_AppliesPromotionDiscount()
+        public async Task Calculate_PromotionBeatsAll_AppliesPromotionDiscount()
         {
             var (client, sessionType) = CreateBaseDomainContext(LoyaltyLevel.Gold);
             var promotion = Promotion.Create(
@@ -94,39 +90,37 @@ namespace FysioEnterprise.Domain.Tests
                 DateTime.UtcNow.AddDays(5)
             );
 
-            var strategies = new List<IPricingStrategy>
+            var calculator = new PriceCalculator(new List<IPricingStrategy>
             {
                 new LoyaltyPricingStrategy(),
                 new BirthdayPricingStrategy(),
                 new PromotionPricingStrategy()
-            };
-            var calculator = new PriceCalculator(strategies);
+            });
 
-            var result = calculator.BuildStrategies(client, promotion, sessionType);
+            var result = await calculator.BuildStrategies(client, promotion, sessionType);
 
             Assert.Equal(60D, result.Value);
         }
 
         [Fact]
-        public void Calculate_AlwaysPicksLowestPrice()
+        public async Task Calculate_AlwaysPicksLowestPrice()
         {
             var (client, sessionType) = CreateBaseDomainContext(LoyaltyLevel.Silver);
             var promotion = Promotion.Create("Småting", 5m, DateTime.UtcNow.AddDays(-1), DateTime.UtcNow.AddDays(1));
 
-            var strategies = new List<IPricingStrategy>
+            var calculator = new PriceCalculator(new List<IPricingStrategy>
             {
                 new LoyaltyPricingStrategy(),
                 new PromotionPricingStrategy()
-            };
-            var calculator = new PriceCalculator(strategies);
+            });
 
-            var result = calculator.BuildStrategies(client, promotion, sessionType);
+            var result = await calculator.BuildStrategies(client, promotion, sessionType);
 
             Assert.Equal(90D, result.Value);
         }
 
         [Fact]
-        public void Calculate_PromotionZeroPercent_ThrowsDomainExceptionOnCreation()
+        public async Task Calculate_PromotionZeroPercent_ThrowsDomainExceptionOnCreation()
         {
             var (client, sessionType) = CreateBaseDomainContext(LoyaltyLevel.None);
 
