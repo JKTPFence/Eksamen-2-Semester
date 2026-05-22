@@ -62,10 +62,15 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
             var sessionTypeResult = await _sessionTypeRepository.GetSessionTypeAsync(request.SessionInstanceTypeID);
             if (sessionTypeResult.IsFailed)
                 return Result.Fail("Session type not found.");
-            
-            var promotionResult = await _promotionRepository.GetPromotionAsync(request.PromotionID);
+
+            Result<Promotion> promotionResult = null;
+
+            if (request.PromotionID != Guid.Empty)
+            {
+                promotionResult = await _promotionRepository.GetPromotionAsync(request.PromotionID);
                 if (promotionResult.IsFailed)
                     return Result.Fail("Promotion not found.");
+            }
     
 
             var existingClientSessions = await _sessionRepository.GetSessionsByClientAsync(request.ClientID);
