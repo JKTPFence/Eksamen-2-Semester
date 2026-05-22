@@ -1,174 +1,197 @@
 ﻿@page "/Clients"
 @rendermode InteractiveServer
+@using Radzen.Blazor
 
-<div class="container-fluid mt-4">
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <h2>Klienter</h2>
-        </div>
-        <div class="col-md-4 text-end">
-            <button class="btn btn-primary" @onclick="OpenCreateModal">
-                <i class="bi bi-plus-circle"></i> Opret klient
+<section class="booking-page">
+    <header class="booking-header">
+        <h1 class="booking-title">Klienter</h1>
+    </header>
+
+    <header class="booking-toolbar">
+        <nav class="toolbar-left" aria-label="Klient handlinger" style="min-width: auto; flex: 1; justify-content: flex-start;">
+            <button class="btn-primary" @onclick="OpenCreateModal">
+                <RadzenIcon Icon="person_add" />
+                Opret klient
             </button>
-        </div>
-    </div>
 
-    <div class="row mb-3">
-        <div class="col-md-6">
-            <input type="text" 
-                   class="form-control" 
-                   placeholder="Søg på navn, email eller telefon..." 
-                   @bind="searchTerm" 
-                   @oninput="OnSearchChanged" />
-        </div>
-    </div>
+            <label class="search-wrapper" aria-label="Søg i klienter" style="margin-left: 4px;">
+                <RadzenIcon Icon="search" class="search-icon" />
+                <input type="search"
+                       class="client-search"
+                       placeholder="Søg på navn, email eller telefon..."
+                       value="@searchTerm"
+                       @oninput="OnSearchChanged" />
+                @if (!string.IsNullOrEmpty(searchTerm))
+                {
+                    <button class="search-clear" @onclick='() => { searchTerm = string.Empty; FilterClients(); }' aria-label="Ryd søgning">
+                        <RadzenIcon Icon="close" />
+                    </button>
+                }
+            </label>
+        </nav>
+    </header>
 
-    <div class="row">
-        <div class="col-12">
+    <article class="client-content-wrap">
+        <div class="table-container">
             @if (filteredClients == null)
             {
-                <p><em>Indlæser...</em></p>
+                <div style="padding: 2rem; text-align: center;">
+                    <p style="color: var(--color-text-muted);">Indlæser klienter...</p>
+                </div>
             }
             else if (filteredClients.Count == 0)
             {
-                <div class="alert alert-info">Ingen klienter fundet.</div>
+                <div style="padding: 3rem; text-align: center; color: var(--color-text-muted);">
+                    <RadzenIcon Icon="search_off" Style="font-size: 48px; margin-bottom: 1rem; opacity: 0.5;" />
+                    <p>Ingen klienter fundet.</p>
+                </div>
             }
             else
             {
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover">
-                        <thead class="table-dark">
+                <table class="client-table">
+                    <thead>
+                        <tr>
+                            <th>Navn</th>
+                            <th>Email</th>
+                            <th>Telefon</th>
+                            <th>Adresse</th>
+                            <th>Fødselsdato</th>
+                            <th>Note</th>
+                            <th>Foretrukket personale</th>
+                            <th style="text-align: right;">Handlinger</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var client in filteredClients)
+                        {
                             <tr>
-                                <th>Navn</th>
-                                <th>Email</th>
-                                <th>Telefon</th>
-                                <th>Adresse</th>
-                                <th>Fødselsdato</th>
-                                <th>Note</th>
-                                <th>Foretrukket personale</th>
-                                <th>Handlinger</th>
+                                <td style="font-weight: 600;">@client.ClientFirstName @client.ClientLastName</td>
+                                <td>@client.ClientEmail</td>
+                                <td>@client.ClientPhoneNumber</td>
+                                <td>@client.ClientAddress</td>
+                                <td>@client.ClientBirthDate.ToString("dd. MMM yyyy", DanishCulture)</td>
+                                <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="@client.ClientNote">
+                                    @client.ClientNote
+                                </td>
+                                <td>
+                                    @{
+                                        var staff = _staff.FirstOrDefault(s => s.StaffID == client.ClientPrefferedStaffID);
+                                        if (staff != null)
+                                        {
+                                            <span>@staff.StaffFirstName @staff.StaffLastName</span>
+                                        }
+                                        else
+                                        {
+                                            <span style="color: var(--color-text-muted); font-style: italic;">Ikke valgt</span>
+                                        }
+                                    }
+                                </td>
+                                <td style="text-align: right; white-space: nowrap;">
+                                    <button class="btn-action btn-edit" @onclick="() => OpenEditModal(client)" title="Rediger">
+                                        <RadzenIcon Icon="edit" Style="font-size: 16px;" />
+                                        Rediger
+                                    </button>
+                                    <button class="btn-action btn-delete" @onclick="() => OpenDeleteConfirm(client)" title="Slet">
+                                        <RadzenIcon Icon="delete" Style="font-size: 16px;" />
+                                        Slet
+                                    </button>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var client in filteredClients)
-                            {
-                                <tr>
-                                    <td>@client.ClientFirstName @client.ClientLastName</td>
-                                    <td>@client.ClientEmail</td>
-                                    <td>@client.ClientPhoneNumber</td>
-                                    <td>@client.ClientAddress</td>
-									<td>@client.ClientBirthDate.ToString("dd/MM/yyyy")</td>
-									<td>@client.ClientNote</td>
-                                    <td>@_staff.FirstOrDefault(s => s.StaffID == client.ClientPrefferedStaffID)?.StaffFirstName @_staff.FirstOrDefault(s => s.StaffID == client.ClientPrefferedStaffID)?.StaffLastName</td>
-                                    <td>
-                                        <button class="btn btn-sm btn-warning" @onclick="() => OpenEditModal(client)">
-                                            <i class="bi bi-pencil"></i> Rediger
-                                        </button>
-                                        <button class="btn btn-sm btn-danger" @onclick="() => OpenDeleteConfirm(client)">
-                                            <i class="bi bi-trash"></i> Slet
-                                        </button>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
+                        }
+                    </tbody>
+                </table>
             }
         </div>
-    </div>
-</div>
+    </article>
+</section>
 
-<div class="modal @(showModal ? "show d-block" : "")" tabindex="-1" role="dialog" style="background-color: @(showModal ? "rgba(0,0,0,0.5)" : "")">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">@(isEditMode ? "Rediger Client" : "Opret ny Client")</h5>
-                <button type="button" class="btn-close" @onclick="CloseModal"></button>
-            </div>
-            <div class="modal-body">
-                @if (showError && !string.IsNullOrEmpty(errorMessage))
-                {
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        @errorMessage
-                        <button type="button" class="btn-close" @onclick="() => showError = false"></button>
-                    </div>
-                }
-                <EditForm Model="currentClient" OnValidSubmit="SaveClient">
-                    <DataAnnotationsValidator />
-                    <ValidationSummary />
+<dialog class="@(showModal ? "show d-block" : "")" style="background-color: @(showModal ? "rgba(0,0,0,0.5)" : "")">
+	<form method="dialog">
+		<header>
+			<h5>@(isEditMode ? "Rediger Klient" : "Opret ny Klient")</h5>
+			<button type="button" class="btn-close" @onclick="CloseModal"></button>
+		</header>
+		<section>
+			@if (showError && !string.IsNullOrEmpty(errorMessage))
+			{
+				<output class="alert alert-danger alert-dismissible fade show" role="alert">
+					@errorMessage
+					<button type="button" class="btn-close" @onclick="() => showError = false"></button>
+				</output>
+			}
+			<EditForm Model="currentClient" OnValidSubmit="SaveClient">
+				<DataAnnotationsValidator />
+				<ValidationSummary />
 
-                    <div class="mb-3">
-                        <label for="name" class="form-label">Navn *</label>
-                        <InputText id="name" class="form-control" @bind-Value="currentClient.ClientFirstName" />
-                        <ValidationMessage For="() => currentClient.ClientFirstName" />
-                    </div>
+				<fieldset class="mb-3">
+					<label for="name" class="form-label">Navn *</label>
+					<InputText id="name" class="form-control" @bind-Value="currentClient.ClientFirstName" />
+					<ValidationMessage For="() => currentClient.ClientFirstName" />
+				</fieldset>
 
-                    <div class="mb-3">
-                        <label for="lastname" class="form-label">Efternavn</label>
-                        <InputText id="lastname" class="form-control" @bind-Value="currentClient.ClientLastName" />
-                    </div>
+				<fieldset class="mb-3">
+					<label for="lastname" class="form-label">Efternavn</label>
+					<InputText id="lastname" class="form-control" @bind-Value="currentClient.ClientLastName" />
+				</fieldset>
 
-                    <div class="mb-3">
-                        <label for="email" class="form-label">Email *</label>
-                        <InputText id="email" class="form-control" type="email" @bind-Value="currentClient.ClientEmail" />
-                        <ValidationMessage For="() => currentClient.ClientEmail" />
-                    </div>
+				<fieldset class="mb-3">
+					<label for="email" class="form-label">Email *</label>
+					<InputText id="email" class="form-control" type="email" @bind-Value="currentClient.ClientEmail" />
+					<ValidationMessage For="() => currentClient.ClientEmail" />
+				</fieldset>
 
-                    <div class="mb-3">
-                        <label for="phone" class="form-label">Telefonnummer</label>
-                        <InputText id="phone" class="form-control" @bind-Value="currentClient.ClientPhoneNumber" />
-                    </div>
+				<fieldset class="mb-3">
+					<label for="phone" class="form-label">Telefonnummer</label>
+					<InputText id="phone" class="form-control" @bind-Value="currentClient.ClientPhoneNumber" />
+				</fieldset>
 
-                    <div class="mb-3">
-                        <label for="address" class="form-label">Adresse</label>
-                        <InputText id="address" class="form-control" @bind-Value="currentClient.ClientAddress" />
-                    </div>
+				<fieldset class="mb-3">
+					<label for="address" class="form-label">Adresse</label>
+					<InputText id="address" class="form-control" @bind-Value="currentClient.ClientAddress" />
+				</fieldset>
 
-                    <div class="mb-3">
-                        <label for="birthdate" class="form-label">Fødselsdato</label>
-                        <InputDate id="birthdate" class="form-control" @bind-Value="currentClient.ClientBirthDate" />
-                    </div>
+				<fieldset class="mb-3">
+					<label for="birthdate" class="form-label">Fødselsdato</label>
+					<InputDate id="birthdate" class="form-control" @bind-Value="currentClient.ClientBirthDate" />
+				</fieldset>
 
-                    <div class="mb-3">
-                        <label for="note" class="form-label">Note</label>
-                        <InputTextArea id="note" class="form-control" @bind-Value="currentClient.ClientNote" />
-                    </div>
+				<fieldset class="mb-3">
+					<label for="note" class="form-label">Note</label>
+					<InputTextArea id="note" class="form-control" @bind-Value="currentClient.ClientNote" />
+				</fieldset>
 
-                    <div class="mb-3">
-                        <label for="staff" class="form-label">Foretrukket personale</label>
-                        <InputSelect id="staff" class="form-control" @bind-Value="currentClient.ClientPrefferedStaffID">
-                            <option value="@Guid.Empty">-- Vælg personale --</option>
-                            @foreach (var staff in _staff)
-                            {
-                                <option value="@staff.StaffID">@staff.StaffFirstName @staff.StaffLastName</option>
-                            }
-                        </InputSelect>
-                    </div>
+				<fieldset class="mb-3">
+					<label for="staff" class="form-label">Foretrukket personale</label>
+					<InputSelect id="staff" class="form-control" @bind-Value="currentClient.ClientPrefferedStaffID">
+						<option value="@Guid.Empty">-- Vælg personale --</option>
+						@foreach (var staff in _staff)
+						{
+							<option value="@staff.StaffID">@staff.StaffFirstName @staff.StaffLastName</option>
+						}
+					</InputSelect>
+				</fieldset>
 
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" @onclick="CloseModal">Annuller</button>
-                        <button type="submit" class="btn btn-primary">Gem</button>
-                    </div>
-                </EditForm>
-            </div>
-        </div>
-    </div>
-</div>
+				<footer>
+					<button type="button" class="btn btn-secondary" @onclick="CloseModal">Annuller</button>
+					<button type="submit" class="btn btn-primary">Gem</button>
+				</footer>
+			</EditForm>
+		</section>
+	</form>
+</dialog>
 
-<div class="modal @(showDeleteConfirm ? "show d-block" : "")" tabindex="-1" role="dialog" style="background-color: @(showDeleteConfirm ? "rgba(0,0,0,0.5)" : "")">
-    <div class="modal-dialog modal-sm" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Bekræft</h5>
-                <button type="button" class="btn-close" @onclick="CloseDeleteConfirm"></button>
-            </div>
-            <div class="modal-body">
-                <p>Er du sikker på, at du vil slette <strong>@clientToDelete?.ClientFirstName @clientToDelete?.ClientLastName</strong>?</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" @onclick="CloseDeleteConfirm">Annuller</button>
-                <button type="button" class="btn btn-danger" @onclick="DeleteClient">Slet</button>
-            </div>
-        </div>
-    </div>
-</div>
+<dialog class="@(showDeleteConfirm ? "show d-block" : "")" style="background-color: @(showDeleteConfirm ? "rgba(0,0,0,0.5)" : "")">
+	<form method="dialog">
+		<header>
+			<h5>Bekræft</h5>
+			<button type="button" class="btn-close" @onclick="CloseDeleteConfirm"></button>
+		</header>
+		<section>
+			<p>Er du sikker på, at du vil slette <strong>@clientToDelete?.ClientFirstName @clientToDelete?.ClientLastName</strong>?</p>
+		</section>
+		<footer>
+			<button type="button" class="btn btn-secondary" @onclick="CloseDeleteConfirm">Annuller</button>
+			<button type="button" class="btn btn-danger" @onclick="DeleteClient">Slet</button>
+		</footer>
+	</form>
+</dialog>
