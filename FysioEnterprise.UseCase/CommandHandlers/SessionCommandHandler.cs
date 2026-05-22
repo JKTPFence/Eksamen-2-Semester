@@ -3,7 +3,6 @@ using FysioEnterprise.Domain.Entities;
 using FysioEnterprise.Domain.Exceptions;
 using FysioEnterprise.Domain.Service;
 using FysioEnterprise.Domain.Service.PricingService;
-using FysioEnterprise.Domain.Service.PricingService.Strategies.PricingMethods;
 using FysioEnterprise.Domain.ValueObjects;
 using FysioEnterprise.Facade.UseCase.SessionUseCase;
 using FysioEnterprise.UseCase.IRepositories;
@@ -91,7 +90,6 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
                         sessionTypeResult.Value,
                         roomResult.Value.Id,
                         timeSlot,
-                        request.SessionTotalPrice,
                         promotionResult?.Value,
                         existingClientSessions,
                         existingStaffSessions,
