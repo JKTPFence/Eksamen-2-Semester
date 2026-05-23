@@ -233,6 +233,7 @@ namespace FysioEnterprise.Presentation.Components.Pages
 
         private void OnStartTimeChanged(ChangeEventArgs e)
         {
+
             if (DateTime.TryParse(e.Value?.ToString(), out var startDt))
             {
                 _startTime = startDt;
@@ -247,6 +248,7 @@ namespace FysioEnterprise.Presentation.Components.Pages
                 {
                     _endTime = _startTime.Value.Add(sessionType.SessionTypeTimeSpan.ToTimeSpan());
                 }
+
                 StateHasChanged();
             }
         }
@@ -260,6 +262,36 @@ namespace FysioEnterprise.Presentation.Components.Pages
         private void ToggleEndTimeEdit()
         {
             _editEndTime = !_editEndTime;
+            StateHasChanged();
+        }
+
+        private void SelectSessionType(Guid id)
+        {
+            _selectedSessionTypeId = id;
+            var sessionType = _sessionTypes.FirstOrDefault(s => s.SessionTypeID == id);
+            
+            if (sessionType != null)
+            {
+                _filteredStaff = _staffInClinic
+                    .Where(s => sessionType.AllowedAuthorisationNumbers.Contains(s.StaffAuthorisationNumber))
+                    .ToList();
+
+                if (_startTime.HasValue)
+                {
+                    _endTime = _startTime.Value.Add(sessionType.SessionTypeTimeSpan.ToTimeSpan());
+                }
+            }
+        }
+
+        private void SelectStaff(Guid id)
+        {
+            _selectedStaffId = id;
+            StateHasChanged();
+        }
+
+        private void SelectRoom(Guid id)
+        {
+            _selectedRoomId = id;
             StateHasChanged();
         }
 
