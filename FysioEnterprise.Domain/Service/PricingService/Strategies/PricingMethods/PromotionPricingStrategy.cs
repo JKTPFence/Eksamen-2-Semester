@@ -11,7 +11,7 @@ namespace FysioEnterprise.Domain.Service.PricingService.Strategies.PricingMethod
             Promotion? promotion,
             SessionType sessionType)
         {
-            if (promotion is null || !promotion.IsActive)
+            if (promotion is null)
                 return new Price(0);
 
             var savings = sessionType.SessionTypePrice.Value * Convert.ToDouble(promotion.PromotionDiscountPercent / 100);

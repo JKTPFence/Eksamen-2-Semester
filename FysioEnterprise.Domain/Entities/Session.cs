@@ -63,6 +63,11 @@ namespace FysioEnterprise.Domain.Entities
             ValidateOverlap(newSession.SessionTimeSlot, existingClientSessions, existingStaffSessions, existingRoomSessions);
             TimeValidationService.ValidateTime(sessionType.SessionTypeName, newSession.SessionTimeSlot.From, newSession.SessionTimeSlot.To, DateTime.Now);
 
+            if (sessionTimeSlot.From < promotion?.PromotionStartTime || sessionTimeSlot.To > promotion?.PromotionEndTime)
+            {
+                promotion = null; // Promotion is not valid for the selected session (We dont want to validate the promotion for now but for when the session is active), so we set it to null to ensure it is not applied to the session.
+            }
+
             newSession.priceTotal = pricingStrategyFactory.BuildStrategies(client,
                 promotion,
                 sessionType).Result;
