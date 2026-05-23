@@ -12,14 +12,11 @@
 
 	<article class="selection-card">
 
-		@if (!string.IsNullOrEmpty(_errorMessage))
+		@if (Notification.IsVisible)
 		{
-			<p class="error-message">@_errorMessage</p>
-		}
-
-		@if (!string.IsNullOrEmpty(_successMessage))
-		{
-			<p class="success-message">@_successMessage</p>
+			<p class="@(Notification.IsSuccess ? "success-message" : "error-message")">
+				@Notification.Message
+			</p>
 		}
 
 		
@@ -50,7 +47,7 @@
 				Starttid
 			</label>
 			<input type="datetime-local" class="form-select"
-				   value="@_startTime?.ToString("yyyy-MM-DDTHH:mm")"
+				   value="@_startTime?.ToString("yyyy-MM-ddTHH:mm")"
 				   @onchange="OnStartTimeChanged" />
 		</section>
 
