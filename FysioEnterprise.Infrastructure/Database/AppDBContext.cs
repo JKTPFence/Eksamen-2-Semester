@@ -65,7 +65,11 @@ namespace FysioEnterprise.Infrastructure.Database
 
             modelBuilder.Entity<Entity.Client>(entity =>
             {
-                entity.OwnsOne(c => c.ClientLoyaltyLevel);
+                entity.OwnsOne(c => c.ClientLoyaltyLevel, ll =>
+                {
+                    ll.Property(l => l.LoyaltyLevelName);
+                    ll.Property(l => l.LoyaltyLevelDiscountPercentage);
+                });
                 entity.HasIndex(c => c.ClientEmail).IsUnique();
             });
 

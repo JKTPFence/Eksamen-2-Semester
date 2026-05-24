@@ -2,9 +2,6 @@
 using FysioEnterprise.Infrastructure.Database;
 using FysioEnterprise.Facade.Queries;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace FysioEnterprise.Infrastructure.QueryHandlers
 {

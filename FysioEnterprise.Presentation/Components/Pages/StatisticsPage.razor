@@ -24,14 +24,15 @@
                 <strong class="current-range">@GetRangeLabel()</strong>
                 <button @onclick="NavigateForward" aria-label="Næste"><RadzenIcon Icon="chevron_right" /></button>
             </nav>
-
-            <button class="btn-today" @onclick="GoToThisYear">Dette år</button>
         </nav>
     </header>
 
     @if (_loading)
     {
-        <p class="loading-text">Indlæser data...</p>
+        <div class="loading-container">
+            <div class="loading-pulse-ring"></div>
+            <p class="loading-text">Henter data...</p>
+        </div>
     }
     else
     {
@@ -41,11 +42,11 @@
                 <strong class="summary-value">@_totalRevenue.ToString("N0", DanishCulture) kr.</strong>
             </article>
             <article class="summary-card">
-                <span class="summary-label">Antal sessioner</span>
+                <span class="summary-label">Antal bookings</span>
                 <strong class="summary-value">@_totalSessions</strong>
             </article>
             <article class="summary-card">
-                <span class="summary-label">Gns. pr. session</span>
+                <span class="summary-label">Gns. pr. booking</span>
                 <strong class="summary-value">@_avgRevenue.ToString("N0", DanishCulture) kr.</strong>
             </article>
             <article class="summary-card">
@@ -97,7 +98,7 @@
 
             <article class="chart-card" aria-label="Session status graf">
                 <header class="chart-header">
-                    <h2 class="chart-title">Session status</h2>
+                    <h2 class="chart-title">Booking status</h2>
                     <span class="chart-subtitle">@GetChartSubtitle()</span>
                 </header>
                 <figure class="chart-figure" aria-label="Søjlediagram over session status">
@@ -152,7 +153,7 @@
         <section class="export-section" aria-label="Eksport">
             <header class="export-header">
                 <h2 class="export-title">Eksportér rapport</h2>
-                <p class="export-desc">Vælg en periode og download en Excel-rapport med omsætning og session status.</p>
+                <p class="export-desc">Vælg en periode og download en Excel-rapport med omsætning og booking status.</p>
             </header>
             <form class="export-form" @onsubmit:preventDefault>
                 <fieldset class="export-fields">

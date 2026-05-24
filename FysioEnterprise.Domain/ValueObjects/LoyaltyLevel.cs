@@ -22,6 +22,14 @@ namespace FysioEnterprise.Domain.ValueObjects
         public static readonly LoyaltyLevel Silver = new("Silver", 10m);
         public static readonly LoyaltyLevel Gold = new("Gold", 15m);
 
+        public static LoyaltyLevel FromName(string name) => name switch
+        {
+            "Bronze" => Bronze,
+            "Silver" => Silver,
+            "Gold" => Gold,
+            _ => None
+        };
+
         protected override IEnumerable<object> GetEqualityComponents()
         {
             yield return LoyaltyLevelName;

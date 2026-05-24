@@ -12,7 +12,7 @@ namespace FysioEnterprise.Domain.ValueObjects
         public TimeSlot(DateTime from, DateTime to)
         {
             if (to <= from)
-                throw new DomainException($"The From time: {from} cannot be after the To time: {to}");
+                throw new DomainException("Til tiden må ikke være før fra tiden");
 
         From = from;
         To = to;

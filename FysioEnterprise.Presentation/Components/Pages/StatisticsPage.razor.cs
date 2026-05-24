@@ -1,8 +1,10 @@
 ﻿using System.Drawing;
 using System.Globalization;
 using ClosedXML.Excel;
-using FysioEnterprise.Facade.Queries;
+using FysioEnterprise.Domain.Enums;
 using FysioEnterprise.Facade.DTOs;
+using FysioEnterprise.Facade.Queries;
+using FysioEnterprise.Facade.RequestModels;
 using FysioEnterprise.Presentation.Service;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
@@ -24,8 +26,8 @@ public partial class StatisticsPage : ComponentBase
     private bool _loading = true;
     private bool _exporting = false;
 
-    private DateTime ExportFrom { get; set; } = DateTime.Today.AddMonths(-1);
-    private DateTime ExportTo { get; set; } = DateTime.Today;
+    private DateTime ExportFrom { get; set; } = DateTime.Today;
+    private DateTime ExportTo { get; set; } = DateTime.Today.AddMonths(1);
 
     private double _totalRevenue;
     private int _totalSessions;
@@ -75,6 +77,7 @@ public partial class StatisticsPage : ComponentBase
             _activeCount = inRange.Count(s => s.SessionStatus == "Active");
 
             BuildChartData(inRange, from, to);
+            UpdateExportRangeToCurrentView();
         }
         catch (Exception ex)
         {
@@ -167,6 +170,7 @@ public partial class StatisticsPage : ComponentBase
             _ => CurrentDate.AddDays(-7)
         };
         await LoadData();
+        UpdateExportRangeToCurrentView();
         StateHasChanged();
     }
 
@@ -179,6 +183,7 @@ public partial class StatisticsPage : ComponentBase
             _ => CurrentDate.AddDays(7)
         };
         await LoadData();
+        UpdateExportRangeToCurrentView();
         StateHasChanged();
     }
 
@@ -187,6 +192,7 @@ public partial class StatisticsPage : ComponentBase
         CurrentDate = DateTime.Today;
         View = "year";
         await LoadData();
+        UpdateExportRangeToCurrentView();
         StateHasChanged();
     }
     private (DateTime From, DateTime To) GetCurrentRange() => View switch
@@ -202,15 +208,39 @@ public partial class StatisticsPage : ComponentBase
     {
         "year" => CurrentDate.Year.ToString(),
         "month" => CurrentDate.ToString("MMMM yyyy", DanishCulture),
-        _ => $"{GetMonday(CurrentDate):d/M} – {GetMonday(CurrentDate).AddDays(6):d/M}, {CurrentDate.Year}"
+        _ => GetWeekRangeLabel()
     };
 
+    private string GetWeekRangeLabel()
+    {
+        var monday = GetMonday(CurrentDate);
+        var sunday = monday.AddDays(6);
+        string monthName = monday.ToString("MMMM", DanishCulture);
+
+        if (!string.IsNullOrEmpty(monthName))
+        {
+            monthName = char.ToUpper(monthName[0]) + monthName.Substring(1);
+        }
+
+        if (monday.Month != sunday.Month)
+        {
+            string endMonthName = sunday.ToString("MMMM", DanishCulture);
+            if (!string.IsNullOrEmpty(endMonthName))
+            {
+                endMonthName = char.ToUpper(endMonthName[0]) + endMonthName.Substring(1);
+            }
+
+            return $"{monthName} {monday.Day} – {endMonthName} {sunday.Day}, {sunday.Year}";
+        }
+        return $"{monday.Day} - {sunday.Day} , {monthName} , {monday.Year}";
+    }
     private string GetChartSubtitle() => View switch
     {
         "year" => "pr. måned",
         "month" => "pr. uge",
         _ => "pr. dag"
     };
+
 
     private static DateTime GetMonday(DateTime date)
     {
@@ -225,68 +255,148 @@ public partial class StatisticsPage : ComponentBase
 
         try
         {
-            var sessions = await SessionQueries.GetAllActiveSessionsByClincIdAsync(Context.ClinicId);
-            var inRange = sessions.Where(s =>
-                s.timeSlot.From.Date >= ExportFrom.Date &&
-                s.timeSlot.From.Date <= ExportTo.Date).ToList();
+            //using the DTO directly from the report query, to ensure we get the same data as shown in the summary, and not just the raw session data which would require us to re-apply all discounts and calculations here
+            var report = await ReportQuery.GetEarningsReportAsync(
+            new EarningsReportRequestDTO(ExportFrom, ExportTo));
 
             using var wb = new XLWorkbook();
-            var revenueSheet = wb.Worksheets.Add("Omsætning");
-            var statusSheet = wb.Worksheets.Add("Session Status");
 
-            revenueSheet.Cell("A1").Value = "FysioFunc — Omsætningsrapport";
+            //Session box, with calculated revenue
+            var revenueSheet = wb.Worksheets.Add("Omsætning");
+
+            revenueSheet.Cell("A1").Value = $"{Context.ClinicName} — Omsætningsrapport";
             revenueSheet.Cell("A1").Style.Font.Bold = true;
             revenueSheet.Cell("A1").Style.Font.FontSize = 14;
-
             revenueSheet.Cell("A2").Value = $"Periode: {ExportFrom:dd-MM-yyyy} til {ExportTo:dd-MM-yyyy}";
             revenueSheet.Cell("A2").Style.Font.Italic = true;
+            revenueSheet.Cell("A3").Value = $"Genereret: {DateTime.Now:dd-MM-yyyy HH:mm}";
+            revenueSheet.Cell("A3").Style.Font.Italic = true;
 
-            revenueSheet.Cell("A4").Value = "Dato";
-            revenueSheet.Cell("B4").Value = "Klient";
-            revenueSheet.Cell("C4").Value = "Behandler";
-            revenueSheet.Cell("D4").Value = "Sessiontype";
-            revenueSheet.Cell("E4").Value = "Status";
-            revenueSheet.Cell("F4").Value = "Beløb (kr.)";
+            //Summary box, for easier view of key metrics
+            revenueSheet.Cell("A5").Value = "Total omsætning (kr.)";
+            revenueSheet.Cell("B5").Value = report.TotalRevenue;
 
-            var headerRange = revenueSheet.Range("A4:F4");
-            headerRange.Style.Font.Bold = true;
-            headerRange.Style.Fill.BackgroundColor = XLColor.FromHtml("#2d6a4f");
-            headerRange.Style.Font.FontColor = XLColor.White;
+            revenueSheet.Cell("A6").Value = "Antal fuldførte bookinger";
+            revenueSheet.Cell("B6").Value = report.SessionCount;
 
-            var row = 5;
-            foreach (var s in inRange.OrderBy(s => s.timeSlot.From))
+            revenueSheet.Cell("A7").Value = "Gennemsnit pr. booking (kr.)";
+            revenueSheet.Cell("B7").Value = report.AverageRevenue;
+
+            revenueSheet.Cell("A8").Value = "Samlet rabat givet (kr.)";
+            revenueSheet.Cell("B8").Value = report.Discounts
+                .Where(d => d.SessionStatus is SessionStatusEnum.Completed or SessionStatusEnum.Active)
+                .Sum(d => d.DiscountAmount);
+
+            revenueSheet.Cell("A9").Value = "Mistede penge (kr.)";
+            revenueSheet.Cell("B9").Value = report.Discounts.Sum(d => d.LostRevenue);
+
+            revenueSheet.Cell("A10").Value = "Kommende omsætning (kr.)";
+            revenueSheet.Cell("B10").Value = report.Discounts.Sum(d => d.UpcomingPrice);
+
+            var summaryRange = revenueSheet.Range("A5:B10");
+            summaryRange.Style.Fill.BackgroundColor = XLColor.FromHtml("#f0f7f4");
+            summaryRange.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+            revenueSheet.Range("A5:A10").Style.Font.Bold = true;
+
+
+            revenueSheet.Cell("A12").Value = "Dato";
+            revenueSheet.Cell("B12").Value = "Klient";
+            revenueSheet.Cell("C12").Value = "Behandler";
+            revenueSheet.Cell("D12").Value = "Bookingtype";
+            revenueSheet.Cell("E12").Value = "Status";
+            revenueSheet.Cell("F12").Value = "Originalpris (kr.)";
+            revenueSheet.Cell("G12").Value = "Rabat (kr.)";
+            revenueSheet.Cell("H12").Value = "Aflyste bookinger (kr.)";
+            revenueSheet.Cell("I12").Value = "Kommende bookinger (kr.)";
+            revenueSheet.Cell("J12").Value = "Nettoresultat (kr.)";
+
+            var revHeader = revenueSheet.Range("A12:J12");
+            revHeader.Style.Font.Bold = true;
+            revHeader.Style.Fill.BackgroundColor = XLColor.FromHtml("#2d6a4f");
+            revHeader.Style.Font.FontColor = XLColor.White;
+            revHeader.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+            var row = 13;
+            foreach (var d in report.Discounts.OrderBy(d => d.SessionStart))
             {
-                revenueSheet.Cell(row, 1).Value = s.timeSlot.From.ToString("dd-MM-yyyy HH:mm");
-                revenueSheet.Cell(row, 2).Value = $"{s.ClientFirstName} {s.ClientLastName}";
-                revenueSheet.Cell(row, 3).Value = $"{s.StaffFirstName} {s.StaffLastname}";
-                revenueSheet.Cell(row, 4).Value = s.SessionTypeName;
-                revenueSheet.Cell(row, 5).Value = s.SessionStatus;
-                revenueSheet.Cell(row, 6).Value = s.SessionTotalPrice.Value;
+                revenueSheet.Cell(row, 1).Value = d.SessionStart.ToString("dd-MM-yyyy HH:mm");
+                revenueSheet.Cell(row, 2).Value = d.ClientName;
+                revenueSheet.Cell(row, 3).Value = d.StaffName;
+                revenueSheet.Cell(row, 4).Value = d.SessiontypeName;
+                revenueSheet.Cell(row, 5).Value = d.SessionStatus.ToString();
+                revenueSheet.Cell(row, 6).Value = d.OriginalPrice;
+
+                if (d.SessionStatus is SessionStatusEnum.Completed or SessionStatusEnum.Active)
+                {
+                    revenueSheet.Cell(row, 7).Value = d.DiscountAmount;
+                    revenueSheet.Cell(row, 7).Style.NumberFormat.Format = "#,##0.00";
+                }
+                else
+                {
+                    revenueSheet.Cell(row, 7).Value = "Ingen Rabat";
+                    revenueSheet.Cell(row, 7).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                }
+
+                if (d.SessionStatus is SessionStatusEnum.Cancelled or SessionStatusEnum.NoShow)
+                {
+                    revenueSheet.Cell(row, 8).Value = d.LostRevenue;
+                    revenueSheet.Cell(row, 8).Style.NumberFormat.Format = "#,##0.00";
+                }
+
+                if (d.SessionStatus == SessionStatusEnum.Active)
+                {
+                    revenueSheet.Cell(row, 9).Value = d.UpcomingPrice;
+                    revenueSheet.Cell(row, 9).Style.NumberFormat.Format = "#,##0.00";
+                }
+
+                if (d.SessionStatus == SessionStatusEnum.Completed)
+                {
+                    revenueSheet.Cell(row, 10).Value = d.FinalPrice;
+                    revenueSheet.Cell(row, 10).Style.NumberFormat.Format = "#,##0.00";
+                }
+                else
+                {
+                    revenueSheet.Cell(row, 10).Value = $"{d.SessionStatus}";
+                    revenueSheet.Cell(row, 10).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                }
+
+                revenueSheet.Cell(row, 6).Value = d.OriginalPrice;
                 revenueSheet.Cell(row, 6).Style.NumberFormat.Format = "#,##0.00";
 
-                var rowColor = s.SessionStatus switch
+                var rowColor = d.SessionStatus switch
                 {
-                    "Completed" => XLColor.FromHtml("#e8f5e9"),
-                    "Cancelled" => XLColor.FromHtml("#fce4ec"),
-                    "NoShow" => XLColor.FromHtml("#fff3e0"),
+                    SessionStatusEnum.Completed => XLColor.FromHtml("#e8f5e9"),
+                    SessionStatusEnum.Cancelled => XLColor.FromHtml("#fce4ec"),
+                    SessionStatusEnum.NoShow => XLColor.FromHtml("#fff3e0"),
                     _ => XLColor.White
                 };
-                revenueSheet.Range(row, 1, row, 6).Style.Fill.BackgroundColor = rowColor;
+                revenueSheet.Range(row, 1, row, 10).Style.Fill.BackgroundColor = rowColor;
                 row++;
             }
 
-            revenueSheet.Cell(row, 5).Value = "Total";
-            revenueSheet.Cell(row, 5).Style.Font.Bold = true;
-            revenueSheet.Cell(row, 6).FormulaA1 = $"=SUM(F5:F{row - 1})";
-            revenueSheet.Cell(row, 6).Style.Font.Bold = true;
-            revenueSheet.Cell(row, 6).Style.NumberFormat.Format = "#,##0.00";
+            if (row > 13)
+            {
+                revenueSheet.Cell(row, 5).Value = "Total";
+                revenueSheet.Cell(row, 5).Style.Font.Bold = true;
+                revenueSheet.Cell(row, 6).FormulaA1 = $"=SUM(F13:F{row - 1})";
+                revenueSheet.Cell(row, 7).FormulaA1 = $"=SUM(G13:G{row - 1})";
+                revenueSheet.Cell(row, 8).FormulaA1 = $"=SUM(H13:H{row - 1})";
+                revenueSheet.Cell(row, 9).FormulaA1 = $"=SUM(I13:I{row - 1})";
+                revenueSheet.Cell(row, 10).FormulaA1 = $"=SUM(J13:J{row - 1})";
+                revenueSheet.Range(row, 5, row, 10).Style.Font.Bold = true;
+                revenueSheet.Range(row, 6, row, 10).Style.NumberFormat.Format = "#,##0.00";
+                revenueSheet.Range(row, 1, row, 10).Style.Fill.BackgroundColor = XLColor.FromHtml("#e8ebe4");
+            }
+
 
             revenueSheet.Columns().AdjustToContents();
 
-            statusSheet.Cell("A1").Value = "FysioFunc — Session Status Rapport";
+            //Session status sheet
+            var statusSheet = wb.Worksheets.Add("Booking Status");
+
+            statusSheet.Cell("A1").Value = $"{Context.ClinicName} — Booking Status Rapport";
             statusSheet.Cell("A1").Style.Font.Bold = true;
             statusSheet.Cell("A1").Style.Font.FontSize = 14;
-
             statusSheet.Cell("A2").Value = $"Periode: {ExportFrom:dd-MM-yyyy} til {ExportTo:dd-MM-yyyy}";
             statusSheet.Cell("A2").Style.Font.Italic = true;
 
@@ -301,16 +411,21 @@ public partial class StatisticsPage : ComponentBase
 
             var statuses = new[] { "Completed", "Cancelled", "NoShow", "Active" };
             var labels = new[] { "Fuldført", "Annulleret", "No-show", "Aktiv" };
+            var colors = new[] { "#e8f5e9", "#fce4ec", "#fff3e0", "#e3f2fd" };
+
             var sRow = 5;
-            foreach (var (status, label) in statuses.Zip(labels))
+            foreach (var (status, label, color) in statuses.Zip(labels).Zip(colors,
+            (a, c) => (a.First, a.Second, c)))
             {
-                var count = inRange.Count(s => s.SessionStatus == status);
+                var count = report.Discounts.Count(s => s.SessionStatus.ToString() == status);
                 statusSheet.Cell(sRow, 1).Value = label;
                 statusSheet.Cell(sRow, 2).Value = count;
-                statusSheet.Cell(sRow, 3).FormulaA1 = inRange.Count > 0
-                    ? $"=B{sRow}/{inRange.Count}"
+                statusSheet.Cell(sRow, 3).FormulaA1 = report.Discounts.Count > 0
+                    ? $"=B{sRow}/{report.Discounts.Count}"
                     : "=0";
                 statusSheet.Cell(sRow, 3).Style.NumberFormat.Format = "0.0%";
+                statusSheet.Range(sRow, 1, sRow, 3).Style.Fill.BackgroundColor =
+                XLColor.FromHtml(color);
                 sRow++;
             }
 
@@ -318,20 +433,102 @@ public partial class StatisticsPage : ComponentBase
             statusSheet.Cell(sRow, 1).Style.Font.Bold = true;
             statusSheet.Cell(sRow, 2).FormulaA1 = $"=SUM(B5:B{sRow - 1})";
             statusSheet.Cell(sRow, 2).Style.Font.Bold = true;
+            statusSheet.Range(sRow, 1, sRow, 3).Style.Fill.BackgroundColor =
+            XLColor.FromHtml("#e8ebe4");
             statusSheet.Columns().AdjustToContents();
 
+            //Discount sheet, to analyze the impact of discounts and see which sessions had them applied
+            var discountSheet = wb.Worksheets.Add("Rabatter");
+
+            discountSheet.Cell("A1").Value = $"{Context.ClinicName} — Rabatrapport";
+            discountSheet.Cell("A1").Style.Font.Bold = true;
+            discountSheet.Cell("A1").Style.Font.FontSize = 14;
+            discountSheet.Cell("A2").Value = $"Periode: {ExportFrom:dd-MM-yyyy} til {ExportTo:dd-MM-yyyy}";
+            discountSheet.Cell("A2").Style.Font.Italic = true;
+
+            discountSheet.Cell("A4").Value = "Bookinger med rabat";
+            discountSheet.Cell("B4").Value = report.Discounts.Count(d => d.DiscountAmount > 0);
+            discountSheet.Cell("A5").Value = "Bookinger uden rabat";
+            discountSheet.Cell("B5").Value = report.Discounts.Count(d => d.DiscountAmount <= 0);
+            discountSheet.Cell("A6").Value = "Samlet rabat givet (kr.)";
+            discountSheet.Cell("B6").Value = report.Discounts.Sum(d => d.DiscountAmount);
+            discountSheet.Cell("B6").Style.NumberFormat.Format = "#,##0.00";
+
+            var discSummary = discountSheet.Range("A4:B6");
+            discSummary.Style.Fill.BackgroundColor = XLColor.FromHtml("#f0f7f4");
+            discSummary.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+            discountSheet.Range("A4:A6").Style.Font.Bold = true;
+
+            discountSheet.Cell("A8").Value = "Bookingtype";
+            discountSheet.Cell("B8").Value = "Rabat grundlag";
+            discountSheet.Cell("C8").Value = "Originalpris (kr.)";
+            discountSheet.Cell("D8").Value = "Rabat (kr.)";
+            discountSheet.Cell("E8").Value = "Slutpris (kr.)";
+
+            var discHeader = discountSheet.Range("A8:E8");
+            discHeader.Style.Font.Bold = true;
+            discHeader.Style.Fill.BackgroundColor = XLColor.FromHtml("#2d6a4f");
+            discHeader.Style.Font.FontColor = XLColor.White;
+            discHeader.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+            var dRow = 9;
+            foreach (var d in report.Discounts.OrderByDescending(d => d.DiscountAmount))
+            {
+                discountSheet.Cell(dRow, 1).Value = d.SessiontypeName;
+                discountSheet.Cell(dRow, 2).Value = d.StrategyName;
+                discountSheet.Cell(dRow, 3).Value = d.OriginalPrice;
+                discountSheet.Cell(dRow, 4).Value = d.DiscountAmount;
+                discountSheet.Cell(dRow, 5).Value = d.FinalPrice;
+
+                discountSheet.Cell(dRow, 3).Style.NumberFormat.Format = "#,##0.00";
+                discountSheet.Cell(dRow, 4).Style.NumberFormat.Format = "#,##0.00";
+                discountSheet.Cell(dRow, 5).Style.NumberFormat.Format = "#,##0.00";
+
+                discountSheet.Range(dRow, 1, dRow, 5).Style.Fill.BackgroundColor = d.DiscountAmount > 0
+                    ? XLColor.FromHtml("#e8f5e9")
+                    : XLColor.White;
+
+                dRow++;
+            }
+
+            // Total prices at the bottom of the discount sheet, to see the overall impact of discounts on the revenue
+            if (dRow > 9)
+            {
+                discountSheet.Cell(dRow, 2).Value = "Total";
+                discountSheet.Cell(dRow, 2).Style.Font.Bold = true;
+                discountSheet.Cell(dRow, 3).FormulaA1 = $"=SUM(C9:C{dRow - 1})";
+                discountSheet.Cell(dRow, 4).FormulaA1 = $"=SUM(D9:D{dRow - 1})";
+                discountSheet.Cell(dRow, 5).FormulaA1 = $"=SUM(E9:E{dRow - 1})";
+                discountSheet.Range(dRow, 2, dRow, 5).Style.Font.Bold = true;
+                discountSheet.Range(dRow, 3, dRow, 5).Style.NumberFormat.Format = "#,##0.00";
+                discountSheet.Range(dRow, 1, dRow, 5).Style.Fill.BackgroundColor =
+                    XLColor.FromHtml("#e8ebe4");
+            }
+
+            discountSheet.Columns().AdjustToContents();
+
+            //Stream the Excel file to the client for download
             using var stream = new MemoryStream();
             wb.SaveAs(stream);
             var bytes = stream.ToArray();
             var base64 = Convert.ToBase64String(bytes);
             var filename = $"FysioFunc_Rapport_{ExportFrom:yyyyMMdd}_{ExportTo:yyyyMMdd}.xlsx";
 
-            await JS.InvokeVoidAsync("downloadBase64File", filename, base64);
+            await JS.InvokeVoidAsync("downloadBase64File", filename, base64, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         }
         finally
         {
             _exporting = false;
             StateHasChanged();
         }
+
+    }
+
+    private void UpdateExportRangeToCurrentView()
+    {
+        var range = GetCurrentRange();
+        ExportFrom = range.From.Date;
+
+        ExportTo = range.To.Date.AddDays(1).AddTicks(-1);
     }
 }

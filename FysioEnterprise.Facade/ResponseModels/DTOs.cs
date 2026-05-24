@@ -1,4 +1,6 @@
-﻿using FysioEnterprise.Domain.ValueObjects;
+﻿using FysioEnterprise.Domain.Enums;
+using FysioEnterprise.Domain.Service.PricingService.Strategies;
+using FysioEnterprise.Domain.ValueObjects;
 
 namespace FysioEnterprise.Facade.DTOs
 {
@@ -71,10 +73,27 @@ namespace FysioEnterprise.Facade.DTOs
         List<int> AllowedAuthorisationNumbers);
 
     public record EarningsReportDTO(
-        DateTime From,
-        DateTime To,
-        double TotalEarnings,
-        int TotalSessions,
-        double AveragePerSession);
+     DateTime From,
+     DateTime To,
+     double TotalRevenue,
+     int SessionCount,
+     double AverageRevenue,
+     List<DiscountProjectionDTO> Discounts
+     );
+
+    public record DiscountProjectionDTO(
+        Guid SessionId,
+        DateTime SessionStart,
+        string ClientName,
+        string StaffName,
+        SessionStatusEnum SessionStatus,
+        string StrategyName,
+        string SessiontypeName,
+        double OriginalPrice,
+        double DiscountAmount,
+        double FinalPrice,
+        double LostRevenue, 
+        double UpcomingPrice
+    );
 }
 
