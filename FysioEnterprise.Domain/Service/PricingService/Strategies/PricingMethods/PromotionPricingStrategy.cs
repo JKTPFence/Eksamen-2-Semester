@@ -12,9 +12,10 @@ namespace FysioEnterprise.Domain.Service.PricingService.Strategies.PricingMethod
             SessionType sessionType)
         {
             if (promotion is null)
-                return sessionType.SessionTypePrice;
+                return new Price(0);
+
             var savings = sessionType.SessionTypePrice.Value * Convert.ToDouble(promotion.PromotionDiscountPercent / 100);
-            return new Price (savings);
+            return new Price(savings);
         }
     }
 }

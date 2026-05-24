@@ -40,7 +40,7 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
                 return Session.Create(
                     client, Guid.NewGuid(), sessionType, Guid.NewGuid(),
                     timeSlot,
-                    totalPrice: 100m, promotion: null, [], [], [], dummyPriceCalculator);
+                    promotion: null, [], [], [], dummyPriceCalculator);
             }
 
             [Fact]
@@ -87,7 +87,7 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
                 var ex = Assert.Throws<ArgumentNullException>(() => Session.Create(
                     client, ids["staffId"], sessionType, ids["roomId"],
                     new TimeSlot(DateTime.UtcNow.AddHours(1), DateTime.UtcNow.AddHours(2)),
-                    100m, null, [], [], [], dummyPriceCalculator));
+                    null, [], [], [], dummyPriceCalculator));
 
                 Assert.Equal(paramName, ex.ParamName);
             }
@@ -121,7 +121,7 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
 
             Assert.Throws<DomainException>(() => Session.Create(
                     client, Guid.NewGuid(), sessionType, Guid.NewGuid(),
-                    timeSlot, 100m, null, [], [], [], dummyPriceCalculator));
+                    timeSlot, null, [], [], [], dummyPriceCalculator));
             }
 
             [Fact]
@@ -150,7 +150,7 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
             Assert.Throws<DomainException>(() => Session.Create(
                     client, Guid.NewGuid(), sessionType, Guid.NewGuid(),
                     new TimeSlot(DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow.AddHours(1)),
-                    100m, null, [], [], [], dummyPriceCalculator));
+                    null, [], [], [], dummyPriceCalculator));
             }
 
             //Overlap validation tests
@@ -183,7 +183,7 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
 
             Assert.Throws<DomainException>(() => Session.Create(
                     client, Guid.NewGuid(), sessionType, Guid.NewGuid(),
-                    timeSlot, 100m, null, [existing], [], [], dummyPriceCalculator));
+                    timeSlot, null, [existing], [], [], dummyPriceCalculator));
             }
 
             [Fact]
@@ -215,7 +215,7 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
 
             Assert.Throws<DomainException>(() => Session.Create(
                     client, existing.SessionStaffID, sessionType, Guid.NewGuid(),
-                    timeSlot, 100m, null, [], [existing], [], dummyPriceCalculator));
+                    timeSlot, null, [], [existing], [], dummyPriceCalculator));
             }
 
             //Update Session Validation tests
@@ -286,10 +286,10 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
             }
         private class SeedPricingFactory : IPricingStrategyFactory
         {
-            public Price BuildStrategies(Client client, Promotion? promotion, SessionType sessionType)
+            public Task<Price> BuildStrategies(Client client, Promotion? promotion, SessionType sessionType)
             {
                 // Fallback default value object returned to bypass domain creation invariants smoothly
-                return new Price(450);
+                return Task.FromResult(new Price(450));
             }
         }
     }

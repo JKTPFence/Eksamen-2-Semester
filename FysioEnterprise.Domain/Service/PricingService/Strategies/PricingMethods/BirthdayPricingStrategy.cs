@@ -5,14 +5,21 @@ namespace FysioEnterprise.Domain.Service.PricingService.Strategies.PricingMethod
 {
     public class BirthdayPricingStrategy : IPricingStrategy
     {
-        private decimal _discountPercentage = 20;
-        public string Name => "Sessiontype price";
+        private const double DiscountPercentage = 25;
+        public string Name => "Birthday Discount";
 
         public Price calculatePrice(Client client,
             Promotion? promotion,
             SessionType sessionType)
         {
-            return sessionType.SessionTypePrice;
+            if (!client.IsBirthdayMonth(DateOnly.FromDateTime(DateTime.Today)))
+                return new Price(0);
+
+            if (client.HasUsedBirthdayDiscountThisYear)
+                return new Price(0);
+
+            var discountAmount = sessionType.SessionTypePrice.Value * (DiscountPercentage / 100);
+            return new Price(discountAmount);
         }
     }
 }

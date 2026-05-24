@@ -7,22 +7,36 @@ namespace FysioEnterprise.Domain.Service.PricingService
    public class PriceCalculator : IPricingStrategyFactory
     {
         private readonly IEnumerable<IPricingStrategy> _strategies;
+        private readonly object _lock = new object();
 
         public PriceCalculator(IEnumerable<IPricingStrategy> strategies)
         {
             _strategies = strategies;
         }
-        public Price BuildStrategies(Client client,
-            Promotion? promotion,
-            SessionType sessionType)
+        public Task<Price> BuildStrategies(Client client,
+                Promotion? promotion,
+                SessionType sessionType)
         {
-            var discounts = _strategies.Select(a => a.calculatePrice(client, promotion, sessionType));
-            var bestDiscount = discounts.MaxBy(a => a.Value) ?? new Price(0);
+            Price bestDiscount = new Price(0);
 
-            var result = sessionType.SessionTypePrice.Value - bestDiscount.Value;
-            result = Math.Max(0, result);
+            Parallel.ForEach(_strategies, s =>
+            {
+                var discount = s.calculatePrice(client, promotion, sessionType);
 
-            return new Price(result);
+                lock (_lock)
+                {
+                    if (discount != null && discount.Value > bestDiscount.Value)
+                    {
+                        bestDiscount = discount;
+                    }
+                }
+            });
+
+            var result = bestDiscount.Value > 0
+                ? Math.Max(0, sessionType.SessionTypePrice.Value - bestDiscount.Value)
+                : sessionType.SessionTypePrice.Value;
+
+            return Task.FromResult(new Price(result));
         }
     }
 }

@@ -1,5 +1,7 @@
 ﻿using FysioEnterprise.Domain.Service;
 using FysioEnterprise.Domain.Service.PricingService;
+using FysioEnterprise.Domain.Service.PricingService.Strategies;
+using FysioEnterprise.Domain.Service.PricingService.Strategies.PricingMethods;
 using FysioEnterprise.Facade.UseCase.ClientUseCase;
 using FysioEnterprise.Facade.UseCase.PromotionUseCase;
 using FysioEnterprise.Facade.UseCase.SessionUseCase;
@@ -34,6 +36,10 @@ namespace FysioEnterprise.UseCase.DependencyInjection
             services.AddScoped<ICancelSessionUseCase, SessionCommandHandler>();
 
             services.AddScoped<IPricingStrategyFactory, PriceCalculator>();
+            services.AddScoped<IPricingStrategy, StandardPricingStrategy>();
+            services.AddScoped<IPricingStrategy, LoyaltyPricingStrategy>();
+            services.AddScoped<IPricingStrategy, BirthdayPricingStrategy>();
+            services.AddScoped<IPricingStrategy, PromotionPricingStrategy>();
             services.AddScoped<ITimeNow, CurrentDateTime>();
 
             return services;

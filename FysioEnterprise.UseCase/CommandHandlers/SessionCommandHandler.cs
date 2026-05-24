@@ -3,7 +3,6 @@ using FysioEnterprise.Domain.Entities;
 using FysioEnterprise.Domain.Exceptions;
 using FysioEnterprise.Domain.Service;
 using FysioEnterprise.Domain.Service.PricingService;
-using FysioEnterprise.Domain.Service.PricingService.Strategies.PricingMethods;
 using FysioEnterprise.Domain.ValueObjects;
 using FysioEnterprise.Facade.UseCase.SessionUseCase;
 using FysioEnterprise.UseCase.IRepositories;
@@ -63,10 +62,15 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
             var sessionTypeResult = await _sessionTypeRepository.GetSessionTypeAsync(request.SessionInstanceTypeID);
             if (sessionTypeResult.IsFailed)
                 return Result.Fail("Session type not found.");
-            
-            var promotionResult = await _promotionRepository.GetPromotionAsync(request.PromotionID);
+
+            Result<Promotion> promotionResult = null;
+
+            if (request.PromotionID != Guid.Empty)
+            {
+                promotionResult = await _promotionRepository.GetPromotionAsync(request.PromotionID);
                 if (promotionResult.IsFailed)
                     return Result.Fail("Promotion not found.");
+            }
     
 
             var existingClientSessions = await _sessionRepository.GetSessionsByClientAsync(request.ClientID);
@@ -91,7 +95,6 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
                         sessionTypeResult.Value,
                         roomResult.Value.Id,
                         timeSlot,
-                        request.SessionTotalPrice,
                         promotionResult?.Value,
                         existingClientSessions,
                         existingStaffSessions,

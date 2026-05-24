@@ -33,6 +33,8 @@ namespace FysioEnterprise.Presentation.Components.Pages
         private List<SessionTypeDTO> _sessionTypes = [];
         private List<RoomDTO> _rooms = [];
         private List<PromotionDTO> _promotions = [];
+        private List<StaffDTO> _filteredStaff = [];
+        private List<PromotionDTO> _allPromotions = [];
 
         //Selected værdier
         private Guid _selectedClientId;
@@ -49,6 +51,8 @@ namespace FysioEnterprise.Presentation.Components.Pages
         private string _successMessage = string.Empty;
 
         private bool _editEndTime = false;
+
+        private bool _isLoading = false;
 
         private bool CanSubmit =>
             _selectedClientId != Guid.Empty &&
@@ -78,8 +82,12 @@ namespace FysioEnterprise.Presentation.Components.Pages
             _sessionTypes = (await SimpleQueries.GetAllSessionTypesAsync())
                 .OrderBy(s => s.SessionTypeName).ToList();
 
-            _promotions = (await PromotionQueries.GetAllActivePromotionsAsync())
+            _allPromotions = (await PromotionQueries.GetAllPromotionsAsync())
                 .OrderBy(p => p.PromotionName).ToList();
+
+            _promotions = _allPromotions
+                .Where(p => p.IsActive)
+                .ToList();
 
             _selectedClinicId = Context.ClinicId;
             await LoadStaffAndRooms();
@@ -106,10 +114,29 @@ namespace FysioEnterprise.Presentation.Components.Pages
             if (DateTime.TryParse(Date, out var date) && Hour.HasValue)
             {
                 _startTime = date.AddHours(Hour.Value);
+
+                _promotions = _allPromotions
+                    .Where(p => p.PromotionStartTime <= _startTime && p.PromotionEndTime >= _startTime)
+                    .ToList();
             }
 
             if (SessionTypeId.HasValue && SessionTypeId != Guid.Empty)
+            {
                 _selectedSessionTypeId = SessionTypeId.Value;
+
+                var sessionType = _sessionTypes.FirstOrDefault(s => s.SessionTypeID == SessionTypeId.Value);
+
+                if (sessionType != null)
+                {
+                    _filteredStaff = _staffInClinic
+                        .Where(s => sessionType.AllowedAuthorisationNumbers.Contains(s.StaffAuthorisationNumber))
+                        .ToList();
+
+                    if (_startTime.HasValue)
+                        _endTime = _startTime.Value.Add(sessionType.SessionTypeTimeSpan.ToTimeSpan());
+                }
+
+            }
 
             //Til Redigering af bookings
             if (SessionId.HasValue && SessionId != Guid.Empty)
@@ -125,6 +152,19 @@ namespace FysioEnterprise.Presentation.Components.Pages
                     _selectedRoomId = session.RoomID;
                     _startTime = session.timeSlot.From;
                     _endTime = session.timeSlot.To;
+
+                    var sessionType = _sessionTypes.FirstOrDefault(s => s.SessionTypeID == session.SessionTypeID);
+
+                    if (sessionType != null)
+                    {
+                        _filteredStaff = _staffInClinic
+                            .Where(s => sessionType.AllowedAuthorisationNumbers.Contains(s.StaffAuthorisationNumber))
+                            .ToList();
+                    }
+
+                    _promotions = _allPromotions
+                    .Where(p => p.PromotionStartTime <= _startTime && p.PromotionEndTime >= _startTime)
+                    .ToList();
                 }
             }
         }
@@ -147,11 +187,20 @@ namespace FysioEnterprise.Presentation.Components.Pages
             {
                 _selectedSessionTypeId = id;
                 var sessionType = _sessionTypes.FirstOrDefault(s => s.SessionTypeID == id);
-                if (sessionType != null && _startTime.HasValue)
+                
+                if (sessionType != null)
                 {
-                    _endTime = _startTime.Value.Add(sessionType.SessionTypeTimeSpan.ToTimeSpan());
+                    _filteredStaff = _staffInClinic
+                           .Where(s => sessionType.AllowedAuthorisationNumbers.Contains(s.StaffAuthorisationNumber))
+                           .ToList();
+
+                    if (_startTime.HasValue)
+                    {
+                        _endTime = _startTime.Value.Add(sessionType.SessionTypeTimeSpan.ToTimeSpan());
+                    }
                     StateHasChanged();
                 }
+
             }
         }
 
@@ -188,14 +237,17 @@ namespace FysioEnterprise.Presentation.Components.Pages
             {
                 _startTime = startDt;
 
+                _promotions = _allPromotions
+                    .Where(p => p.PromotionStartTime <= _startTime && p.PromotionEndTime >= _startTime)
+                    .ToList();
 
                 var sessionType = _sessionTypes.FirstOrDefault(s => s.SessionTypeID == _selectedSessionTypeId);
 
                 if (sessionType != null)
                 {
                     _endTime = _startTime.Value.Add(sessionType.SessionTypeTimeSpan.ToTimeSpan());
-                    StateHasChanged();
                 }
+                StateHasChanged();
             }
         }
 
@@ -216,57 +268,69 @@ namespace FysioEnterprise.Presentation.Components.Pages
             _errorMessage = string.Empty;
             _successMessage = string.Empty;
 
-            if (_isEditMode)
+            if (_isLoading is false)
             {
-                var updateRequest = new UpdateSessionRequest(
-                    SessionId!.Value,
-                    _selectedClientId,
-                    _selectedStaffId,
-                    _selectedClinicId,
-                    _selectedRoomId,
-                    _startTime!.Value,
-                    _endTime!.Value);
+                _isLoading = true;
+                StateHasChanged();
 
-                var result = await UpdateSession.UpdateSessionAsync(updateRequest);
-
-                if (result.IsSuccess)
+                if (_isEditMode)
                 {
-                    _successMessage = "Booking opdateret!";
-                    await Task.Delay(1500);
-                    Nav.NavigateTo("/calendar");
+                    var updateRequest = new UpdateSessionRequest(
+                        SessionId!.Value,
+                        _selectedClientId,
+                        _selectedStaffId,
+                        _selectedClinicId,
+                        _selectedRoomId,
+                        _startTime!.Value,
+                        _endTime!.Value);
+
+                    var result = await UpdateSession.UpdateSessionAsync(updateRequest);
+
+                    if (result.IsSuccess)
+                    {
+                        _successMessage = "Booking opdateret!";
+                        await Task.Delay(1500);
+                        Nav.NavigateTo("/calendar");
+                    }
+                    else
+                    {
+                        _errorMessage = result.Errors.FirstOrDefault()?.Message ?? "Opdatering af session mislykkedes";
+                        _isLoading = false;
+                        StateHasChanged();
+
+                    }
                 }
                 else
                 {
-                    _errorMessage = result.Errors.FirstOrDefault()?.Message ?? "Opdatering af session mislykkedes";
+                    var request = new CreateSessionRequest(
+                        _selectedClientId,
+                        _selectedStaffId,
+                        _selectedPromotionId,
+                        _selectedClinicId,
+                        _selectedRoomId,
+                        _selectedSessionTypeId,
+                        0,
+                        _startTime.Value,
+                        _endTime.Value);
+
+                    var result = await CreateSession.CreateSessionAsync(request);
+
+                    if (result.IsSuccess)
+                    {
+                        _successMessage = "Booking oprettet!";
+                        await Task.Delay(1500);
+                        Nav.NavigateTo("/calendar");
+                    }
+                    else
+                    {
+                        _errorMessage = result.Errors.FirstOrDefault()?.Message ?? "Oprettelse mislykkes";
+                        _isLoading = false;
+                        StateHasChanged();
+                    }
+                    _isLoading = false;
+
                 }
             }
-            else
-            {
-            var request = new CreateSessionRequest(
-                _selectedClientId,
-                _selectedStaffId,
-                _selectedPromotionId,
-                _selectedClinicId,
-                _selectedRoomId,
-                _selectedSessionTypeId,
-                0,
-                _startTime.Value,
-                _endTime.Value);
-
-            var result = await CreateSession.CreateSessionAsync(request);
-
-                if (result.IsSuccess)
-                {
-                    _successMessage = "Booking oprettet!";
-                    await Task.Delay(1500);
-                    Nav.NavigateTo("/calendar");
-                }
-                else
-                {
-                    _errorMessage = result.Errors.FirstOrDefault()?.Message ?? "Oprettelse mislykkes";
-                }
-            }
-
         }
 
         private void Cancel()
