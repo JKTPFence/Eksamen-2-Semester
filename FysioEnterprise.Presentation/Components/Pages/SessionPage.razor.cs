@@ -24,7 +24,6 @@ namespace FysioEnterprise.Presentation.Components.Pages
         [SupplyParameterFromQuery] private string? Date {  get; set; }
         [SupplyParameterFromQuery] private int? Hour { get; set; }
         [SupplyParameterFromQuery] private Guid? SessionTypeId { get; set; }
-        [SupplyParameterFromQuery] private Guid? ClinicId { get; set; }
         [SupplyParameterFromQuery] private Guid? SessionId { get; set; }
 
         //Data lister
@@ -47,11 +46,7 @@ namespace FysioEnterprise.Presentation.Components.Pages
         private DateTime? _endTime;
 
         private bool _isEditMode = false;
-        private string _errorMessage = string.Empty;
-        private string _successMessage = string.Empty;
-
         private bool _editEndTime = false;
-
         private bool _isLoading = false;
 
         private bool CanSubmit =>
@@ -175,35 +170,6 @@ namespace FysioEnterprise.Presentation.Components.Pages
                 _selectedClientId = id;
         }
 
-        private void OnStaffChanged(ChangeEventArgs e)
-        {
-            if (Guid.TryParse(e.Value?.ToString(), out var id))
-                _selectedStaffId = id;
-        }
-
-        private void OnSessionTypeChanged(ChangeEventArgs e)
-        {
-            if (Guid.TryParse(e.Value?.ToString(), out var id))
-            {
-                _selectedSessionTypeId = id;
-                var sessionType = _sessionTypes.FirstOrDefault(s => s.SessionTypeID == id);
-                
-                if (sessionType != null)
-                {
-                    _filteredStaff = _staffInClinic
-                           .Where(s => sessionType.AllowedAuthorisationNumbers.Contains(s.StaffAuthorisationNumber))
-                           .ToList();
-
-                    if (_startTime.HasValue)
-                    {
-                        _endTime = _startTime.Value.Add(sessionType.SessionTypeTimeSpan.ToTimeSpan());
-                    }
-                    StateHasChanged();
-                }
-
-            }
-        }
-
         private int GetSessionTypeInMinutes(SessionTypeDTO sessionType)
         {
             int minutes = 0;
@@ -217,12 +183,6 @@ namespace FysioEnterprise.Presentation.Components.Pages
             return minutes;
         }
 
-        private void OnRoomChanged(ChangeEventArgs e)
-        {
-            if (Guid.TryParse(e.Value?.ToString(), out var id))
-                _selectedRoomId = id;
-        }
-
         private void OnPromotionChanged(ChangeEventArgs e)
         {
             if (Guid.TryParse(e.Value?.ToString(), out var id))
@@ -233,6 +193,7 @@ namespace FysioEnterprise.Presentation.Components.Pages
 
         private void OnStartTimeChanged(ChangeEventArgs e)
         {
+
             if (DateTime.TryParse(e.Value?.ToString(), out var startDt))
             {
                 _startTime = startDt;
@@ -247,6 +208,7 @@ namespace FysioEnterprise.Presentation.Components.Pages
                 {
                     _endTime = _startTime.Value.Add(sessionType.SessionTypeTimeSpan.ToTimeSpan());
                 }
+
                 StateHasChanged();
             }
         }
@@ -263,10 +225,40 @@ namespace FysioEnterprise.Presentation.Components.Pages
             StateHasChanged();
         }
 
+        private void SelectSessionType(Guid id)
+        {
+            _selectedSessionTypeId = id;
+            var sessionType = _sessionTypes.FirstOrDefault(s => s.SessionTypeID == id);
+            
+            if (sessionType != null)
+            {
+                _filteredStaff = _staffInClinic
+                    .Where(s => sessionType.AllowedAuthorisationNumbers.Contains(s.StaffAuthorisationNumber))
+                    .ToList();
+
+                if (_startTime.HasValue)
+                {
+                    _endTime = _startTime.Value.Add(sessionType.SessionTypeTimeSpan.ToTimeSpan());
+                }
+
+                StateHasChanged();
+            }
+        }
+
+        private void SelectStaff(Guid id)
+        {
+            _selectedStaffId = id;
+            StateHasChanged();
+        }
+
+        private void SelectRoom(Guid id)
+        {
+            _selectedRoomId = id;
+            StateHasChanged();
+        }
+
         private async Task Submit()
         {
-            _errorMessage = string.Empty;
-            _successMessage = string.Empty;
 
             if (_isLoading is false)
             {
@@ -288,13 +280,13 @@ namespace FysioEnterprise.Presentation.Components.Pages
 
                     if (result.IsSuccess)
                     {
-                        _successMessage = "Booking opdateret!";
+                        Notification.ShowSuccess("Booking opdateret!");
                         await Task.Delay(1500);
                         Nav.NavigateTo("/calendar");
                     }
                     else
                     {
-                        _errorMessage = result.Errors.FirstOrDefault()?.Message ?? "Opdatering af session mislykkedes";
+                        Notification.ShowError(result.Errors.FirstOrDefault()?.Message ?? "Opdatering af session mislykkedes");
                         _isLoading = false;
                         StateHasChanged();
 
@@ -317,13 +309,13 @@ namespace FysioEnterprise.Presentation.Components.Pages
 
                     if (result.IsSuccess)
                     {
-                        _successMessage = "Booking oprettet!";
+                        Notification.ShowSuccess("Booking oprettet!");
                         await Task.Delay(1500);
                         Nav.NavigateTo("/calendar");
                     }
                     else
                     {
-                        _errorMessage = result.Errors.FirstOrDefault()?.Message ?? "Oprettelse mislykkes";
+                        Notification.ShowError(result.Errors.FirstOrDefault()?.Message ?? "Oprettelse mislykkes");
                         _isLoading = false;
                         StateHasChanged();
                     }

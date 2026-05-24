@@ -12,20 +12,18 @@
 
 	<article class="selection-card">
 
-		@if (!string.IsNullOrEmpty(_errorMessage))
+		@if (Notification.IsVisible)
 		{
-			<p class="error-message">@_errorMessage</p>
-		}
-
-		@if (!string.IsNullOrEmpty(_successMessage))
-		{
-			<p class="success-message">@_successMessage</p>
+			<p class="@(Notification.IsSuccess ? "success-message" : "error-message")">
+				@Notification.Message
+			</p>
 		}
 
 		
-		<!-- Klient -->
+		@*Klient*@
 		<section class="form-field">
 			<label class="field-label">
+				<span class="step-nr">1</span>
 				<RadzenIcon Icon="person" Style ="font-size: 18px;" />
 				Klient
 			</label>
@@ -41,9 +39,10 @@
 			</select>
 		</section>
 
-		<!-- Starttid -->
+		@*Starttid*@
 		<section class="form-field">
 			<label class="field-label">
+				<span class="step-nr">2</span>
 				<RadzenIcon Icon="schedule" Style="font-size: 18px;" />
 				Starttid
 			</label>
@@ -73,67 +72,78 @@
 			</section>
 		}
 
-		<!-- Behandslingstype -->
+		@*Behandslingstype*@
 		<section class="form-field">
 			<label class="field-label">
+				<span class="step-nr">3</span>
 				<RadzenIcon Icon="healing" Style="font-size: 18px;" />
-				Behandlingstype
+				Behandslingstype
 			</label>
-			<select class="session-select" @onchange="OnSessionTypeChanged"
-					disabled="@(!_startTime.HasValue)">
-				<option value="" disabled selected hidden>— Vælg Behandlingstype —</option>
+			<section class="card-grid @(!_startTime.HasValue ? "card-grid--disabled" : "")">
 				@foreach (var type in _sessionTypes)
 				{
-					<option value="@type.SessionTypeID"
-						selected="@(type.SessionTypeID == _selectedSessionTypeId)">
-						@type.SessionTypeName - @GetSessionTypeInMinutes(type) min. -  @type.SessionTypePrice kr.
-					</option>
+					<button class="card @(type.SessionTypeID == _selectedSessionTypeId ? "card--selected" : "")"
+					@onclick="() => SelectSessionType(type.SessionTypeID)"
+					disabled="@(!_startTime.HasValue)"
+					type="button">
+					<RadzenIcon Icon="healing" Style="font-size: 22px;" />
+					<span class="card-title">@type.SessionTypeName</span>
+					<span class="card-meta">@GetSessionTypeInMinutes(type) min · @type.SessionTypePrice kr.</span>
+				</button>
 				}
-			</select>
+			</section>
 		</section>
 
-		<!-- Behandler -->
+		@*Behandler*@
 		<section class="form-field">
 			<label class="field-label">
+				<span class="step-nr">4</span>
 				<RadzenIcon Icon="medical_services" Style="font-size: 18px;" />
 				Behandler
 			</label>
-			<select class="form-select" @onchange="OnStaffChanged"
-					disabled="@(_selectedSessionTypeId == Guid.Empty)">
-				<option value="" disabled selected hidden>- Vælg Behandler -</option>
+			<section class="card-grid @(_selectedSessionTypeId == Guid.Empty ? "card-grid--disabled" : "")">
 				@foreach (var staff in _filteredStaff)
 				{
-					<option value="@staff.StaffID"
-						selected="@(staff.StaffID == _selectedStaffId)">
-						@staff.StaffFirstName @staff.StaffLastName - @staff.StaffAuthorisationType
-					</option>
+					<button class="card @(staff.StaffID == _selectedStaffId ? "card--selected" : "")"
+					@onclick="() => SelectStaff(staff.StaffID)"
+					disabled="@(_selectedSessionTypeId == Guid.Empty)"
+					type="button">
+				<span class="card-avatar">
+					<RadzenIcon Icon="person" Style="font-size: 24px;" />
+				</span>
+				<span class="card-title">@staff.StaffFirstName @staff.StaffLastName</span>
+				<span class="card-meta">@staff.StaffAuthorisationType</span>
+				</button>
 				}
-			</select>
+			</section>
 		</section>
 
 
-		<!-- Rum -->
+		@*Rum*@
 		<section class="form-field">
 			<label class="field-label">
+				<span class="step-nr">5</span>
 				<RadzenIcon Icon="meeting_room" Style="font-size: 18px;" />
 				Rum
 			</label>
-			<select class="form-select" @onchange="OnRoomChanged"
-					disabled="@(_selectedClinicId == Guid.Empty)">
-				<option value="" disabled selected hidden>— Vælg Rum —</option>
+			<section class="card-grid @(_selectedStaffId == Guid.Empty ? "card-grid--disabled" : "")">
 				@foreach (var room in _rooms)
 				{
-					<option value="@room.RoomID"
-						selected="@(room.RoomID == _selectedRoomId)">
-						Rum @room.RoomNumber
-					</option>
+					<button class="card @(room.RoomID == _selectedRoomId ? "card--selected" : "")"
+							@onclick="() => SelectRoom(room.RoomID)"
+							disabled="@(_selectedStaffId == Guid.Empty)"
+							type="button">
+						<RadzenIcon Icon="meeting_room" Style="font-size: 22px;" />
+						<span class="card-title">Rum @room.RoomNumber</span>
+					</button>
 				}
-			</select>
+			</section>
 		</section>
 
-		<!-- Promotion -->
+		@*Promotion*@
 		<section class="form-field">
 			<label class="field-label">
+				<span class="step-nr">6</span>
 				<RadzenIcon Icon="sell" Style="font-size: 18px;" />
 				Promotion (Valgfri)
 			</label>
@@ -148,7 +158,53 @@
 			</select>
 		</section>
 
-		<!-- Knapper -->
+		@*Bookings oversigt*@
+		<aside class="summary">
+			<p class="summary-title">Booking oversigt</p>
+			<ul class="summary-list">
+
+				@if (_selectedClientId != Guid.Empty)
+				{
+					var client = _clients.FirstOrDefault(c => c.ClientID == _selectedClientId);
+					<li><RadzenIcon Icon="person" Style="font-size: 14px;" /> @client.ClientFirstName @client.ClientLastName</li>
+				}
+
+				@if (_selectedSessionTypeId != Guid.Empty)
+				{
+					var sessionType = _sessionTypes.FirstOrDefault(st => st.SessionTypeID == _selectedSessionTypeId);
+					<li><RadzenIcon Icon="healing" Style="font-size: 14px;" /> @sessionType.SessionTypeName</li>
+				}
+
+				@if (_selectedStaffId != Guid.Empty)
+				{
+					var staff = _filteredStaff.FirstOrDefault(s => s.StaffID == _selectedStaffId);
+					<li><RadzenIcon Icon="medical_services" Style="font-size: 14px;" /> @staff.StaffFirstName @staff.StaffLastName</li>
+				}
+
+				@if (_selectedRoomId != Guid.Empty)
+				{
+					var room = _rooms.FirstOrDefault(r => r.RoomID == _selectedRoomId);
+					<li><RadzenIcon Icon="meeting_room" Style="font-size: 14px;" /> Rum @room.RoomNumber</li>
+				}
+
+				@if (_startTime.HasValue)
+				{
+					<li>
+						<RadzenIcon Icon="schedule" Style="font-size: 14px;" />
+						@_startTime.Value.ToString("dd/MM/yyyy HH:mm")
+
+						@if (_endTime.HasValue)
+						{
+							<span> Til @_endTime.Value.ToString("HH:mm")</span>
+						}
+					</li>
+				}
+
+
+			</ul>
+		</aside>
+
+		@*Knapper*@
 		<footer class="action-footer">
 			<button class="submit-button" @onclick="Cancel">
 				Annuller
