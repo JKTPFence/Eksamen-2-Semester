@@ -1,9 +1,166 @@
-﻿@rendermode InteractiveServer
+@rendermode InteractiveServer
 @using FysioEnterprise.Presentation.Service.Helpers
 @inject NotificationHelper Notification
 @page "/promotions"
 <h3>PromotionPage</h3>
 
-@code {
+<section class="booking-page">
+    <header class="booking-header">
+        <h1 class="booking-title">Promoveringer</h1>
+    </header>
 
-}
+    <header class="booking-toolbar">
+        <nav class="toolbar-left" aria-label="Promovering handlinger" style="min-width: auto; flex: 1; justify-content: flex-start;">
+            <button class="btn-primary" @onclick="OpenCreateModal">
+                <RadzenIcon Icon="add" />
+                Opret promovering
+            </button>
+
+            <label class="search-wrapper" aria-label="Søg i promoveringer" style="margin-left: 4px;">
+                <RadzenIcon Icon="search" class="search-icon" />
+                <input type="search"
+                       class="client-search"
+                       placeholder="Søg på navn..."
+                       value="@searchTerm"
+                       @oninput="OnSearchChanged" />
+                @if (!string.IsNullOrEmpty(searchTerm))
+                {
+                    <button class="search-clear" @onclick='() => { searchTerm = string.Empty; FilterPromotions(); }' aria-label="Ryd søgning">
+                        <RadzenIcon Icon="close" />
+                    </button>
+                }
+            </label>
+        </nav>
+    </header>
+
+    <article class="client-content-wrap">
+        <div class="table-container">
+            @if (filteredPromotions == null)
+            {
+                <div style="padding: 2rem; text-align: center;">
+                    <p style="color: var(--color-text-muted);">Indlæser promoveringer...</p>
+                </div>
+            }
+            else if (filteredPromotions.Count == 0)
+            {
+                <div style="padding: 3rem; text-align: center; color: var(--color-text-muted);">
+                    <RadzenIcon Icon="search_off" Style="font-size: 48px; margin-bottom: 1rem; opacity: 0.5;" />
+                    <p>Ingen promoveringer fundet.</p>
+                </div>
+            }
+            else
+            {
+                <table class="client-table">
+                    <thead>
+                        <tr>
+                            <th>Navn</th>
+                            <th>Rabat</th>
+                            <th>Startdato</th>
+                            <th>Slutdato</th>
+                            <th>Status</th>
+                            <th style="text-align: right;">Handlinger</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var promotion in filteredPromotions)
+                        {
+                            <tr>
+                                <td style="font-weight: 600;">@promotion.PromotionName</td>
+                                <td>@promotion.PromotionDiscountPercent.ToString("0.##")%</td>
+                                <td>@promotion.PromotionStartTime.ToString("dd. MMM yyyy", DanishCulture)</td>
+                                <td>@promotion.PromotionEndTime.ToString("dd. MMM yyyy", DanishCulture)</td>
+                                <td>
+                                    @if (promotion.IsActive)
+                                    {
+                                        <span style="color: #2d6a4f; font-weight: 600;">Aktiv</span>
+                                    }
+                                    else
+                                    {
+                                        <span style="color: var(--color-text-muted); font-style: italic;">Inaktiv</span>
+                                    }
+                                </td>
+                                <td style="text-align: right; white-space: nowrap;">
+                                    <button class="btn-action btn-edit" @onclick="() => OpenEditModal(promotion)" title="Rediger">
+                                        <RadzenIcon Icon="edit" Style="font-size: 16px;" />
+                                        Rediger
+                                    </button>
+                                    <button class="btn-action btn-delete" @onclick="() => OpenDeleteConfirm(promotion)" title="Slet">
+                                        <RadzenIcon Icon="delete" Style="font-size: 16px;" />
+                                        Slet
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </article>
+</section>
+
+<dialog class="@(showModal ? "show d-block" : "")" style="background-color: @(showModal ? "rgba(0,0,0,0.5)" : "")">
+    <form method="dialog">
+        <header>
+            <h5>@(isEditMode ? "Rediger Promovering" : "Opret ny Promovering")</h5>
+            <button type="button" class="btn-close" @onclick="CloseModal"></button>
+        </header>
+        <section>
+            @if (showError && !string.IsNullOrEmpty(errorMessage))
+            {
+                <output class="alert alert-danger alert-dismissible fade show" role="alert">
+                    @errorMessage
+                    <button type="button" class="btn-close" @onclick="() => showError = false"></button>
+                </output>
+            }
+            <EditForm Model="currentPromotion" OnValidSubmit="SavePromotion">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <fieldset class="mb-3">
+                    <label for="name" class="form-label">Navn *</label>
+                    <InputText id="name" class="form-control" @bind-Value="currentPromotion.Name" />
+                    <ValidationMessage For="() => currentPromotion.Name" />
+                </fieldset>
+
+                <fieldset class="mb-3">
+                    <label for="discount" class="form-label">Rabat i procent *</label>
+                    <InputNumber id="discount" class="form-control" @bind-Value="currentPromotion.DiscountPercentage" />
+                    <ValidationMessage For="() => currentPromotion.DiscountPercentage" />
+                </fieldset>
+
+                <fieldset class="mb-3">
+                    <label for="start" class="form-label">Startdato *</label>
+                    <InputDate id="start" class="form-control" @bind-Value="currentPromotion.StartDate" />
+                    <ValidationMessage For="() => currentPromotion.StartDate" />
+                </fieldset>
+
+                <fieldset class="mb-3">
+                    <label for="end" class="form-label">Slutdato *</label>
+                    <InputDate id="end" class="form-control" @bind-Value="currentPromotion.EndDate" />
+                    <ValidationMessage For="() => currentPromotion.EndDate" />
+                </fieldset>
+
+                <footer>
+                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">Annuller</button>
+                    <button type="submit" class="btn btn-primary">Gem</button>
+                </footer>
+            </EditForm>
+        </section>
+    </form>
+</dialog>
+
+<dialog class="@(showDeleteConfirm ? "show d-block" : "")" style="background-color: @(showDeleteConfirm ? "rgba(0,0,0,0.5)" : "")">
+    <form method="dialog">
+        <header>
+            <h5>Bekræft</h5>
+            <button type="button" class="btn-close" @onclick="CloseDeleteConfirm"></button>
+        </header>
+        <section>
+            <p>Er du sikker på, at du vil slette <strong>@promotionToDelete?.PromotionName</strong>?</p>
+        </section>
+        <footer>
+            <button type="button" class="btn btn-secondary" @onclick="CloseDeleteConfirm">Annuller</button>
+            <button type="button" class="btn btn-danger" @onclick="DeletePromotion">Slet</button>
+        </footer>
+    </form>
+</dialog>

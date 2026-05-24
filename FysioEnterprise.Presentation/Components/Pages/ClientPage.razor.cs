@@ -154,6 +154,7 @@ namespace FysioEnterprise.Presentation.Components.Pages
                     await CreateClientUseCase.CreateClientAsync(createRequest);
                 }
 
+                await Task.Delay(50);
                 await LoadStaff();
                 await LoadClients();
                 CloseModal();
