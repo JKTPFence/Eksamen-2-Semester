@@ -100,16 +100,6 @@ nav.nav-arrows {
             background: #e8ebe4;
         }
 
-strong.current-range {
-    font-size: 16px;
-    font-weight: 800;
-    color: var(--color-text-primary, #1a1a1a);
-    white-space: nowrap;
-    min-width: 180px;
-    text-align: center;
-    display: inline-block;
-}
-
 .btn-today {
     padding: 6px 14px;
     border: 1px solid rgba(0,0,0,0.14);

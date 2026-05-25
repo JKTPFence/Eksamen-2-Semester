@@ -1,5 +1,6 @@
 ﻿using FluentResults;
 using FysioEnterprise.Domain.Entities;
+using FysioEnterprise.Domain.Enums;
 using FysioEnterprise.Domain.Exceptions;
 using FysioEnterprise.Domain.Service;
 using FysioEnterprise.Domain.Service.PricingService;
@@ -76,6 +77,12 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
             var existingStaffSessions = await _sessionRepository.GetSessionsByStaffAsync(request.StaffID);
             var existingRoomSessions = await _sessionRepository.GetSessionsByRoomAsync(request.ClinicID, request.SessionRoomID);
             var timeSlot = new TimeSlot(request.StartTime, request.EndTime);
+            var twelveMonthsAgo = request.StartTime.AddMonths(-12);
+            double totalSpend = existingClientSessions
+            .Where(s => s.SessionStatus == SessionStatusEnum.Completed &&
+                        s.SessionTimeSlot.From >= twelveMonthsAgo)
+            .Sum(s => s.priceTotal.Value);
+            clientResult.Value.EvaluateLoyaltyStatus(totalSpend);
 
             await _sessionLock.WaitAsync();
             try
@@ -88,7 +95,7 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
                 {
                     var session = Session.Create(
                         clientResult.Value,
-                        staffResult.Value.Id,
+                        staffResult.Value,
                         sessionTypeResult.Value,
                         roomResult.Value.Id,
                         timeSlot,
@@ -99,6 +106,9 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
                         _pricingStrategyFactory,
                         clinicResult.Value.ClinicOpeningHours);
                     await _sessionRepository.CreateSessionAsync(session);
+
+                    //Updates client Loyaltylevel if the value has exceeded a limit
+                    await _clientRepository.UpdateClientAsync(clientResult.Value);
                 }
                 catch (DomainException ex)
                 {

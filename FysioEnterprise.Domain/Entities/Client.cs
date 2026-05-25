@@ -32,7 +32,7 @@ namespace FysioEnterprise.Domain.Entities
             string clientAddress,
             string? clientNote,
             Guid clientPrefferedStaffID,
-            LoyaltyLevel clientLoyaltyLevel)
+            LoyaltyLevel? clientLoyaltyLevel)
         {
             Id = Guid.NewGuid();
             if (string.IsNullOrWhiteSpace(clientFirstName))
@@ -51,7 +51,7 @@ namespace FysioEnterprise.Domain.Entities
             ClientNote = clientNote;
             ClientPrefferedStaffID = clientPrefferedStaffID;
             ClientBirthDate = clientBirthDate;
-            ClientLoyaltyLevel = clientLoyaltyLevel;
+            ClientLoyaltyLevel = clientLoyaltyLevel ?? LoyaltyLevel.None;
         }
 
         public static Client Create(
@@ -120,6 +120,11 @@ namespace FysioEnterprise.Domain.Entities
         public void UpdateClientNote(string? clientNote)
         {
             ClientNote = clientNote;
+        }
+
+        public void EvaluateLoyaltyStatus(double totalSpendInLast12Months)
+        {
+            ClientLoyaltyLevel = LoyaltyLevel.CalculateFromSpend(totalSpendInLast12Months);
         }
     }
 }

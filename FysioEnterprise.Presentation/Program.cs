@@ -3,6 +3,7 @@ using FysioEnterprise.Infrastructure.Database;
 using FysioEnterprise.Presentation.Components;
 using FysioEnterprise.Presentation.Service;
 using FysioEnterprise.UseCase.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,7 +24,7 @@ var app = builder.Build();
 using(var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDBContext>();
-    context.Database.EnsureCreated();
+    context.Database.Migrate();
     await context.SeedDataMigrateAsync();
 }
 
