@@ -21,4 +21,8 @@
     <ProjectReference Include="..\FysioEnterprise.UseCase\FysioEnterprise.UseCase.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Migrations\" />
+  </ItemGroup>
+
 </Project>

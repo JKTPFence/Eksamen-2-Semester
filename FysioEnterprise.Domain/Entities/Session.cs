@@ -1,4 +1,5 @@
-﻿using FluentResults;
+﻿using System.Collections;
+using FluentResults;
 using FysioEnterprise.Domain.Enums;
 using FysioEnterprise.Domain.Exceptions;
 using FysioEnterprise.Domain.Service;
@@ -48,7 +49,7 @@ namespace FysioEnterprise.Domain.Entities
 
         public static Session Create(
             Client client,
-            Guid staffId,
+            Staff staff,
             SessionType sessionType,
             Guid roomId,
             TimeSlot sessionTimeSlot,
@@ -60,10 +61,10 @@ namespace FysioEnterprise.Domain.Entities
             List<OpeningHours> openingHours)
         {
 
-            var newSession = new Session(client.Id, staffId, sessionType.Id, roomId, promotion?.Id, sessionTimeSlot);
+            var newSession = new Session(client.Id, staff.Id, sessionType.Id, roomId, promotion?.Id, sessionTimeSlot);
 
             ValidateOverlap(newSession.SessionTimeSlot, existingClientSessions, existingStaffSessions, existingRoomSessions);
-            var result = TimeValidationService.ValidateTime(sessionType.SessionTypeName, newSession.SessionTimeSlot.From, newSession.SessionTimeSlot.To, DateTime.Now, openingHours);
+            var result = TimeValidationService.ValidateTime(sessionType.SessionTypeName, newSession.SessionTimeSlot.From, newSession.SessionTimeSlot.To, DateTime.Now);
 
             if (result.IsFailed)
                 throw new ValidationException("Fejl med validering af tid " + result.Errors.First().Message);
@@ -76,6 +77,19 @@ namespace FysioEnterprise.Domain.Entities
             newSession.priceTotal = pricingStrategyFactory.BuildStrategies(client,
                 promotion,
                 sessionType).Result;
+            var basePrice = newSession.priceTotal;
+
+            var authType = AuthorisationTypeExtensions.FromRoleString(staff.StaffAuthorisationType);
+            double staffMultiplier = authType.GetPriceMultiplier();
+            var firstCalculatedPrice = new Price(basePrice.Value * staffMultiplier);
+
+            var IsOutsideOf = OpeningHoursValidation.IsOutsideOpeningHours(sessionTimeSlot.From, sessionTimeSlot.To, openingHours);
+            if (IsOutsideOf)
+            {
+                firstCalculatedPrice = new Price(firstCalculatedPrice.Value * 1.15);
+            }
+
+            newSession.priceTotal = new Price(firstCalculatedPrice.Value);
 
             return newSession;
         }
@@ -92,7 +106,7 @@ namespace FysioEnterprise.Domain.Entities
                 throw new UserInvalidInputException($"Der kan ikke laves ændringer i en ikke aktiv tid");
 
             ValidateOverlap(newSessionTimeSlot, existingClientSessions, existingStaffSessions, existingRoomSessions, sessionId);
-            var result = TimeValidationService.ValidateTime("New time", newSessionTimeSlot.From, newSessionTimeSlot.To, DateTime.Now, openingHours);
+            var result = TimeValidationService.ValidateTime("New time", newSessionTimeSlot.From, newSessionTimeSlot.To, DateTime.Now);
 
             if (result.IsFailed)
                 throw new ValidationException("Fejl med validering af tid " + result.Errors.First().Message);
@@ -181,6 +195,8 @@ namespace FysioEnterprise.Domain.Entities
                     + $"hvilket lavet et booking overlap");
                 }
             }
+
+
         }
 
     }

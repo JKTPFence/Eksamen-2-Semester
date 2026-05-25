@@ -64,8 +64,7 @@ namespace FysioEnterprise.UseCase.CommandHandlers.PromotionCommands
                            request.Name,
                            request.StartDate,
                            request.EndDate,
-                           DateTime.Now,
-                           null);
+                           DateTime.Now);
             if (validationResult.IsFailed)
                 return validationResult;
 

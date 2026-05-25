@@ -325,6 +325,7 @@ public partial class StatisticsPage : ComponentBase
                 revenueSheet.Cell(row, 4).Value = d.SessiontypeName;
                 revenueSheet.Cell(row, 5).Value = d.SessionStatus.ToString();
                 revenueSheet.Cell(row, 6).Value = d.OriginalPrice;
+                revenueSheet.Cell(row, 6).Style.NumberFormat.Format = "#,##0.00";
 
                 if (d.SessionStatus is SessionStatusEnum.Completed or SessionStatusEnum.Active)
                 {
@@ -368,6 +369,7 @@ public partial class StatisticsPage : ComponentBase
                     SessionStatusEnum.Completed => XLColor.FromHtml("#e8f5e9"),
                     SessionStatusEnum.Cancelled => XLColor.FromHtml("#fce4ec"),
                     SessionStatusEnum.NoShow => XLColor.FromHtml("#fff3e0"),
+                    SessionStatusEnum.Active => XLColor.FromHtml("#e3f2fd"),
                     _ => XLColor.White
                 };
                 revenueSheet.Range(row, 1, row, 10).Style.Fill.BackgroundColor = rowColor;

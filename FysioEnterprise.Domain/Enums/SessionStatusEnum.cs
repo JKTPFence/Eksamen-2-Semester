@@ -4,7 +4,7 @@ using System.Text;
 
 namespace FysioEnterprise.Domain.Enums
 {
-    public enum SessionStatusEnum //ToDo; Map to Infrastructure later
+    public enum SessionStatusEnum
     {
         Active,
         Completed,

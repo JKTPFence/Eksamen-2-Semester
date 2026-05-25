@@ -42,8 +42,7 @@ namespace FysioEnterprise.Domain.Entities
                 "Promotion",
                 promotionStartTime,
                 promotionEndTime,
-                DateTime.Now,
-                null);
+                DateTime.Now);
             if (validationResult.IsFailed)
             {
                 throw new ValidationException("Der er sket en fejl med tiden under oprettelsen af kampagnen " + validationResult.Errors);
@@ -70,8 +69,7 @@ namespace FysioEnterprise.Domain.Entities
                 "Promotion",
                 promotionStartTime,
                 promotionEndTime,
-                DateTime.Now,
-                null);
+                DateTime.Now);
             if (validationResult.IsFailed)
             {
                 throw new ValidationException("Der er sket en fejl med tiden under oprettelsen af kampagnen " + validationResult.Errors);

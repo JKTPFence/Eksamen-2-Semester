@@ -19,7 +19,7 @@
             
             <button class="btn-switch" @onclick="ToggleViewMode">
                 <RadzenIcon Icon="swap_horiz" />
-                Gå til @(CurrentViewMode == CalendarViewMode.Staff ? "Klient" : "Medarbejder") kalender
+                Se @(CurrentViewMode == CalendarViewMode.Staff ? "Klient" : "Medarbejder") kalender
             </button>
 
             <label class="search-wrapper" aria-label="Søg i kalender" style="margin-left: 4px;">
@@ -152,12 +152,19 @@
                             }
                             @foreach (var session in daySessions)
                             {
+
                                 var layout = GetSessionLayout(session, columns);
-                                <article class="session-block @GetDynamicColorClass(session)"
-                                         style="top:@(layout.Top.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))px;height:@(layout.Height.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))px;left:@(layout.Left.ToString("F2", System.Globalization.CultureInfo.InvariantCulture))%;width:@(layout.Width.ToString("F2", System.Globalization.CultureInfo.InvariantCulture))%;"
-                                         @onclick:stopPropagation="true"
-                                         @onclick="() => OnSessionClick(session)"
-                                         title="@session.ClientFirstName @session.ClientLastName — @session.SessionTypeName">
+    
+                                bool isCombo = daySessions.Any(other => 
+                                    other.SessionID!= session.SessionID && 
+                                    other.ClientID == session.ClientID &&
+                                    (other.timeSlot.To == session.timeSlot.From || other.timeSlot.From == session.timeSlot.To)
+                                    );
+                                <article class="session-block @GetDynamicColorClass(session) @(isCombo ? "session-block--combo" : "")"
+                                     style="top:@(layout.Top.ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + "px");height:@(layout.Height.ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + "px");left:@(layout.Left.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) + "%");width:@(layout.Width.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) + "%");"
+                                     @onclick:stopPropagation="true"
+                                     @onclick="() => OnSessionClick(session)"
+                                     title="@session.ClientFirstName @session.ClientLastName — @session.SessionTypeName">
 
                                     <span class="session-status-badge">
                                         <RadzenIcon Icon="@(session.SessionStatus.ToString() switch {
@@ -167,6 +174,10 @@
                                             "NoShow" => "person_off",
                                             _ => "help"
                                         })" />
+                                        @if (isCombo)
+                                        {
+                                            <RadzenIcon Icon="link" Style="font-size: 14px; margin-left: 4px; color: #000000;" title="Koblet Combo Aftale" />
+                                        }
                                     </span>
 
                                     <time class="session-time">
@@ -285,7 +296,10 @@
                     </section>
                 </fieldset>
 
-                <footer class="card-actions-footer">
+
+            <footer class="card-actions-footer">
+                @if (_loadingButtonClick == false)
+                   {
                     <button class="action-btn btn-update" @onclick="HandleUpdate">
                         <RadzenIcon Icon="edit" /> Rediger
                     </button>
@@ -297,7 +311,24 @@
                     </button>
                     <button class="action-btn btn-cancel" @onclick="HandleCancel">
                         <RadzenIcon Icon="block" /> Aflys
-                    </button>
+                    </button>        
+                   }
+                   else
+                    {
+                        <button class="action-btn btn-update">
+                            <RadzenIcon Icon="edit" /> Loading...
+                        </button>
+                        <button class="action-btn btn-complete">
+                            <RadzenIcon Icon="check_circle" /> Loading...
+                        </button>
+                        <button class="action-btn btn-noshow">
+                            <RadzenIcon Icon="person_off" /> Loading...
+                        </button>
+                        <button class="action-btn btn-cancel">
+                            <RadzenIcon Icon="block" /> Loading...
+                        </button>      
+                    }
+
                 </footer>
             </article>
         </section>
@@ -333,7 +364,7 @@
                                         {
                                             <article class="month-session @GetDynamicColorClass(session)"
                                                      @onclick:stopPropagation="true"
-                                                     @onclick="() => OnSessionClick(session)"
+                                                     @onclick="() => DrillToDay(day)"
                                                      title="@session.ClientFirstName @session.ClientLastName — @session.SessionTypeName">
                                                 <time class="session-time" datetime="@session.timeSlot.From.ToString("HH:mm")">
                                                     @session.timeSlot.From.ToString("HH:mm") – @session.timeSlot.To.ToString("HH:mm")

@@ -45,6 +45,8 @@ public partial class SessionBookingPage : ComponentBase
     private string _loadingMessage = "Henter data...";
     private bool _isDataLoaded = false;
     private const int MaxRetries = 3;
+    private bool _shouldScrollOnNextRender = false;
+    private bool _loadingButtonClick = false;
     private bool HideCancelled { get; set; } = false;
     private record SessionLayout(double Top, double Height, double Left, double Width);
 
@@ -137,6 +139,15 @@ public partial class SessionBookingPage : ComponentBase
             
             if (!_isDataLoaded)
                 await LoadData();
+
+            var openingHour = _clinic?.ClinicOpeningHours.FirstOrDefault()?.From.Hour ?? 7;
+            await JS.InvokeVoidAsync("scrollToHour", openingHour);
+        }
+        if (_shouldScrollOnNextRender)
+        {
+            _shouldScrollOnNextRender = false;
+
+            await Task.Yield();
 
             var openingHour = _clinic?.ClinicOpeningHours.FirstOrDefault()?.From.Hour ?? 7;
             await JS.InvokeVoidAsync("scrollToHour", openingHour);
@@ -279,6 +290,10 @@ public partial class SessionBookingPage : ComponentBase
     {
         CurrentDate = day;
         View = "day";
+
+        _shouldScrollOnNextRender = true;
+
+        StateHasChanged();
     }
 
     private void SetView(string view)
@@ -448,6 +463,7 @@ public partial class SessionBookingPage : ComponentBase
 
     private async Task HandleComplete()
     {
+        _loadingButtonClick = true;
         if (SelectedViewSession == null) return;
         var result = await EndSessionUseCase.EndSessionAsync(new EndSessionRequest(SelectedViewSession.SessionID));
         if (result.Errors == null || result.Errors.Count == 0)
@@ -465,6 +481,7 @@ public partial class SessionBookingPage : ComponentBase
             var sessionsfortheday = GetSessionsForDay(dayofsession);
             CalculateColumns(sessionsfortheday);
             Notification.ShowSuccess("Booking er markeret som færdiggjort");
+            _loadingButtonClick = false;
             CloseSessionDetails();
             StateHasChanged();
         }
@@ -477,6 +494,7 @@ public partial class SessionBookingPage : ComponentBase
 
     private async Task HandleNoShow()
     {
+        _loadingButtonClick = true;
         if (SelectedViewSession == null) return;
         var result = await MarkSessionAsNoShowUseCase.MarkSessionAsNoShowAsync(new MarkNoShowSessionRequest(SelectedViewSession.SessionID));
         if (result.Errors == null || result.Errors.Count == 0)
@@ -494,6 +512,7 @@ public partial class SessionBookingPage : ComponentBase
             var sessionsfortheday = GetSessionsForDay(dayofsession);
             CalculateColumns(sessionsfortheday);
             Notification.ShowSuccess("Booking er markeret som no-show");
+            _loadingButtonClick = false;
             CloseSessionDetails();
             StateHasChanged();
         }
@@ -506,6 +525,7 @@ public partial class SessionBookingPage : ComponentBase
 
     private async Task HandleCancel()
     {
+        _loadingButtonClick = true;
         if (SelectedViewSession == null) return;
         var result = await CancelSessionUseCase.CancelSessionAsync(new CancelSessionRequest(SelectedViewSession.SessionID));
         if (result.Errors == null || result.Errors.Count == 0)
@@ -523,6 +543,7 @@ public partial class SessionBookingPage : ComponentBase
             var sessionsfortheday = GetSessionsForDay(dayofsession);
             CalculateColumns(sessionsfortheday);
             Notification.ShowSuccess("Booking er markeret som annulleret");
+            _loadingButtonClick = false;
             CloseSessionDetails();
             StateHasChanged();
         }
@@ -536,6 +557,18 @@ public partial class SessionBookingPage : ComponentBase
     {
         SelectedCell = null;
         SelectedSessionTypeId = Guid.Empty;
+    }
+
+    private bool IsCoupledComboSession(SessionDTO currentSession, List<SessionDTO> allVisibleSessions)
+    {
+        if (currentSession == null || allVisibleSessions == null) return false;
+
+        return allVisibleSessions.Any(other =>
+            other.ClientID != currentSession.ClientID &&
+            other.SessionID == currentSession.SessionID &&
+            (other.timeSlot.To == currentSession.timeSlot.From ||
+             other.timeSlot.From == currentSession.timeSlot.To)
+        );
     }
 
 }

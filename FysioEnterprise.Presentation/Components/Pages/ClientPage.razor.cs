@@ -31,6 +31,7 @@ namespace FysioEnterprise.Presentation.Components.Pages
             public string ClientAddress { get; set; } = "";
             public string? ClientNote { get; set; }
             public Guid ClientPrefferedStaffID { get; set; } = Guid.Empty;
+            public LoyaltyLevel ClientLoyaltyLevel { get; set; } = LoyaltyLevel.None;
         }
 
         private List<ClientDTO> clients = new();
@@ -153,7 +154,8 @@ namespace FysioEnterprise.Presentation.Components.Pages
                 ClientBirthDate = client.ClientBirthDate,
                 ClientAddress = client.ClientAddress,
                 ClientPrefferedStaffID = client.ClientPrefferedStaffID,
-                ClientNote = client.ClientNote
+                ClientNote = client.ClientNote,
+                ClientLoyaltyLevel = client.ClientLoyaltyLevel
             };
             isEditMode = true;
             showModal = true;
