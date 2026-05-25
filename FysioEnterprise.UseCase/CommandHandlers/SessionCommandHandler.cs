@@ -1,5 +1,6 @@
 ﻿using FluentResults;
 using FysioEnterprise.Domain.Entities;
+using FysioEnterprise.Domain.Enums;
 using FysioEnterprise.Domain.Exceptions;
 using FysioEnterprise.Domain.Service;
 using FysioEnterprise.Domain.Service.PricingService;
@@ -47,42 +48,45 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
         {
             var clientResult = await _clientRepository.GetClientAsync(request.ClientID);
             if (clientResult.IsFailed)
-                return Result.Fail("Client not found.");
+                return Result.Fail("Klienten blev ikke fundet");
 
             var staffResult = await _staffRepository.GetStaffAsync(request.StaffID);
             if (staffResult.IsFailed)
-                return Result.Fail("Staff not found.");
+                return Result.Fail("Medarbejder blev ikke fundet");
 
             var clinicResult = await _clinicRepository.GetClinicAsync(request.ClinicID);
-            if (clinicResult.IsFailed) return Result.Fail("Clinic not found.");
+            if (clinicResult.IsFailed) return Result.Fail("Klinik blev ikke fundet");
 
             var roomResult = clinicResult.Value.GetRoom(request.SessionRoomID);
-            if (roomResult.IsFailed) return Result.Fail("Room not found.");
+            if (roomResult.IsFailed) return Result.Fail("Rum blev ikke fundet");
 
             var sessionTypeResult = await _sessionTypeRepository.GetSessionTypeAsync(request.SessionInstanceTypeID);
             if (sessionTypeResult.IsFailed)
-                return Result.Fail("Session type not found.");
+                return Result.Fail("Denne bookingtype blev ikke fundet");
 
-            Result<Promotion> promotionResult = null;
+            Result<Promotion>? promotionResult = null;
 
             if (request.PromotionID != Guid.Empty)
             {
                 promotionResult = await _promotionRepository.GetPromotionAsync(request.PromotionID);
                 if (promotionResult.IsFailed)
-                    return Result.Fail("Promotion not found.");
+                    return Result.Fail("Ingen kampagne blev fundet");
             }
-    
 
             var existingClientSessions = await _sessionRepository.GetSessionsByClientAsync(request.ClientID);
             var existingStaffSessions = await _sessionRepository.GetSessionsByStaffAsync(request.StaffID);
             var existingRoomSessions = await _sessionRepository.GetSessionsByRoomAsync(request.ClinicID, request.SessionRoomID);
             var timeSlot = new TimeSlot(request.StartTime, request.EndTime);
-            
+            var twelveMonthsAgo = request.StartTime.AddMonths(-12);
+            double totalSpend = existingClientSessions
+            .Where(s => s.SessionStatus == SessionStatusEnum.Completed &&
+                        s.SessionTimeSlot.From >= twelveMonthsAgo)
+            .Sum(s => s.priceTotal.Value);
+            clientResult.Value.EvaluateLoyaltyStatus(totalSpend);
 
             await _sessionLock.WaitAsync();
             try
             {
-
                 bool birthdayEligible = clientResult.Value.IsBirthdayMonth(
                 DateOnly.FromDateTime(request.StartTime))
                 && !clientResult.Value.HasUsedBirthdayDiscountThisYear;
@@ -91,7 +95,7 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
                 {
                     var session = Session.Create(
                         clientResult.Value,
-                        staffResult.Value.Id,
+                        staffResult.Value,
                         sessionTypeResult.Value,
                         roomResult.Value.Id,
                         timeSlot,
@@ -99,12 +103,26 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
                         existingClientSessions,
                         existingStaffSessions,
                         existingRoomSessions,
-                        _pricingStrategyFactory);
+                        _pricingStrategyFactory,
+                        clinicResult.Value.ClinicOpeningHours);
                     await _sessionRepository.CreateSessionAsync(session);
+
+                    //Updates client Loyaltylevel if the value has exceeded a limit
+                    await _clientRepository.UpdateClientAsync(clientResult.Value);
                 }
                 catch (DomainException ex)
                 {
-                    return Result.Fail(ex.Message);
+                    return ex switch
+                    {
+                        UserInvalidInputException => Result.Fail("Et input var ikke korrekt" + ex.Message),
+                        ValidationException => Result.Fail("Der er sket en valideringsfejl" + ex.Message),
+                        _ => Result.Fail("Der er sket en uforventet fejl " + ex.Message) // Fallback catch-all for base DomainException
+                    };
+                }
+                catch (Exception ex) // Catch-all for any other unexpected exceptions (typically SQL or Infrastructure exceptions)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Infrastructure Failure: {ex.Message}");
+                    return Result.Fail("An unexpected system error occurred." + ex.Message);
                 }
                 return Result.Ok();
             }
@@ -118,12 +136,15 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
         {
             var sessionResult = await _sessionRepository.GetSessionAsync(request.SessionID);
             if (sessionResult.IsFailed)
-                return Result.Fail("Session not found.");
+                return Result.Fail("Bookingen blev ikke fundet");
+
+            var clinicResult = await _clinicRepository.GetClinicAsync(request.ClinicID);
+            if (clinicResult.IsFailed) return Result.Fail("Klinik blev ikke fundet");
 
             var session = sessionResult.Value;
 
             if (request.ClientID != session.SessionClientID)
-                return Result.Fail("Session does not belong to the specified client.");
+                return Result.Fail("Denne booking høre ikke til denne klient");
 
             var existingClientSessions = await _sessionRepository.GetSessionsByClientAsync(request.ClientID);
             var existingStaffSessions = await _sessionRepository.GetSessionsByStaffAsync(request.StaffID);
@@ -133,13 +154,14 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
             await _sessionLock.WaitAsync();
             try
             {
-                  session.UpdateSessionTime(
-                    request.SessionID,
-                    timeSlot,
-                    existingClientSessions.Where(s => s.Id != session.Id),
-                    existingStaffSessions.Where(s => s.Id != session.Id),
-                    existingRoomSessions.Where(s => s.Id != session.Id)
-                    );
+                session.UpdateSessionTime(
+                  request.SessionID,
+                  timeSlot,
+                  existingClientSessions.Where(s => s.Id != session.Id),
+                  existingStaffSessions.Where(s => s.Id != session.Id),
+                  existingRoomSessions.Where(s => s.Id != session.Id),
+                  clinicResult.Value.ClinicOpeningHours
+                  );
 
                 await _sessionRepository.UpdateSessionAsync(session);
                 return Result.Ok();
@@ -147,13 +169,23 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
 
             catch (DomainException ex)
             {
-                return Result.Fail(ex.Message);
+                return ex switch
+                {
+                    UserInvalidInputException => Result.Fail("Et input var ikke korrekt" + ex.Message),
+                    ValidationException => Result.Fail("Der er sket en valideringsfejl" + ex.Message),
+                    _ => Result.Fail("Der er sket en uforventet fejl " + ex.Message) // Fallback catch-all for base DomainException
+                };
+            }
+            catch (Exception ex) // Catch-all for any other unexpected exceptions (typically SQL or Infrastructure exceptions)
+            {
+                System.Diagnostics.Debug.WriteLine($"Infrastructure Failure: {ex.Message}");
+                return Result.Fail("An unexpected system error occurred." + ex.Message);
             }
 
-         finally
-          {
-            _sessionLock.Release();
-          }
+            finally
+            {
+                _sessionLock.Release();
+            }
 
         }
 
@@ -161,7 +193,7 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
         {
             var sessionResult = await _sessionRepository.GetSessionAsync(request.SessionId);
             if (sessionResult.IsFailed)
-                return Result.Fail("Session not found.");
+                return Result.Fail("Booking blev ikke fundet");
 
             try
             {
@@ -169,7 +201,7 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
             }
             catch (UserInvalidInputException ex)
             {
-                return Result.Fail($"Error couldn't complete session: {ex.Message}");
+                return Result.Fail($"Kunne ikke sætte booking til afsluttet: {ex.Message}");
             }
 
             await _sessionRepository.UpdateSessionAsync(sessionResult.Value);
@@ -180,7 +212,7 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
         {
             var sessionResult = await _sessionRepository.GetSessionAsync(request.SessionId);
             if (sessionResult.IsFailed)
-                return Result.Fail("Session not found.");
+                return Result.Fail("booking blev ikke fundet.");
 
             try
             {
@@ -188,7 +220,7 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
             }
             catch (UserInvalidInputException ex)
             {
-                return Result.Fail($"Error couldn't set session to cancelled: {ex.Message}");
+                return Result.Fail($"Kunne ikke sætte booking til aflyst: {ex.Message}");
             }
 
             await _sessionRepository.UpdateSessionAsync(sessionResult.Value);
@@ -199,16 +231,9 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
         {
             var sessionResult = await _sessionRepository.GetSessionAsync(request.SessionID);
             if (sessionResult.IsFailed)
-                return Result.Fail("Session not found.");
-
-            try
-            {
-                sessionResult.Value.SetNoShowSession();
-            }
-            catch (UserInvalidInputException ex)
-            {
-                return Result.Fail($"Error couldn't set session as NoShow: {ex.Message}");
-            }
+                return Result.Fail("booking blev ikke fundet");
+                
+            sessionResult.Value.SetNoShowSession();
 
             await _sessionRepository.UpdateSessionAsync(sessionResult.Value);
             return Result.Ok();

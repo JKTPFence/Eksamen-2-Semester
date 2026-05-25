@@ -1,4 +1,6 @@
 using System.Globalization;
+using DocumentFormat.OpenXml.InkML;
+using FysioEnterprise.Domain.Entities;
 using FysioEnterprise.Facade.DTOs;
 using FysioEnterprise.Facade.Queries;
 using FysioEnterprise.Facade.UseCase.PromotionUseCase;
@@ -36,16 +38,50 @@ namespace FysioEnterprise.Presentation.Components.Pages
         private bool isEditMode = false;
         private string errorMessage = "";
         private bool showError = false;
+        private bool _loading = false;
+        private string _loadingMessage = "Henter data...";
+        private const int MaxRetries = 3;
 
         protected override async Task OnInitializedAsync()
         {
             await LoadPromotions();
         }
 
-        private async Task LoadPromotions()
+        private async Task LoadPromotions(int attempt = 1)
         {
-            promotions = await PromotionQueries.GetAllPromotionsAsync();
-            FilterPromotions();
+            if (_loading && attempt == 1) return;
+
+            _loading = true;
+            _loadingMessage = attempt > 1 ? "Synkroniserer med databasen..." : "Henter data...";
+            StateHasChanged();
+            try
+            {
+                promotions = await PromotionQueries.GetAllPromotionsAsync();
+                FilterPromotions();
+            }
+            catch (Exception ex) when (ex.Message.Contains("second operation was started"))
+            {
+                System.Diagnostics.Debug.WriteLine($"[DB Collision Caught] Attempt {attempt} failed. Retrying...");
+
+                if (attempt < MaxRetries)
+                {
+                    await Task.Delay(500);
+
+                    await LoadPromotions(attempt + 1);
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[DB Collision] Maximum retries reached. Context is permanently locked.");
+                }
+            }
+            finally
+            {
+                if (attempt == 1 || !_loading)
+                {
+                    _loading = false;
+                    StateHasChanged();
+                }
+            }
         }
 
         private void FilterPromotions()
@@ -71,7 +107,10 @@ namespace FysioEnterprise.Presentation.Components.Pages
 
         private void OpenCreateModal()
         {
-            currentPromotion = new PromotionEditModel();
+            currentPromotion = new PromotionEditModel
+            {
+                PromotionID = Guid.Empty
+            };
             isEditMode = false;
             showModal = true;
             errorMessage = "";
@@ -98,7 +137,7 @@ namespace FysioEnterprise.Presentation.Components.Pages
         {
             try
             {
-                if (isEditMode)
+                if (isEditMode && currentPromotion.PromotionID != Guid.Empty)
                 {
                     var updateRequest = new UpdatePromotionRequest(
                         currentPromotion.PromotionID,

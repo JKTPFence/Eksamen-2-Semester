@@ -1,4 +1,5 @@
 ﻿using FluentResults;
+using FysioEnterprise.Domain.ValueObjects;
 
 namespace FysioEnterprise.Domain.Service
 {
@@ -13,7 +14,7 @@ namespace FysioEnterprise.Domain.Service
             if (startTime >= endTime)
                 return Result.Fail($"{eventName} must start before it ends.");
             
-            if (startTime < currentTime)
+            if (startTime < currentTime && eventName is not "Promotion")
                 return Result.Fail($"{eventName} start cannot be in the past.");
 
             return Result.Ok();

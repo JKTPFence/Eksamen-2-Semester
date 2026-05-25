@@ -32,26 +32,26 @@ namespace FysioEnterprise.Domain.Entities
             string clientAddress,
             string? clientNote,
             Guid clientPrefferedStaffID,
-            LoyaltyLevel clientLoyaltyLevel)
+            LoyaltyLevel? clientLoyaltyLevel)
         {
             Id = Guid.NewGuid();
             if (string.IsNullOrWhiteSpace(clientFirstName))
-                throw new DomainException($"First name cannot be empty: {clientFirstName}");
+                throw new UserInvalidInputException($"En klient skal have et fornavn");
             ClientFirstName = clientFirstName;
             ClientLastName = clientLastName;
             if (string.IsNullOrWhiteSpace(clientEmail))
-                throw new DomainException($"Email cannot be empty: {clientEmail}");
+                throw new UserInvalidInputException($"En klient skal have en email");
             ClientEmail = clientEmail;
             if (string.IsNullOrWhiteSpace(clientPhoneNumber))
-                throw new DomainException($"Phone number cannot be empty: {clientPhoneNumber}");
+                throw new UserInvalidInputException($"En klient skal have et telefonnummer");
             ClientPhoneNumber = clientPhoneNumber;
             if (string.IsNullOrWhiteSpace(clientAddress))
-                throw new DomainException($"Address cannot be empty: {clientAddress}");
+                throw new UserInvalidInputException($"En klient skal have en Adresse");
             ClientAddress = clientAddress;
             ClientNote = clientNote;
             ClientPrefferedStaffID = clientPrefferedStaffID;
             ClientBirthDate = clientBirthDate;
-            ClientLoyaltyLevel = clientLoyaltyLevel;
+            ClientLoyaltyLevel = clientLoyaltyLevel ?? LoyaltyLevel.None;
         }
 
         public static Client Create(
@@ -78,9 +78,9 @@ namespace FysioEnterprise.Domain.Entities
         public void MarkBirthdayDiscountUsed(DateOnly date)
         {
             if (!IsBirthdayMonth(date))
-                throw new DomainException("Cannot mark birthday discount outside of birthday month.");
+                throw new ValidationException("Kan ikke bruge en et fødselsdagstilbud uden for fødselsdagsmåneden.");
             if (HasUsedBirthdayDiscountThisYear)
-                throw new DomainException("Birthday discount already used this year.");
+                throw new UserInvalidInputException("Fødselsdagstilbud er allerede brugt");
 
             BirthdayDiscountUsedYear = DateTime.Now.Year;
         }
@@ -94,13 +94,13 @@ namespace FysioEnterprise.Domain.Entities
             )
             {
             if (string.IsNullOrWhiteSpace(clientFirstName))
-                throw new DomainException($"First name cannot be empty: {clientFirstName}");
+                throw new UserInvalidInputException($"En klient skal have et fornavn");
             if (string.IsNullOrWhiteSpace(clientEmail))
-                throw new DomainException($"Email cannot be empty: {clientEmail}");
+                throw new UserInvalidInputException($"En klient skal have en email");
             if (string.IsNullOrWhiteSpace(clientPhoneNumber))
-                throw new DomainException($"Phone number cannot be empty: {clientPhoneNumber}");
+                throw new UserInvalidInputException($"En klient skal have et telefonnummer");
             if (string.IsNullOrWhiteSpace(clientAddress))
-                throw new DomainException($"Address cannot be empty: {clientAddress}");
+                throw new UserInvalidInputException($"En klient skal have en Adresse");
             ClientFirstName = clientFirstName;
             ClientLastName = clientLastName;
             ClientEmail = clientEmail;
@@ -111,8 +111,8 @@ namespace FysioEnterprise.Domain.Entities
 
         public void UpdateStaff(Guid clientpreferredStaffID)
         {
-            if (clientpreferredStaffID == null)
-                throw new DomainException($"No staff member with these informations could be found");
+            if (clientpreferredStaffID == Guid.Empty)
+                throw new NotFoundException($"No staff member with this ID could be found");
 
             ClientPrefferedStaffID = clientpreferredStaffID;
         }
@@ -120,6 +120,11 @@ namespace FysioEnterprise.Domain.Entities
         public void UpdateClientNote(string? clientNote)
         {
             ClientNote = clientNote;
+        }
+
+        public void EvaluateLoyaltyStatus(double totalSpendInLast12Months)
+        {
+            ClientLoyaltyLevel = LoyaltyLevel.CalculateFromSpend(totalSpendInLast12Months);
         }
     }
 }

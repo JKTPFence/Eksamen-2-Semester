@@ -1,11 +1,15 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using System.Collections;
+using System.Diagnostics.Eventing.Reader;
+using FluentResults;
+using FysioEnterprise.Domain.Entities;
+using FysioEnterprise.Domain.ValueObjects;
 using FysioEnterprise.Facade.DTOs;
 using FysioEnterprise.Facade.Queries;
 using FysioEnterprise.Facade.UseCase.SessionUseCase;
 using FysioEnterprise.Presentation.Service;
-using static FysioEnterprise.Facade.RequestModels.SessionRequests;
+using Microsoft.AspNetCore.Components;
 using Radzen;
-using System.Diagnostics.Eventing.Reader;
+using static FysioEnterprise.Facade.RequestModels.SessionRequests;
 
 namespace FysioEnterprise.Presentation.Components.Pages
 {
@@ -23,6 +27,7 @@ namespace FysioEnterprise.Presentation.Components.Pages
         //URL parametre fra kalender
         [SupplyParameterFromQuery] private string? Date {  get; set; }
         [SupplyParameterFromQuery] private int? Hour { get; set; }
+        [SupplyParameterFromQuery] private int? Minute { get; set; }
         [SupplyParameterFromQuery] private Guid? SessionTypeId { get; set; }
         [SupplyParameterFromQuery] private Guid? SessionId { get; set; }
 
@@ -34,6 +39,8 @@ namespace FysioEnterprise.Presentation.Components.Pages
         private List<PromotionDTO> _promotions = [];
         private List<StaffDTO> _filteredStaff = [];
         private List<PromotionDTO> _allPromotions = [];
+        private bool _isComboMode { get; set; } = false;
+        private int _comboStep { get; set; } = 1;
 
         //Selected værdier
         private Guid _selectedClientId;
@@ -58,6 +65,30 @@ namespace FysioEnterprise.Presentation.Components.Pages
             _startTime.HasValue &&
             _endTime.HasValue &&
             _startTime < _endTime;
+
+        private record PendingSession(
+        Guid ClientId,
+        Guid SessionTypeId,
+        Guid StaffId,
+        Guid ClinicId,
+        Guid RoomId,
+        Guid PromotionId,
+        DateTime StartTime,
+        DateTime EndTime);
+
+        private bool IsStepTwoLocked => _isComboMode && _comboStep == 2;
+
+        private PendingSession? _firstSession = null;
+
+        private static readonly Dictionary<string, List<string>> AllowedComboRules = new()
+        {
+            { "Fysioterapi",    new() { "Akupunktur", "Sportsmassage" } },
+            { "Genoptræning",   new() { "Fysioterapi", "Sportsmassage", "Kostvejledning førstegang", "Kostvejledning opfølgning" } },
+            { "Sportsmassage",  new() { "Akupunktur", "Genoptræning" } },
+            { "Akupunktur",    new() { "Fysioterapi", "Sportsmassage" } },
+            { "Kostvejledning førstegang",  new() { "Genoptræning" } },
+            { "Kostvejledning opfølgning",  new() { "Genoptræning" } }
+        };
 
 
         protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -108,7 +139,10 @@ namespace FysioEnterprise.Presentation.Components.Pages
         {
             if (DateTime.TryParse(Date, out var date) && Hour.HasValue)
             {
-                _startTime = date.AddHours(Hour.Value);
+                if (Minute.HasValue)
+                    _startTime = date.AddHours(Hour.Value).AddMinutes(Minute.Value);
+                else
+                    _startTime = date.AddHours(Hour.Value);
 
                 _promotions = _allPromotions
                     .Where(p => p.PromotionStartTime <= _startTime && p.PromotionEndTime >= _startTime)
@@ -166,6 +200,8 @@ namespace FysioEnterprise.Presentation.Components.Pages
 
         private void OnClientChanged(ChangeEventArgs e)
         {
+            if (IsStepTwoLocked) return;
+
             if (Guid.TryParse(e.Value?.ToString(), out var id))
                 _selectedClientId = id;
         }
@@ -193,6 +229,7 @@ namespace FysioEnterprise.Presentation.Components.Pages
 
         private void OnStartTimeChanged(ChangeEventArgs e)
         {
+            if (IsStepTwoLocked) return;
 
             if (DateTime.TryParse(e.Value?.ToString(), out var startDt))
             {
@@ -259,12 +296,46 @@ namespace FysioEnterprise.Presentation.Components.Pages
 
         private async Task Submit()
         {
+            if (_isLoading) return;
 
-            if (_isLoading is false)
+            if (_isComboMode && _comboStep == 1)
             {
-                _isLoading = true;
-                StateHasChanged();
+                _firstSession = new PendingSession(
+                _selectedClientId,
+                _selectedSessionTypeId,
+                _selectedStaffId,
+                _selectedClinicId,
+                _selectedRoomId,
+                _selectedPromotionId,
+                _startTime!.Value,
+                _endTime!.Value);
 
+               
+                var nextStart = _endTime!.Value;
+                var firstSessionType = _sessionTypes.FirstOrDefault(s => s.SessionTypeID == _selectedSessionTypeId);
+                string firstTypeName = firstSessionType?.SessionTypeName ?? "";
+                ResetForm();
+                _selectedClientId = _firstSession.ClientId;
+                _selectedClinicId = _firstSession.ClinicId;
+                _startTime = nextStart;
+                _comboStep = 2;
+                _sessionTypes = _sessionTypes.Where(type =>
+                {
+                    bool allowedAsSecond = AllowedComboRules.TryGetValue(firstTypeName, out var list1) && list1.Contains(type.SessionTypeName);
+                    bool allowedAsFirst = AllowedComboRules.TryGetValue(type.SessionTypeName, out var list2) && list2.Contains(firstTypeName);
+
+                    return allowedAsSecond || allowedAsFirst;
+                }).ToList();
+
+                StateHasChanged();
+                return; 
+            }
+
+            _isLoading = true;
+            StateHasChanged();
+
+            try
+            {
                 if (_isEditMode)
                 {
                     var updateRequest = new UpdateSessionRequest(
@@ -276,7 +347,79 @@ namespace FysioEnterprise.Presentation.Components.Pages
                         _startTime!.Value,
                         _endTime!.Value);
 
-                    var result = await UpdateSession.UpdateSessionAsync(updateRequest);
+                    var result1 = await UpdateSession.UpdateSessionAsync(updateRequest);
+
+                    if (result1.IsSuccess)
+                    {
+                        Notification.ShowSuccess("Booking opdateret!");
+                        await Task.Delay(1500);
+                        Nav.NavigateTo("/calendar");
+                    }
+                    else
+                    {
+                        Notification.ShowError(result1.Errors.FirstOrDefault()?.Message ?? "Opdatering af session mislykkedes");
+                    }
+                }
+                if (_isComboMode && _comboStep == 2 && _firstSession is not null)
+                {
+
+                    var request1 = new CreateSessionRequest(
+                        _firstSession.ClientId,
+                        _firstSession.StaffId,
+                        _firstSession.PromotionId,
+                        _firstSession.ClinicId,
+                        _firstSession.RoomId,
+                        _firstSession.SessionTypeId,
+                        0,
+                        _firstSession.StartTime,
+                        _firstSession.EndTime);
+
+                    var request2 = new CreateSessionRequest(
+                        _selectedClientId,
+                        _selectedStaffId,
+                        _selectedPromotionId,
+                        _selectedClinicId,
+                        _selectedRoomId,
+                        _selectedSessionTypeId,
+                        0,
+                        _startTime!.Value,
+                        _endTime!.Value);
+
+                        var result1 = await CreateSession.CreateSessionAsync(request1);
+                        if (result1.IsSuccess)
+                        {
+                            var result2 = await CreateSession.CreateSessionAsync(request2);
+
+                            if (result2.IsSuccess)
+                            {
+                                Notification.ShowSuccess("Combo Booking oprettet!");
+                                await Task.Delay(1500);
+                                Nav.NavigateTo("/calendar");
+                            }
+                            else
+                            {
+                                Notification.ShowError(result2.Errors.FirstOrDefault()?.Message ?? "Oprettelse af session 2 mislykkedes");
+                            }
+                        }
+                        else
+                        {
+                            Notification.ShowError(result1.Errors.FirstOrDefault()?.Message ?? "Oprettelse af session 1 mislykkedes");
+                        }
+                    return;
+                }
+
+                    var singleRequest = new CreateSessionRequest(
+                            _selectedClientId,
+                            _selectedStaffId,
+                            _selectedPromotionId,
+                            _selectedClinicId,
+                            _selectedRoomId,
+                            _selectedSessionTypeId,
+                            0,
+                            _startTime!.Value,
+                            _endTime!.Value);
+
+                    var result = await CreateSession.CreateSessionAsync(singleRequest);
 
                     if (result.IsSuccess)
                     {
@@ -287,46 +430,66 @@ namespace FysioEnterprise.Presentation.Components.Pages
                     else
                     {
                         Notification.ShowError(result.Errors.FirstOrDefault()?.Message ?? "Opdatering af session mislykkedes");
-                        _isLoading = false;
                         StateHasChanged();
 
                     }
-                }
-                else
-                {
-                    var request = new CreateSessionRequest(
-                        _selectedClientId,
-                        _selectedStaffId,
-                        _selectedPromotionId,
-                        _selectedClinicId,
-                        _selectedRoomId,
-                        _selectedSessionTypeId,
-                        0,
-                        _startTime.Value,
-                        _endTime.Value);
-
-                    var result = await CreateSession.CreateSessionAsync(request);
-
-                    if (result.IsSuccess)
-                    {
-                        Notification.ShowSuccess("Booking oprettet!");
-                        await Task.Delay(1500);
-                        Nav.NavigateTo("/calendar");
-                    }
-                    else
-                    {
-                        Notification.ShowError(result.Errors.FirstOrDefault()?.Message ?? "Oprettelse mislykkes");
-                        _isLoading = false;
-                        StateHasChanged();
-                    }
-                    _isLoading = false;
-
-                }
+                
+              }
+            finally
+            {
+                _isLoading = false;
+                StateHasChanged();
+            
             }
         }
 
         private void Cancel()
             => Nav.NavigateTo("/calendar");
+
+        private Result<string> GetStaffNameWithId(Guid staffID)
+        {
+            var clinicStaff = _staffInClinic.FirstOrDefault(s => s.StaffID == staffID);
+            if (clinicStaff == null)
+            {
+                return Result.Fail<string>("No staff found with the given ID in this clinic");
+            }
+
+            var staffResult = _filteredStaff.FirstOrDefault(s => s.StaffID == staffID);
+            if (staffResult != null)
+            {
+                string fullName = $"{staffResult.StaffFirstName} {staffResult.StaffLastName}";
+                return Result.Ok(fullName);
+            }
+
+            return Result.Fail<string>("No staff found with the given ID");
+        }
+
+        private async Task ToggleComboMode()
+        {
+            _isComboMode = !_isComboMode;
+            _comboStep = 1;
+            _firstSession = null;
+
+            if (!_isComboMode)
+            {
+                ResetForm();
+                _sessionTypes = (await SimpleQueries.GetAllSessionTypesAsync())
+                .OrderBy(s => s.SessionTypeName).ToList();
+            }
+            StateHasChanged();
+        }
+
+        private void ResetForm()
+        {
+            _selectedClientId = Guid.Empty;
+            _selectedSessionTypeId = Guid.Empty;
+            _selectedStaffId = Guid.Empty;
+            _selectedRoomId = Guid.Empty;
+            _selectedPromotionId = Guid.Empty;
+            _startTime = null;
+            _endTime = null;
+            _editEndTime = false;
+        }
     }
 
 }

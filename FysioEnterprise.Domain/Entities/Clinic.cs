@@ -28,7 +28,7 @@ namespace FysioEnterprise.Domain.Entities
         {
             var room = _clinicRooms.FirstOrDefault(r => r.Id == roomId);
             return room is null
-                ? Result.Fail<Room>("Room not found.")
+                ? Result.Fail<Room>("Rummet blev ikke fundet")
                 : Result.Ok(room);
         }
     }

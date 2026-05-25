@@ -289,46 +289,6 @@ table.calendar-table {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.calendar-slot-hitbox {
-    position: absolute;
-    left: 0;
-    right: 0;
-    box-sizing: border-box;
-    transition: background-color 0.1s ease;
-    cursor: pointer;
-}
-
-    .calendar-slot-hitbox.hour-line {
-        border-top: 1px solid rgba(0, 0, 0, 0.12);
-    }
-
-    .calendar-slot-hitbox.half-line {
-        border-top: 1px solid rgba(0, 0, 0, 0.06);
-    }
-
-    .calendar-slot-hitbox.quarter-line {
-        border-top: 1px dashed rgba(0, 0, 0, 0.03);
-    }
-
-    .calendar-slot-hitbox:hover {
-        background-color: var(--color-hover-cell);
-    }
-
-    .calendar-slot-hitbox.closed-hours {
-        background: var(--color-closed-hours);
-    }
-
-        .calendar-slot-hitbox.closed-hours::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(170, 195, 235, 0.12) 8px, rgba(170, 195, 235, 0.12) 16px);
-        }
-
-aside.cell-popup {
-    z-index: 20;
-}
-
 th.time-gutter-header {
     width: 60px;
     background: var(--color-gutter-bg);
@@ -430,8 +390,19 @@ section.day-column {
 }
 
     section.day-column.today-col {
-        background: var(--color-today-col);
+        background-color: rgba(254, 240, 138, 0.25);
+        outline: 1px solid rgba(234, 179, 8, 0.15);
+        outline-offset: -1px;
+        z-index: 1;
     }
+
+        section.day-column.today-col .calendar-slot-row {
+            background-color: transparent;
+        }
+
+            section.day-column.today-col .calendar-slot-row:hover {
+                background-color: rgba(45, 106, 79, 0.08);
+            }
 
     section.day-column.weekend {
         background: repeating-linear-gradient( 45deg, rgba(0,0,0,0.012), rgba(0,0,0,0.012) 4px, transparent 4px, transparent 8px );
@@ -717,13 +688,6 @@ span.month-more {
     font-weight: 500;
 }
 
-.btn-secondary.weekend-hidden-active {
-    background: linear-gradient(180deg, #f0f2ee 0%, var(--color-gutter-bg) 100%);
-    border-color: var(--color-border-strong);
-    color: var(--color-primary);
-    font-weight: 600;
-}
-
 .calendar-slot-row {
     position: absolute;
     left: 0;
@@ -760,21 +724,6 @@ span.month-more {
             background: repeating-linear-gradient( 45deg, transparent, transparent 8px, rgba(170, 195, 235, 0.15) 8px, rgba(170, 195, 235, 0.15) 16px );
         }
 
-section.day-column.today-col {
-    background-color: rgba(254, 240, 138, 0.25);
-    outline: 1px solid rgba(234, 179, 8, 0.15);
-    outline-offset: -1px;
-    z-index: 1;
-}
-
-    section.day-column.today-col .calendar-slot-row {
-        background-color: transparent;
-    }
-
-        section.day-column.today-col .calendar-slot-row:hover {
-            background-color: rgba(45, 106, 79, 0.08);
-        }
-
 .toolbar-btn.toggle-cancelled-btn {
     display: flex;
     align-items: center;
@@ -809,24 +758,6 @@ section.day-column.today-col {
         font-size: 16px !important;
         color: #444444 !important;
     }
-
-/* Force the Weekend button to mirror the exact same layout dimensions */
-.toolbar-btn:has(span:contains("Fjern Weekend")),
-.toolbar-btn:has(span:contains("Vis Weekend")),
-button:contains("Fjern Weekend"),
-button:contains("Weekend") {
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 6px !important;
-    width: 145px !important;
-    height: 35px !important;
-    box-sizing: border-box !important;
-    font-size: 13px !important;
-    font-weight: 500 !important;
-    white-space: nowrap !important;
-}
-
 
 .modal-overlay {
     position: fixed;
@@ -878,47 +809,6 @@ button:contains("Weekend") {
 
     .close-card-btn:hover {
         color: var(--color-modal-close-icon-hover);
-    }
-
-.card-body-content {
-    border: none;
-    margin: 0;
-    padding: 20px;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-}
-
-.info-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-}
-
-    .info-row ::deep .rz-icon-instance {
-        color: var(--color-modal-icon) !important;
-        font-size: 18px !important;
-        margin-top: 2px;
-    }
-
-    .info-row p {
-        margin: 0;
-        padding: 0;
-    }
-
-    .info-row label {
-        display: block;
-        font-size: 11px;
-        color: var(--color-modal-text-muted);
-        text-transform: uppercase;
-        font-weight: 600;
-        margin-bottom: 2px;
-    }
-
-    .info-row strong {
-        font-size: 13.5px;
-        color: var(--color-modal-text-primary);
-        font-weight: 500;
     }
 
 .status-indicator {
@@ -1119,3 +1009,9 @@ fieldset.card-body-content {
         .info-row:has(.status-indicator) label {
             margin-bottom: 0;
         }
+
+.session-block--combo {
+    outline: 2px dashed #000000;
+    outline-offset: -2px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}

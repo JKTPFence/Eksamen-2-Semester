@@ -6,8 +6,8 @@ namespace FysioEnterprise.Domain.ValueObjects
 {
     public class LoyaltyLevel : ValueObject
     {
-        public string LoyaltyLevelName { get; }
-        public decimal LoyaltyLevelDiscountPercentage { get; }
+        public string LoyaltyLevelName { get; private init; }
+        public decimal LoyaltyLevelDiscountPercentage { get; private init; }
 
         public LoyaltyLevel() { } // Empty constructor for EF Core
 
@@ -17,10 +17,29 @@ namespace FysioEnterprise.Domain.ValueObjects
             LoyaltyLevelDiscountPercentage = loyaltyLevelDiscountPercentage;
         }
 
-        public static readonly LoyaltyLevel None = new("None", 0m);
-        public static readonly LoyaltyLevel Bronze = new("Bronze", 5m);
-        public static readonly LoyaltyLevel Silver = new("Silver", 10m);
-        public static readonly LoyaltyLevel Gold = new("Gold", 15m);
+        public static LoyaltyLevel None => new LoyaltyLevel("None", 0m);
+        public static LoyaltyLevel Bronze => new LoyaltyLevel("Bronze", 5m);
+        public static LoyaltyLevel Silver => new LoyaltyLevel("Silver", 10m);
+        public static LoyaltyLevel Gold => new LoyaltyLevel("Gold", 15m);
+
+        public static LoyaltyLevel FromName(string name) => name?.ToLower().Trim() switch
+        {
+            "Bronze" => Bronze,
+            "Silver" => Silver,
+            "Gold" => Gold,
+            _ => None
+        };
+
+        public static LoyaltyLevel CalculateFromSpend(double totalSpendInLast12Months) => totalSpendInLast12Months switch
+        {
+            > 25000D => Gold,
+
+            >= 10001D => Silver,
+
+            >= 3000D => Bronze,
+
+            _ => None
+        };
 
         protected override IEnumerable<object> GetEqualityComponents()
         {

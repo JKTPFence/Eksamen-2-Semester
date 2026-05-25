@@ -343,3 +343,115 @@ table.client-table {
     border: 1px solid #fecaca;
     border-radius: 6px;
 }
+
+section.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+article.modal-box {
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+    width: 100%;
+    max-width: 540px;
+    max-height: 90vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+article.modal-box--small {
+    max-width: 400px;
+}
+
+header.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    flex-shrink: 0;
+}
+
+    header.modal-header h5 {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--color-text-primary);
+        margin: 0;
+    }
+
+section.modal-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow-y: auto;
+}
+
+footer.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 14px 20px;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    flex-shrink: 0;
+}
+
+output.modal-error {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 20px;
+    padding: 10px 14px;
+    background: #fce4ec;
+    border: 1px solid #e57373;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #c62828;
+}
+
+p.modal-warning {
+    font-size: 13px;
+    color: #c62828;
+    margin: 4px 0 0;
+}
+
+.field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+    .field-group label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--color-text-secondary);
+    }
+
+.btn-danger {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: linear-gradient(180deg, #e57373 0%, #c62828 100%);
+    color: #ffffff;
+    border: 1px solid #b71c1c;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+    .btn-danger:hover {
+        background: linear-gradient(180deg, #ef9a9a 0%, #e57373 100%);
+    }

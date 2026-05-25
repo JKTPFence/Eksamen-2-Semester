@@ -19,7 +19,7 @@
             
             <button class="btn-switch" @onclick="ToggleViewMode">
                 <RadzenIcon Icon="swap_horiz" />
-                Gå til @(CurrentViewMode == CalendarViewMode.Staff ? "Klient" : "Medarbejder") kalender
+                Se @(CurrentViewMode == CalendarViewMode.Staff ? "Klient" : "Medarbejder") kalender
             </button>
 
             <label class="search-wrapper" aria-label="Søg i kalender" style="margin-left: 4px;">
@@ -71,288 +71,328 @@
         </aside>
     </header>
 
-    @if (View is "week" or "day")
+    @if (_loading)
     {
-        <article class="calendar-wrap" aria-label="Uge kalender">
-            <table class="calendar-table">
-                <thead>
-                    <tr>
-                        <th class="time-gutter-header" scope="col"></th>
-                        @foreach (var day in VisibleDays)
+        <div class="loading-container">
+        <div class="loading-pulse-ring"></div>
+        <p class="loading-text">@_loadingMessage</p>
+        </div>
+    }
+    else
+    {
+        @if (View is "week" or "day")
+        {
+            <article class="calendar-wrap" aria-label="Uge kalender">
+                <table class="calendar-table">
+                    <thead>
+                        <tr>
+                            <th class="time-gutter-header" scope="col"></th>
+                            @foreach (var day in VisibleDays)
+                            {
+                                <th scope="col"
+                                    class="day-header @(IsToday(day) ? "today-header" : "")"
+                                    @onclick="() => DrillToDay(day)">
+                                    <span class="day-name">@day.ToString("ddd", DanishCulture).ToUpper()</span>
+                                    <span class="day-number @(IsToday(day) ? "today-circle" : "")">
+                                        @day.ToString("d. MMM", DanishCulture)
+                                    </span>
+                                </th>
+                            }
+                        </tr>
+                    </thead>
+                </table>
+
+                <section class="calendar-body" aria-label="Kalender indhold">
+
+                    <aside class="time-gutter" aria-label="Tidslinje">
+                        @for (var hour = 0; hour < 24; hour++)
                         {
-                            <th scope="col"
-                                class="day-header @(IsToday(day) ? "today-header" : "")"
-                                @onclick="() => DrillToDay(day)">
-                                <span class="day-name">@day.ToString("ddd", DanishCulture).ToUpper()</span>
-                                <span class="day-number @(IsToday(day) ? "today-circle" : "")">
-                                    @day.ToString("d. MMM", DanishCulture)
-                                </span>
-                            </th>
+                            var topPx = hour * SlotHeight * 4;
+                            <time class="time-marker" style="top: @(topPx)px">
+                                @($"{hour:D2}:00")
+                            </time>
                         }
-                    </tr>
-                </thead>
-            </table>
+                    </aside>
 
-            <section class="calendar-body" aria-label="Kalender indhold">
-
-                <aside class="time-gutter" aria-label="Tidslinje">
-                    @for (var hour = 0; hour < 24; hour++)
+                    @foreach (var day in VisibleDays)
                     {
-                        var topPx = hour * SlotHeight * 4;
-                        <time class="time-marker" style="top: @(topPx)px">
-                            @($"{hour:D2}:00")
-                        </time>
-                    }
-                </aside>
+                        var isWeekend = day.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
+                        var daySessions = GetSessionsForDay(day);
 
-                @foreach (var day in VisibleDays)
-                {
-                    var isWeekend = day.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday;
-                    var daySessions = GetSessionsForDay(day);
-
-                    if (HideCancelled)
-                    {
-                        daySessions = daySessions.Where(s => s.SessionStatus.ToString() != "Cancelled").ToList();
-                    }
-
-                    var columns = CalculateColumns(daySessions);
-
-                    <section class="day-column
-                        @(isWeekend ? "weekend" : "")
-                        @(IsToday(day) ? "today-col" : "")
-                        @(SelectedCell.HasValue && SelectedCell.Value.Date == day.Date ? "selected-col" : "")"
-                             aria-label="@day.ToString("dddd d. MMMM", DanishCulture)">
-
-                        @for (var slot = 0; slot < 96; slot++)
+                        if (HideCancelled)
                         {
-                            var currentSlot = slot;
-                            var slotHour = currentSlot / 4;
-                            var slotMinute = (currentSlot % 4) * 15;
-                            var isClosed = IsOutsideOpeningHours(day, slotHour);
-
-                            string rowBorderClass;
-                            if (slotMinute == 0) rowBorderClass = "hour-border";
-                            else if (slotMinute == 30) rowBorderClass = "half-border";
-                            else rowBorderClass = "quarter-border";
-
-                            <section class="calendar-slot-row @rowBorderClass @(isClosed ? "closed-hours" : "")"
-                                     style="top: @(currentSlot * SlotHeight)px; height: @(SlotHeight)px;"
-                                     @onclick="() => OnCellClick(day, slotHour)"
-                                     @ondblclick="() => OnColumnDoubleClick(day, slotHour, slotMinute)">
-                            </section>
+                            daySessions = daySessions.Where(s => s.SessionStatus.ToString() != "Cancelled").ToList();
                         }
 
-                        @foreach (var session in daySessions)
-                        {
-                            var layout = GetSessionLayout(session, columns);
-                            <article class="session-block @GetDynamicColorClass(session)"
-                                     style="top:@(layout.Top.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))px;height:@(layout.Height.ToString("F1", System.Globalization.CultureInfo.InvariantCulture))px;left:@(layout.Left.ToString("F2", System.Globalization.CultureInfo.InvariantCulture))%;width:@(layout.Width.ToString("F2", System.Globalization.CultureInfo.InvariantCulture))%;"
+                        var columns = CalculateColumns(daySessions);
+
+                        <section class="day-column
+                            @(isWeekend ? "weekend" : "")
+                            @(IsToday(day) ? "today-col" : "")
+                            @(SelectedCell.HasValue && SelectedCell.Value.Date == day.Date ? "selected-col" : "")"
+                                 aria-label="@day.ToString("dddd d. MMMM", DanishCulture)">
+
+                            @for (var slot = 0; slot < 96; slot++)
+                            {
+                                var currentSlot = slot;
+                                var slotHour = currentSlot / 4;
+                                var slotMinute = (currentSlot % 4) * 15;
+                                var isClosed = IsOutsideOpeningHours(day, slotHour);
+
+                                string rowBorderClass;
+                                if (slotMinute == 0) rowBorderClass = "hour-border";
+                                else if (slotMinute == 30) rowBorderClass = "half-border";
+                                else rowBorderClass = "quarter-border";
+
+                                <section class="calendar-slot-row @rowBorderClass @(isClosed ? "closed-hours" : "")"
+                                         style="top: @(currentSlot * SlotHeight)px; height: @(SlotHeight)px;"
+                                         @onclick="() => OnCellClick(day, slotHour)"
+                                         @ondblclick="() => OnColumnDoubleClick(day, slotHour, slotMinute)">
+                                </section>
+                            }
+                            @foreach (var session in daySessions)
+                            {
+
+                                var layout = GetSessionLayout(session, columns);
+    
+                                bool isCombo = daySessions.Any(other => 
+                                    other.SessionID!= session.SessionID && 
+                                    other.ClientID == session.ClientID &&
+                                    (other.timeSlot.To == session.timeSlot.From || other.timeSlot.From == session.timeSlot.To)
+                                    );
+                                <article class="session-block @GetDynamicColorClass(session) @(isCombo ? "session-block--combo" : "")"
+                                     style="top:@(layout.Top.ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + "px");height:@(layout.Height.ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + "px");left:@(layout.Left.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) + "%");width:@(layout.Width.ToString("F2", System.Globalization.CultureInfo.InvariantCulture) + "%");"
                                      @onclick:stopPropagation="true"
                                      @onclick="() => OnSessionClick(session)"
                                      title="@session.ClientFirstName @session.ClientLastName — @session.SessionTypeName">
 
-                                <span class="session-status-badge">
-                                    <RadzenIcon Icon="@(session.SessionStatus.ToString() switch {
-                                        "Active" => "schedule",
-                                        "Completed" => "check_circle",
-                                        "Cancelled" => "cancel",
-                                        "NoShow" => "person_off",
-                                        _ => "help"
-                                    })" />
-                                </span>
+                                    <span class="session-status-badge">
+                                        <RadzenIcon Icon="@(session.SessionStatus.ToString() switch {
+                                            "Active" => "schedule",
+                                            "Completed" => "check_circle",
+                                            "Cancelled" => "cancel",
+                                            "NoShow" => "person_off",
+                                            _ => "help"
+                                        })" />
+                                        @if (isCombo)
+                                        {
+                                            <RadzenIcon Icon="link" Style="font-size: 14px; margin-left: 4px; color: #000000;" title="Koblet Combo Aftale" />
+                                        }
+                                    </span>
 
-                                <time class="session-time">
-                                    @session.timeSlot.From.ToString("HH:mm") – @session.timeSlot.To.ToString("HH:mm")
-                                </time>
-                                @if (CurrentViewMode == CalendarViewMode.Staff)
-                                {
-                                    <strong class="session-client">@session.StaffFirstName @session.StaffLastname</strong>
-                                }
-                                else
-                                {
-                                    <strong class="session-client">@session.ClientFirstName @session.ClientLastName</strong>
-                                }
-                                <span class="session-type">@session.SessionTypeName</span>
-                            </article>
-                        }
-
-                        @if (SelectedCell.HasValue && SelectedCell.Value.Date == day.Date)
-                        {
-                            var popupTop = TimeToPixels(SelectedCell.Value);
-                            @* FIXED: Backdrop overlay catches clicks outside the popup to clear selection *@
-                            <section class="popup-backdrop" @onclick="ClearPopupSelection"></section>
-                            <aside class="cell-popup"
-                                   style="top:@(popupTop.ToString("F0", System.Globalization.CultureInfo.InvariantCulture))px;"
-                                   @onclick:stopPropagation="true">
-                                <strong class="popup-time">
-                                    @SelectedCell.Value.ToString("HH:mm") – @SelectedCell.Value.AddMinutes(15).ToString("HH:mm")
-                                </strong>
-                                <p class="popup-date">@day.ToString("dddd d. MMMM", DanishCulture)</p>
-                                <select class="popup-select" @onchange="OnSessionTypeSelected">
-                                     <option value="" disabled selected hidden>— Vælg Sessionstype —</option>
-                                    @foreach (var type in _sessionTypes)
+                                    <time class="session-time">
+                                        @session.timeSlot.From.ToString("HH:mm") – @session.timeSlot.To.ToString("HH:mm")
+                                    </time>
+                                    @if (CurrentViewMode == CalendarViewMode.Staff)
                                     {
-                                        <option value="@type.SessionTypeID">@type.SessionTypeName - @GetSessionTypeInMinutes(type)</option>
+                                        <strong class="session-client">@session.StaffFirstName @session.StaffLastname</strong>
                                     }
-                                </select>
-                                <button class="popup-btn"
-                                        @onclick="GoToCreateSessionWithSlot"
-                                        disabled="@(SelectedSessionTypeId == Guid.Empty)">
-                                    Opret booking her
-                                </button>
-                            </aside>
-                        }
+                                    else
+                                    {
+                                        <strong class="session-client">@session.ClientFirstName @session.ClientLastName</strong>
+                                    }
+                                    <span class="session-type">@session.SessionTypeName</span>
+                                </article>
+                            }
+
+                            @if (SelectedCell.HasValue && SelectedCell.Value.Date == day.Date)
+                            {
+                                var popupTop = TimeToPixels(SelectedCell.Value);
+                                @* FIXED: Backdrop overlay catches clicks outside the popup to clear selection *@
+                                <section class="popup-backdrop" @onclick="ClearPopupSelection"></section>
+                                <aside class="cell-popup"
+                                       style="top:@(popupTop.ToString("F0", System.Globalization.CultureInfo.InvariantCulture))px;"
+                                       @onclick:stopPropagation="true">
+                                    <strong class="popup-time">
+                                        @SelectedCell.Value.ToString("HH:mm") – @SelectedCell.Value.AddMinutes(15).ToString("HH:mm")
+                                    </strong>
+                                    <p class="popup-date">@day.ToString("dddd d. MMMM", DanishCulture)</p>
+                                    <select class="popup-select" @onchange="OnSessionTypeSelected">
+                                         <option value="" disabled selected hidden>— Vælg Sessionstype —</option>
+                                        @foreach (var type in _sessionTypes)
+                                        {
+                                            <option value="@type.SessionTypeID">@type.SessionTypeName - @GetSessionTypeInMinutes(type)</option>
+                                        }
+                                    </select>
+                                    <button class="popup-btn"
+                                            @onclick="GoToCreateSessionWithSlot"
+                                            disabled="@(SelectedSessionTypeId == Guid.Empty)">
+                                        Opret booking her
+                                    </button>
+                                </aside>
+                            }
+                        </section>
+                    }
+                </section>
+            </article>
+            @if (SelectedViewSession != null)
+    {
+        <section class="modal-overlay" @onclick="CloseSessionDetails">
+            <article class="session-details-card" @onclick:stopPropagation="true">
+                <header class="card-header">
+                    <h3>Booking Detaljer</h3>
+                    <button class="close-card-btn" @onclick="CloseSessionDetails">
+                        <RadzenIcon Icon="close" />
+                    </button>
+                </header>
+
+                <fieldset class="card-body-content">
+                    <section class="info-row">
+                        <RadzenIcon Icon="person" />
+                        <p>
+                            <label>Klient</label>
+                            <strong>@SelectedViewSession.ClientFirstName @SelectedViewSession.ClientLastName</strong>
+                        </p>
                     </section>
-                }
-            </section>
-        </article>
-        @if (SelectedViewSession != null)
-{
-    <section class="modal-overlay" @onclick="CloseSessionDetails">
-        <article class="session-details-card" @onclick:stopPropagation="true">
-            <header class="card-header">
-                <h3>Booking Detaljer</h3>
-                <button class="close-card-btn" @onclick="CloseSessionDetails">
-                    <RadzenIcon Icon="close" />
-                </button>
-            </header>
 
-            <fieldset class="card-body-content">
-                <section class="info-row">
-                    <RadzenIcon Icon="person" />
-                    <p>
-                        <label>Klient</label>
-                        <strong>@SelectedViewSession.ClientFirstName @SelectedViewSession.ClientLastName</strong>
-                    </p>
-                </section>
+                    <section class="info-row">
+                        <RadzenIcon Icon="badge" />
+                        <p>
+                            <label>Behandler</label>
+                            <strong>@SelectedViewSession.StaffFirstName @SelectedViewSession.StaffLastname - @GetStaffAuthorisationType(SelectedViewSession.StaffID)</strong>
+                        </p>
+                    </section>
 
-                <section class="info-row">
-                    <RadzenIcon Icon="badge" />
-                    <p>
-                        <label>Behandler</label>
-                        <strong>@SelectedViewSession.StaffFirstName @SelectedViewSession.StaffLastname</strong>
-                    </p>
-                </section>
+                    <section class="info-row">
+                        <RadzenIcon Icon="schedule" />
+                        <p>
+                            <label>Tidspunkt</label>
+                            <strong>@SelectedViewSession.timeSlot.From.ToString("HH:mm") – @SelectedViewSession.timeSlot.To.ToString("HH:mm")</strong>
+                        </p>
+                    </section>
 
-                <section class="info-row">
-                    <RadzenIcon Icon="schedule" />
-                    <p>
-                        <label>Tidspunkt</label>
-                        <strong>@SelectedViewSession.timeSlot.From.ToString("HH:mm") – @SelectedViewSession.timeSlot.To.ToString("HH:mm")</strong>
-                    </p>
-                </section>
+                    <section class="info-row">
+                        <RadzenIcon Icon="meeting_room" />
+                        <p>
+                            <label>Lokale</label>
+                            <strong>Stue @SelectedViewSession.RoomNumber</strong>
+                        </p>
+                    </section>
 
-                <section class="info-row">
-                    <RadzenIcon Icon="meeting_room" />
-                    <p>
-                        <label>Lokale</label>
-                        <strong>Stue @SelectedViewSession.RoomNumber</strong>
-                    </p>
-                </section>
+                    <section class="info-row">
+                        <RadzenIcon Icon="layers" />
+                        <p>
+                            <label>Ydelse</label>
+                            <strong>@SelectedViewSession.SessionTypeName</strong>
+                        </p>
+                    </section>
 
-                <section class="info-row">
-                    <RadzenIcon Icon="layers" />
-                    <p>
-                        <label>Ydelse</label>
-                        <strong>@SelectedViewSession.SessionTypeName</strong>
-                    </p>
-                </section>
+                    <section class="info-row">
+                        <RadzenIcon Icon="payments" />
+                        <p>
+                            <label>Pris</label>
+                            <strong>@string.Format(DanishCulture, "{0:C}", SelectedViewSession.SessionTotalPrice.Value)</strong>
+                        </p>
+                    </section>
 
-                <section class="info-row">
-                    <RadzenIcon Icon="payments" />
-                    <p>
-                        <label>Pris</label>
-                        <strong>@string.Format(DanishCulture, "{0:C}", SelectedViewSession.SessionTotalPrice.Value)</strong>
-                    </p>
-                </section>
+                    <section class="info-row">
+                        <RadzenIcon Icon="info" />
+                        <p>
+                            <label>Status</label>
+                            <span class="status-indicator status-@SelectedViewSession.SessionStatus.ToLower()">
+                                @SelectedViewSession.SessionStatus
+                            </span>
+                        </p>
+                    </section>
+                </fieldset>
 
-                <section class="info-row">
-                    <RadzenIcon Icon="info" />
-                    <p>
-                        <label>Status</label>
-                        <span class="status-indicator status-@SelectedViewSession.SessionStatus.ToLower()">
-                            @SelectedViewSession.SessionStatus
-                        </span>
-                    </p>
-                </section>
-            </fieldset>
 
             <footer class="card-actions-footer">
-                <button class="action-btn btn-update" @onclick="HandleUpdate">
-                    <RadzenIcon Icon="edit" /> Rediger
-                </button>
-                <button class="action-btn btn-complete" @onclick="HandleComplete">
-                    <RadzenIcon Icon="check_circle" /> Færdiggør
-                </button>
-                <button class="action-btn btn-noshow" @onclick="HandleNoShow">
-                    <RadzenIcon Icon="person_off" /> NoShow
-                </button>
-                <button class="action-btn btn-cancel" @onclick="HandleCancel">
-                    <RadzenIcon Icon="block" /> Aflys
-                </button>
-            </footer>
-        </article>
-    </section>
-}
-    }
-
-    @if (View == "month")
-    {
-        <article class="month-wrap" aria-label="Måneds kalender">
-            <table class="month-table">
-                <thead>
-                    <tr>
-                        @foreach (var dayName in new[] { "MAN", "TIRS", "ONS", "TORS", "FRE", "LØR", "SØN" })
-                        {
-                            <th scope="col" class="month-day-header">@dayName</th>
-                        }
-                    </tr>
-                </thead>
-                <tbody>
-                    @for (var i = 0; i < MonthDays.Count; i += 7)
+                @if (_loadingButtonClick == false)
+                   {
+                    <button class="action-btn btn-update" @onclick="HandleUpdate">
+                        <RadzenIcon Icon="edit" /> Rediger
+                    </button>
+                    <button class="action-btn btn-complete" @onclick="HandleComplete">
+                        <RadzenIcon Icon="check_circle" /> Færdiggør
+                    </button>
+                    <button class="action-btn btn-noshow" @onclick="HandleNoShow">
+                        <RadzenIcon Icon="person_off" /> NoShow
+                    </button>
+                    <button class="action-btn btn-cancel" @onclick="HandleCancel">
+                        <RadzenIcon Icon="block" /> Aflys
+                    </button>        
+                   }
+                   else
                     {
-                        <tr>
-                            @foreach (var day in MonthDays.Skip(i).Take(7))
-                            {
-                                var inMonth = day.Month == CurrentDate.Month;
-                                var isToday = IsToday(day);
-                                var daySessions = GetSessionsForDay(day);
+                        <button class="action-btn btn-update">
+                            <RadzenIcon Icon="edit" /> Loading...
+                        </button>
+                        <button class="action-btn btn-complete">
+                            <RadzenIcon Icon="check_circle" /> Loading...
+                        </button>
+                        <button class="action-btn btn-noshow">
+                            <RadzenIcon Icon="person_off" /> Loading...
+                        </button>
+                        <button class="action-btn btn-cancel">
+                            <RadzenIcon Icon="block" /> Loading...
+                        </button>      
+                    }
 
-                                <td class="month-cell @(!inMonth ? "out-of-month" : "") @(isToday ? "today-month" : "")"
-                                    @onclick="() => DrillToDay(day)">
-                                    <span class="month-day-number @(isToday ? "today-circle" : "")">@day.Day</span>
-                                    @foreach (var session in daySessions.Take(3))
-                                    {
-                                        <article class="month-session @GetDynamicColorClass(session)"
-                                                 @onclick:stopPropagation="true"
-                                                 @onclick="() => OnSessionClick(session)"
-                                                 title="@session.ClientFirstName @session.ClientLastName — @session.SessionTypeName">
-                                            <time class="session-time" datetime="@session.timeSlot.From.ToString("HH:mm")">
-                                                @session.timeSlot.From.ToString("HH:mm") – @session.timeSlot.To.ToString("HH:mm")
-                                            </time>
-                                            
-                                            @if (CurrentViewMode == CalendarViewMode.Staff)
-                                            {
-                                                <strong class="session-month">@session.StaffFirstName @session.StaffLastname</strong>
-                                            }
-                                            else
-                                            {
-                                                <strong class="session-month">@session.ClientFirstName @session.ClientLastName</strong>
-                                            }
-                                            <span class="session-type">@session.SessionTypeName</span>
-                                        </article>
-                                    }
-                                    @if (daySessions.Count > 3)
-                                    {
-                                        <span class="month-more">+@(daySessions.Count - 3) mere</span>
-                                    }
-                                </td>
+                </footer>
+            </article>
+        </section>
+    }
+        }
+
+        @if (View == "month")
+        {
+            <article class="month-wrap" aria-label="Måneds kalender">
+                <table class="month-table">
+                    <thead>
+                        <tr>
+                            @foreach (var dayName in new[] { "MAN", "TIRS", "ONS", "TORS", "FRE", "LØR", "SØN" })
+                            {
+                                <th scope="col" class="month-day-header">@dayName</th>
                             }
                         </tr>
-                    }
-                </tbody>
-            </table>
-        </article>
-    }
+                    </thead>
+                    <tbody>
+                        @for (var i = 0; i < MonthDays.Count; i += 7)
+                        {
+                            <tr>
+                                @foreach (var day in MonthDays.Skip(i).Take(7))
+                                {
+                                    var inMonth = day.Month == CurrentDate.Month;
+                                    var isToday = IsToday(day);
+                                    var daySessions = GetSessionsForDay(day);
 
+                                    <td class="month-cell @(!inMonth ? "out-of-month" : "") @(isToday ? "today-month" : "")"
+                                        @onclick="() => DrillToDay(day)">
+                                        <span class="month-day-number @(isToday ? "today-circle" : "")">@day.Day</span>
+                                        @foreach (var session in daySessions.Take(3))
+                                        {
+                                            <article class="month-session @GetDynamicColorClass(session)"
+                                                     @onclick:stopPropagation="true"
+                                                     @onclick="() => DrillToDay(day)"
+                                                     title="@session.ClientFirstName @session.ClientLastName — @session.SessionTypeName">
+                                                <time class="session-time" datetime="@session.timeSlot.From.ToString("HH:mm")">
+                                                    @session.timeSlot.From.ToString("HH:mm") – @session.timeSlot.To.ToString("HH:mm")
+                                                </time>
+                                            
+                                                @if (CurrentViewMode == CalendarViewMode.Staff)
+                                                {
+                                                    <strong class="session-month">@session.StaffFirstName @session.StaffLastname</strong>
+                                                }
+                                                else
+                                                {
+                                                    <strong class="session-month">@session.ClientFirstName @session.ClientLastName</strong>
+                                                }
+                                                <span class="session-type">@session.SessionTypeName</span>
+                                            </article>
+                                        }
+                                        @if (daySessions.Count > 3)
+                                        {
+                                            <span class="month-more">+@(daySessions.Count - 3) mere</span>
+                                        }
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </article>
+        }
+            
+    }
 </section>
