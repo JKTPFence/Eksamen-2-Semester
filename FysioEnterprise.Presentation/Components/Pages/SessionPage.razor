@@ -177,8 +177,8 @@
 
 				@if (_selectedStaffId != Guid.Empty)
 				{
-					var staff = _filteredStaff.FirstOrDefault(s => s.StaffID == _selectedStaffId);
-					<li><RadzenIcon Icon="medical_services" Style="font-size: 14px;" /> @staff.StaffFirstName @staff.StaffLastName</li>
+					var staff = GetStaffNameWithId(_selectedStaffId);
+					<li><RadzenIcon Icon="medical_services" Style="font-size: 14px;" /> @staff</li>
 				}
 
 				@if (_selectedRoomId != Guid.Empty)

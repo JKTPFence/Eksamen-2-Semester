@@ -33,6 +33,15 @@
         </nav>
     </header>
 
+    @if (_loading == true)
+	{
+		<div class="loading-container">
+			<div class="loading-pulse-ring"></div>
+            <p class="loading-text">@_loadingMessage</p>
+		</div>
+	}
+	else
+	{
     <article class="client-content-wrap">
         <div class="table-container">
             @if (filteredPromotions == null)
@@ -96,71 +105,81 @@
             }
         </div>
     </article>
+    }
 </section>
 
-<dialog class="@(showModal ? "show d-block" : "")" style="background-color: @(showModal ? "rgba(0,0,0,0.5)" : "")">
-    <form method="dialog">
-        <header>
-            <h5>@(isEditMode ? "Rediger Promovering" : "Opret ny Promovering")</h5>
-            <button type="button" class="btn-close" @onclick="CloseModal"></button>
-        </header>
-        <section>
+@if (showModal)
+{
+    <section class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <article class="modal-box">
+            <header class="modal-header">
+                <h5 id="modal-title">@(isEditMode ? "Rediger Promovering" : "Opret ny Promovering")</h5>
+                <button type="button" class="btn-close" @onclick="CloseModal" aria-label="Luk"></button>
+            </header>
+
             @if (showError && !string.IsNullOrEmpty(errorMessage))
             {
-                <output class="alert alert-danger alert-dismissible fade show" role="alert">
+                <output class="modal-error" role="alert">
                     @errorMessage
-                    <button type="button" class="btn-close" @onclick="() => showError = false"></button>
+                    <button type="button" @onclick="() => showError = false" aria-label="Luk fejl">✕</button>
                 </output>
             }
+
             <EditForm Model="currentPromotion" OnValidSubmit="SavePromotion">
                 <DataAnnotationsValidator />
                 <ValidationSummary />
 
-                <fieldset class="mb-3">
-                    <label for="name" class="form-label">Navn *</label>
-                    <InputText id="name" class="form-control" @bind-Value="currentPromotion.Name" />
-                    <ValidationMessage For="() => currentPromotion.Name" />
-                </fieldset>
+                <section class="modal-body">
+                    <fieldset class="field-group">
+                        <label for="name">Navn *</label>
+                        <InputText id="name" class="form-control" @bind-Value="currentPromotion.Name" />
+                        <ValidationMessage For="() => currentPromotion.Name" />
+                    </fieldset>
 
-                <fieldset class="mb-3">
-                    <label for="discount" class="form-label">Rabat i procent *</label>
-                    <InputNumber id="discount" class="form-control" @bind-Value="currentPromotion.DiscountPercentage" />
-                    <ValidationMessage For="() => currentPromotion.DiscountPercentage" />
-                </fieldset>
+                    <fieldset class="field-group">
+                        <label for="discount">Rabat i procent *</label>
+                        <InputNumber id="discount" class="form-control" @bind-Value="currentPromotion.DiscountPercentage" />
+                        <ValidationMessage For="() => currentPromotion.DiscountPercentage" />
+                    </fieldset>
 
-                <fieldset class="mb-3">
-                    <label for="start" class="form-label">Startdato *</label>
-                    <InputDate id="start" class="form-control" @bind-Value="currentPromotion.StartDate" />
-                    <ValidationMessage For="() => currentPromotion.StartDate" />
-                </fieldset>
+                    <fieldset class="field-group">
+                        <label for="start">Startdato *</label>
+                        <InputDate id="start" class="form-control" @bind-Value="currentPromotion.StartDate" />
+                        <ValidationMessage For="() => currentPromotion.StartDate" />
+                    </fieldset>
 
-                <fieldset class="mb-3">
-                    <label for="end" class="form-label">Slutdato *</label>
-                    <InputDate id="end" class="form-control" @bind-Value="currentPromotion.EndDate" />
-                    <ValidationMessage For="() => currentPromotion.EndDate" />
-                </fieldset>
+                    <fieldset class="field-group">
+                        <label for="end">Slutdato *</label>
+                        <InputDate id="end" class="form-control" @bind-Value="currentPromotion.EndDate" />
+                        <ValidationMessage For="() => currentPromotion.EndDate" />
+                    </fieldset>
+                </section>
 
-                <footer>
-                    <button type="button" class="btn btn-secondary" @onclick="CloseModal">Annuller</button>
-                    <button type="submit" class="btn btn-primary">Gem</button>
+                <footer class="modal-footer">
+                    <button type="button" class="btn-secondary" @onclick="CloseModal">Annuller</button>
+                    <button type="submit" class="btn-primary">Gem</button>
                 </footer>
             </EditForm>
-        </section>
-    </form>
-</dialog>
+        </article>
+    </section>
+}
 
-<dialog class="@(showDeleteConfirm ? "show d-block" : "")" style="background-color: @(showDeleteConfirm ? "rgba(0,0,0,0.5)" : "")">
-    <form method="dialog">
-        <header>
-            <h5>Bekræft</h5>
-            <button type="button" class="btn-close" @onclick="CloseDeleteConfirm"></button>
-        </header>
-        <section>
-            <p>Er du sikker på, at du vil slette <strong>@promotionToDelete?.PromotionName</strong>?</p>
-        </section>
-        <footer>
-            <button type="button" class="btn btn-secondary" @onclick="CloseDeleteConfirm">Annuller</button>
-            <button type="button" class="btn btn-danger" @onclick="DeletePromotion">Slet</button>
-        </footer>
-    </form>
-</dialog>
+@if (showDeleteConfirm)
+{
+    <section class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="delete-title">
+        <article class="modal-box modal-box--small">
+            <header class="modal-header">
+                <h5 id="delete-title">Bekræft sletning</h5>
+                <button type="button" class="btn-close" @onclick="CloseDeleteConfirm" aria-label="Luk"></button>
+            </header>
+            <section class="modal-body">
+                <p>Er du sikker på, at du vil slette <strong>@promotionToDelete?.PromotionName</strong>?</p>
+                <p class="modal-warning">Denne handling kan ikke fortrydes.</p>
+            </section>
+            <footer class="modal-footer">
+                <button type="button" class="btn-secondary" @onclick="CloseDeleteConfirm">Annuller</button>
+                <button type="button" class="btn-danger" @onclick="DeletePromotion">Slet</button>
+            </footer>
+        </article>
+    </section>
+}

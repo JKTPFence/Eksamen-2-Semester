@@ -41,6 +41,10 @@ public partial class SessionBookingPage : ComponentBase
     private const int SlotHeight = 30;
     private int SessionTimeInMinutes;
     private string clinicName = string.Empty;
+    private bool _loading = true;
+    private string _loadingMessage = "Henter data...";
+    private bool _isDataLoaded = false;
+    private const int MaxRetries = 3;
     private bool HideCancelled { get; set; } = false;
     private record SessionLayout(double Top, double Height, double Left, double Width);
 
@@ -125,53 +129,86 @@ public partial class SessionBookingPage : ComponentBase
         {
             await Context.LoadFromStorageAsync();
 
-            var openingHour = _clinic?.ClinicOpeningHours.FirstOrDefault()?.From.Hour ?? 7;
-            await JS.InvokeVoidAsync("scrollToHour", openingHour);
-
             if (!Context.IsLoggedIn)
             {
                 Nav.NavigateTo("/");
                 return;
             }
+            
+            if (!_isDataLoaded)
+                await LoadData();
 
-            await LoadData();
-            StateHasChanged();
+            var openingHour = _clinic?.ClinicOpeningHours.FirstOrDefault()?.From.Hour ?? 7;
+            await JS.InvokeVoidAsync("scrollToHour", openingHour);
         }
     }
 
     protected override Task OnInitializedAsync() => Task.CompletedTask;
 
-    private async Task LoadData()
+    private async Task LoadData(int attempt = 1) //Self-healing loading loop to prevent 2 queries being called twice
     {
-        var sessionsTask = await SessionQueries.GetAllActiveSessionsByClincIdAsync(Context.ClinicId);
-        var clientsTask = await ClientQueries.GetAllClientsAsync();
-        var staffTask = await SimpleQueries.GetAllStaffByClinicAsync(Context.ClinicId);
-        var typesTask = await SimpleQueries.GetAllSessionTypesAsync();
-        var clinicTask = await SimpleQueries.GetClinicByIdAsync(Context.ClinicId);
-
-        _sessions = sessionsTask.OrderBy(s => s.StaffFirstName).ToList();
-        _clients = clientsTask.OrderBy(c => c.ClientFirstName).ToList();
-        _staff = staffTask.OrderBy(s => s.StaffFirstName).ToList();
-        _sessionTypes = typesTask.OrderBy(s => s.SessionTypeName).ToList();
-        _clinic = clinicTask;
-
-        if (!string.IsNullOrEmpty(_clinic?.ClinicAddress))
+        _loading = true;
+        _loadingMessage = attempt > 1 ? "Synkroniserer med databasen..." : "Henter data...";
+        StateHasChanged();
+        try
         {
-            var clinicsplit = _clinic.ClinicAddress.Split(',');
+            var sessionsTask = await SessionQueries.GetAllActiveSessionsByClincIdAsync(Context.ClinicId);
+            var clientsTask = await ClientQueries.GetAllClientsAsync();
+            var staffTask = await SimpleQueries.GetAllStaffByClinicAsync(Context.ClinicId);
+            var typesTask = await SimpleQueries.GetAllSessionTypesAsync();
+            var clinicTask = await SimpleQueries.GetClinicByIdAsync(Context.ClinicId);
 
-            if (clinicsplit.Length >= 2)
+            _sessions = sessionsTask.OrderBy(s => s.StaffFirstName).ToList();
+            _clients = clientsTask.OrderBy(c => c.ClientFirstName).ToList();
+            _staff = staffTask.OrderBy(s => s.StaffFirstName).ToList();
+            _sessionTypes = typesTask.OrderBy(s => s.SessionTypeName).ToList();
+            _clinic = clinicTask;
+
+            if (!string.IsNullOrEmpty(_clinic?.ClinicAddress))
             {
-                clinicName = $"{clinicsplit[0].Trim()}, {clinicsplit[1].Trim()}";
+                var clinicsplit = _clinic.ClinicAddress.Split(',');
+
+                if (clinicsplit.Length >= 2)
+                {
+                    clinicName = $"{clinicsplit[0].Trim()}, {clinicsplit[1].Trim()}";
+                }
+                else
+                {
+                    clinicName = $"{clinicsplit[0].Trim()}";
+                }
             }
             else
             {
-                clinicName = $"{clinicsplit[0].Trim()}";
+                clinicName = "Klinik";
+            }
+            _isDataLoaded = true;
+
+        }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("second operation was started"))
+        {
+            System.Diagnostics.Debug.WriteLine($"[DB Collision Caught] Attempt {attempt} failed. Retrying...");
+
+            if (attempt < MaxRetries)
+            {
+                await Task.Delay(500);
+
+                await LoadData(attempt + 1);
+            }
+            else
+            {
+                _loading = false;
+                System.Diagnostics.Debug.WriteLine("[DB Collision] Maximum retries reached. Context is permanently locked.");
             }
         }
-        else
+        finally
         {
-            clinicName = "Klinik";
+            if (attempt == 1 || !_loading)
+            {
+                _loading = false;
+                StateHasChanged();
+            }
         }
+
     }
 
     private List<SessionDTO> GetSessionsForDay(DateTime day)
@@ -235,7 +272,7 @@ public partial class SessionBookingPage : ComponentBase
     {
         if (SelectedCell is null || SelectedSessionTypeId == Guid.Empty) return;
         var slot = SelectedCell.Value;
-        Nav.NavigateTo($"/createsession?date={slot:yyyy-MM-dd}&hour={slot.Hour}&sessionTypeId={SelectedSessionTypeId}&clinicId={Context.ClinicId}&staffId={Context.StaffId}");
+        Nav.NavigateTo($"/createsession?date={slot:yyyy-MM-dd}&hour={slot.Hour}&minute={slot.Minute}&sessionTypeId={SelectedSessionTypeId}&clinicId={Context.ClinicId}&staffId={Context.StaffId}");
     }
 
     private void DrillToDay(DateTime day)
@@ -297,7 +334,7 @@ public partial class SessionBookingPage : ComponentBase
 
             return $"{monthName} {monday.Day} – {endMonthName} {sunday.Day}, {sunday.Year}";
         }
-        return $"{monthName} , {monday.Day} - {sunday.Day} , {monday.Year}";
+        return $"{monday.Day} - {sunday.Day} , {monthName} , {monday.Year}";
     }
 
     private static bool IsToday(DateTime day) => day.Date == DateTime.Today;

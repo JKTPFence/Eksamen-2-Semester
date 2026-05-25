@@ -1,11 +1,14 @@
-﻿using Microsoft.AspNetCore.Components;
+﻿using System.Collections;
+using System.Diagnostics.Eventing.Reader;
+using FluentResults;
+using FysioEnterprise.Domain.Entities;
 using FysioEnterprise.Facade.DTOs;
 using FysioEnterprise.Facade.Queries;
 using FysioEnterprise.Facade.UseCase.SessionUseCase;
 using FysioEnterprise.Presentation.Service;
-using static FysioEnterprise.Facade.RequestModels.SessionRequests;
+using Microsoft.AspNetCore.Components;
 using Radzen;
-using System.Diagnostics.Eventing.Reader;
+using static FysioEnterprise.Facade.RequestModels.SessionRequests;
 
 namespace FysioEnterprise.Presentation.Components.Pages
 {
@@ -23,6 +26,7 @@ namespace FysioEnterprise.Presentation.Components.Pages
         //URL parametre fra kalender
         [SupplyParameterFromQuery] private string? Date {  get; set; }
         [SupplyParameterFromQuery] private int? Hour { get; set; }
+        [SupplyParameterFromQuery] private int? Minute { get; set; }
         [SupplyParameterFromQuery] private Guid? SessionTypeId { get; set; }
         [SupplyParameterFromQuery] private Guid? SessionId { get; set; }
 
@@ -108,7 +112,10 @@ namespace FysioEnterprise.Presentation.Components.Pages
         {
             if (DateTime.TryParse(Date, out var date) && Hour.HasValue)
             {
-                _startTime = date.AddHours(Hour.Value);
+                if (Minute.HasValue)
+                    _startTime = date.AddHours(Hour.Value).AddMinutes(Minute.Value);
+                else
+                    _startTime = date.AddHours(Hour.Value);
 
                 _promotions = _allPromotions
                     .Where(p => p.PromotionStartTime <= _startTime && p.PromotionEndTime >= _startTime)
@@ -327,6 +334,24 @@ namespace FysioEnterprise.Presentation.Components.Pages
 
         private void Cancel()
             => Nav.NavigateTo("/calendar");
+
+        private Result<string> GetStaffNameWithId(Guid staffID)
+        {
+            var clinicStaff = _staffInClinic.FirstOrDefault(s => s.StaffID == staffID);
+            if (clinicStaff == null)
+            {
+                return Result.Fail<string>("No staff found with the given ID in this clinic");
+            }
+
+            var staffResult = _filteredStaff.FirstOrDefault(s => s.StaffID == staffID);
+            if (staffResult != null)
+            {
+                string fullName = $"{staffResult.StaffFirstName} {staffResult.StaffLastName}";
+                return Result.Ok(fullName);
+            }
+
+            return Result.Fail<string>("No staff found with the given ID");
+        }
     }
 
 }

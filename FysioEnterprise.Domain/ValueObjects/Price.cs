@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using FysioEnterprise.Domain.Exceptions;
 
 namespace FysioEnterprise.Domain.ValueObjects
 {
@@ -13,7 +11,7 @@ namespace FysioEnterprise.Domain.ValueObjects
         }
         public Price(double value)
         {
-            if (value < 0) throw new ArgumentException("Amount cannot be negative.", nameof(value));
+            if (value < 0) throw new UserInvalidInputException("Mængden må ikke være negativ");
             Value = value;
         }
     }
