@@ -12,7 +12,7 @@ namespace FysioEnterprise.UseCase.IRepositories
         Task<List<Session>> GetSessionsByClientAsync(Guid clientId);
         Task<List<Session>> GetSessionsByStaffAsync(Guid staffId);
         Task<List<Session>> GetSessionsByRoomAsync(Guid clinicId, Guid roomId);
-        Task<List<Session>> GetCompletedSessionsInRangeAsync(DateTime from, DateTime to);
+        Task<List<Session>> GetSessionsInRangeAsync(DateTime from, DateTime to);
 
     }
 }

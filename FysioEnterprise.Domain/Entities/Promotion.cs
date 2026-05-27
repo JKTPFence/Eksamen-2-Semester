@@ -1,4 +1,5 @@
 ﻿using FysioEnterprise.Domain.Exceptions;
+using FysioEnterprise.Domain.Service;
 
 namespace FysioEnterprise.Domain.Entities
 {
@@ -20,13 +21,13 @@ namespace FysioEnterprise.Domain.Entities
         {
             Id = Guid.NewGuid();
             if (string.IsNullOrWhiteSpace(promotionName))
-                throw new DomainException($"Promotion name cannot be empty: {promotionName}");
+                throw new UserInvalidInputException($"En kampagne skal have et navn");
             PromotionName = promotionName;
             if (promotionDiscountPercent <= 0)
-                throw new DomainException($"Discount percentage must be greater than zero: {promotionDiscountPercent}");
+                throw new UserInvalidInputException($"En kampagne skal have en rabatprocent {promotionDiscountPercent}");
             PromotionDiscountPercent = promotionDiscountPercent;
                 if (promotionStartTime >= promotionEndTime)
-                    throw new DomainException($"Promotion start time must be before end time: {promotionStartTime} - {promotionEndTime}");
+                    throw new UserInvalidInputException($"En kampagne skal have en starttid der er før sin sluttid {promotionStartTime} - {promotionEndTime}");
             PromotionStartTime = promotionStartTime;
             PromotionEndTime = promotionEndTime;
         }
@@ -36,7 +37,16 @@ namespace FysioEnterprise.Domain.Entities
             decimal promotionDiscountPercent, 
             DateTime promotionStartTime, 
             DateTime promotionEndTime)
-        { 
+        {
+            var validationResult = TimeValidationService.ValidateTime(
+                "Promotion",
+                promotionStartTime,
+                promotionEndTime,
+                DateTime.Now);
+            if (validationResult.IsFailed)
+            {
+                throw new ValidationException("Der er sket en fejl med tiden under oprettelsen af kampagnen " + validationResult.Errors);
+            }
             var promotion = new Promotion(promotionName, promotionDiscountPercent, promotionStartTime, promotionEndTime);
             return promotion;
         }
@@ -44,7 +54,7 @@ namespace FysioEnterprise.Domain.Entities
         {
             if (string.IsNullOrEmpty(promotion.PromotionName) || promotion.PromotionDiscountPercent <= 0)
             {
-                throw new DomainException("Promotion needs to have a name and a discount");
+                throw new UserInvalidInputException("En kampagne skal have et navn og en rabatprocent");
             }
             
             if (DateTime.Now >= promotion.PromotionStartTime && DateTime.Now < promotion.PromotionEndTime)
@@ -55,7 +65,21 @@ namespace FysioEnterprise.Domain.Entities
         }
         public void UpdatePromotion(string promotionName, decimal promotionDiscountPercent, DateTime promotionStartTime, DateTime promotionEndTime)
         {
+            var validationResult = TimeValidationService.ValidateTime(
+                "Promotion",
+                promotionStartTime,
+                promotionEndTime,
+                DateTime.Now);
+            if (validationResult.IsFailed)
+            {
+                throw new ValidationException("Der er sket en fejl med tiden under oprettelsen af kampagnen " + validationResult.Errors);
+            }
+
+            if (string.IsNullOrWhiteSpace(promotionName))
+                throw new UserInvalidInputException($"En kampagne skal have et navn");
             PromotionName = promotionName;
+            if (promotionDiscountPercent <= 0)
+                throw new UserInvalidInputException($"En kampagne skal have en rabatprocent {promotionDiscountPercent}");
             PromotionDiscountPercent = promotionDiscountPercent;
             PromotionStartTime = promotionStartTime;
             PromotionEndTime = promotionEndTime;

@@ -7,8 +7,58 @@
 
 <main class="home-wrap">
 	<header class="home-header">
-		<h1 class="welcome-text">Opret booking</h1>
+		<h1 class="welcome-text">
+			@if (_isComboMode)
+			{
+				<span>Combo booking — session @_comboStep af 2</span>
+			}
+			else
+			{
+				<span>Opret booking</span>
+			}
+		</h1>
+		@* Combo toggle *@
+		<label class="combo-toggle">
+			<input type="checkbox"
+				   checked="@_isComboMode"
+				   @onchange="() => ToggleComboMode()"
+				   disabled="@(_comboStep == 2)" />
+			<span>Combo booking</span>
+			@if (_isComboMode)
+			{
+				<span class="combo-badge">2 sessioner</span>
+			}
+		</label>
 	</header>
+
+	@* Step indicator — only show in combo mode *@
+	@if (_isComboMode)
+	{
+		<nav class="combo-steps" aria-label="Combo booking trin">
+			<span class="combo-step @(_comboStep == 1 ? "combo-step--active" : "combo-step--done")">
+				<span class="combo-step-nr">1</span>
+				<span class="combo-step-label">
+					@if (_comboStep > 1)
+					{
+						<span>✓ Session 1</span>
+						@if (_firstSession is not null)
+						{
+							<small>@_firstSession.StartTime.ToString("HH:mm") – @_firstSession.EndTime.ToString("HH:mm")</small>
+						}
+					}
+					else
+					{
+						<span>Session 1</span>
+					}
+				</span>
+			</span>
+			<span class="combo-step-divider">→</span>
+			<span class="combo-step @(_comboStep == 2 ? "combo-step--active" : "")">
+				<span class="combo-step-nr">2</span>
+				<span class="combo-step-label">Session 2</span>
+			</span>
+		</nav>
+	}
 
 	<article class="selection-card">
 
@@ -27,8 +77,8 @@
 				<RadzenIcon Icon="person" Style ="font-size: 18px;" />
 				Klient
 			</label>
-			<select class="form-select" @onchange="OnClientChanged">
-				<option value="" disabled selected hidden>- Vælg Klient -</option>
+			<select class="form-select" value="@_selectedClientId" @onchange="OnClientChanged" disabled="@(_isComboMode && _comboStep == 2)">
+				<option value="@Guid.Empty" disabled>- Vælg Klient -</option>
 				@foreach (var client in _clients)
 				{
 					<option value="@client.ClientID"
@@ -48,7 +98,8 @@
 			</label>
 			<input type="datetime-local" class="form-select"
 				   value="@_startTime?.ToString("yyyy-MM-ddTHH:mm")"
-				   @onchange="OnStartTimeChanged" />
+				   @onchange="OnStartTimeChanged"
+				   disabled="@(_isComboMode && _comboStep == 2)" />
 		</section>
 
 		@*Sluttid*@
@@ -214,6 +265,14 @@
 				@if (_isLoading)
 				{
 					<span>"Gemmer..."</span>
+				}
+				else if (_isComboMode && _comboStep == 1)
+				{
+					<span>Næste session →</span>
+				}
+				else if (_isComboMode && _comboStep == 2)
+				{
+					<span>Opret begge sessioner</span>
 				}
 				else
 				{

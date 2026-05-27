@@ -12,6 +12,7 @@
 
 @code {
     private bool _isVisible = false;
+    private System.Threading.CancellationTokenSource? _timerCts;
 
     protected override void OnInitialized()
         => Notification.OnChange += HandleChange;
@@ -20,8 +21,35 @@
     {
         _isVisible = Notification.IsVisible;
         await InvokeAsync(StateHasChanged);
+
+        if (_isVisible)
+        {
+            StartAutoDismissTimer();
+        }
+    }
+
+    private async void StartAutoDismissTimer()
+    {
+        _timerCts?.Cancel();
+        _timerCts?.Dispose();
+        _timerCts = new System.Threading.CancellationTokenSource();
+
+        try
+        {
+            await Task.Delay(5000, _timerCts.Token);
+
+            Notification.Clear();
+        }
+        catch (TaskCanceledException)
+        {
+            //Set up in case of task being aborted
+        }
     }
 
     public void Dispose()
-        => Notification.OnChange -= HandleChange;
+    {
+        Notification.OnChange -= HandleChange;
+        _timerCts?.Cancel();
+        _timerCts?.Dispose();
+    }
 }

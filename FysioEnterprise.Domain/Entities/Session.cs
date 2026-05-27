@@ -1,4 +1,6 @@
-﻿using FysioEnterprise.Domain.Enums;
+﻿using System.Collections;
+using FluentResults;
+using FysioEnterprise.Domain.Enums;
 using FysioEnterprise.Domain.Exceptions;
 using FysioEnterprise.Domain.Service;
 using FysioEnterprise.Domain.Service.PricingService;
@@ -32,13 +34,13 @@ namespace FysioEnterprise.Domain.Entities
         {
             Id = Guid.NewGuid();
             SessionTimeSlot = sessionTimeSlot;
-            if (clientId == Guid.Empty) throw new DomainException(nameof(clientId));
+            if (clientId == Guid.Empty) throw new UserInvalidInputException("For at oprette en booking skal der være en klient");
             SessionClientID = clientId;
-            if (staffId == Guid.Empty) throw new DomainException(nameof(staffId));
+            if (staffId == Guid.Empty) throw new UserInvalidInputException("For at oprette en booking skal der være en medarbejder");
             SessionStaffID = staffId;
-            if (sessionTypeId == Guid.Empty) throw new DomainException(nameof(sessionTypeId));
+            if (sessionTypeId == Guid.Empty) throw new UserInvalidInputException("For at oprette en booking skal der være en bookingtype");
             SessionInstanceTypeID = sessionTypeId;
-            if (roomId == Guid.Empty) throw new DomainException(nameof(roomId));
+            if (roomId == Guid.Empty) throw new UserInvalidInputException("For at oprette en booking skal der vælges et rum");
             SessionRoomID = roomId;
             SessionPromotion = promotionId;
             SessionStatus = SessionStatusEnum.Active;
@@ -47,7 +49,7 @@ namespace FysioEnterprise.Domain.Entities
 
         public static Session Create(
             Client client,
-            Guid staffId,
+            Staff staff,
             SessionType sessionType,
             Guid roomId,
             TimeSlot sessionTimeSlot,
@@ -55,13 +57,17 @@ namespace FysioEnterprise.Domain.Entities
             IEnumerable<Session> existingClientSessions,
             IEnumerable<Session> existingStaffSessions,
             IEnumerable<Session> existingRoomSessions,
-            IPricingStrategyFactory pricingStrategyFactory)
+            IPricingStrategyFactory pricingStrategyFactory,
+            List<OpeningHours> openingHours)
         {
 
-            var newSession = new Session(client.Id, staffId, sessionType.Id, roomId, promotion?.Id, sessionTimeSlot);
+            var newSession = new Session(client.Id, staff.Id, sessionType.Id, roomId, promotion?.Id, sessionTimeSlot);
 
             ValidateOverlap(newSession.SessionTimeSlot, existingClientSessions, existingStaffSessions, existingRoomSessions);
-            TimeValidationService.ValidateTime(sessionType.SessionTypeName, newSession.SessionTimeSlot.From, newSession.SessionTimeSlot.To, DateTime.Now);
+            var result = TimeValidationService.ValidateTime(sessionType.SessionTypeName, newSession.SessionTimeSlot.From, newSession.SessionTimeSlot.To, DateTime.Now);
+
+            if (result.IsFailed)
+                throw new ValidationException("Fejl med validering af tid " + result.Errors.First().Message);
 
             if (sessionTimeSlot.From < promotion?.PromotionStartTime || sessionTimeSlot.To > promotion?.PromotionEndTime)
             {
@@ -71,6 +77,19 @@ namespace FysioEnterprise.Domain.Entities
             newSession.priceTotal = pricingStrategyFactory.BuildStrategies(client,
                 promotion,
                 sessionType).Result;
+            var basePrice = newSession.priceTotal;
+
+            var authType = AuthorisationTypeExtensions.FromRoleString(staff.StaffAuthorisationType);
+            double staffMultiplier = authType.GetPriceMultiplier();
+            var firstCalculatedPrice = new Price(basePrice.Value * staffMultiplier);
+
+            var IsOutsideOf = OpeningHoursValidation.IsOutsideOpeningHours(sessionTimeSlot.From, sessionTimeSlot.To, openingHours);
+            if (IsOutsideOf)
+            {
+                firstCalculatedPrice = new Price(firstCalculatedPrice.Value * 1.15);
+            }
+
+            newSession.priceTotal = new Price(firstCalculatedPrice.Value);
 
             return newSession;
         }
@@ -80,13 +99,17 @@ namespace FysioEnterprise.Domain.Entities
             TimeSlot newSessionTimeSlot,
             IEnumerable<Session> existingClientSessions,
             IEnumerable<Session> existingStaffSessions,
-            IEnumerable<Session> existingRoomSessions)
+            IEnumerable<Session> existingRoomSessions,
+            List<OpeningHours> openingHours)
         {
             if (!IsActive)
-                throw new UserInvalidInputException($"Cannot update time of an inactive session.");
+                throw new UserInvalidInputException($"Der kan ikke laves ændringer i en ikke aktiv tid");
 
             ValidateOverlap(newSessionTimeSlot, existingClientSessions, existingStaffSessions, existingRoomSessions, sessionId);
-            TimeValidationService.ValidateTime("New time", newSessionTimeSlot.From, newSessionTimeSlot.To, DateTime.Now);
+            var result = TimeValidationService.ValidateTime("New time", newSessionTimeSlot.From, newSessionTimeSlot.To, DateTime.Now);
+
+            if (result.IsFailed)
+                throw new ValidationException("Fejl med validering af tid " + result.Errors.First().Message);
 
             SessionTimeSlot = newSessionTimeSlot;
         }
@@ -94,7 +117,7 @@ namespace FysioEnterprise.Domain.Entities
         public void CompletedSession()
         {
             if (!IsActive)
-                throw new UserInvalidInputException($"Cannot complete a non active session.");
+                throw new UserInvalidInputException("Kan ikke afslutte en ikke aktiv tid");
 
             SessionStatus = SessionStatusEnum.Completed;
         }
@@ -102,14 +125,12 @@ namespace FysioEnterprise.Domain.Entities
         public void CancelSession()
         {
             if (!IsActive)
-                throw new UserInvalidInputException($"Cannot cancel a non active session.");
+                throw new UserInvalidInputException("Kan ikke afmelde en ikke aktiv tid");
             SessionStatus = SessionStatusEnum.Cancelled;
         }
 
         public void SetNoShowSession()
         {
-            if (SessionStatus == SessionStatusEnum.Completed)
-                throw new UserInvalidInputException($"Cannot set a completed session to no show.");
             SessionStatus = SessionStatusEnum.NoShow;
         }
 
@@ -128,10 +149,15 @@ namespace FysioEnterprise.Domain.Entities
 
             if (clientOverlap is not null)
             {
-                throw new DomainException(
-                    $"Client already has a session "
-                    + $"({clientOverlap.SessionTimeSlot.From:HH:mm}-{clientOverlap.SessionTimeSlot.To:HH:mm}) "
-                    + $"that overlaps with current booking");
+                if (clientOverlap.SessionTimeSlot.To == sessionTimeSlot.From || clientOverlap.SessionTimeSlot.From == sessionTimeSlot.To)
+                {} //Override to allow a session to end and start a new at the same time (As an example EndTime of previous session is 12:30, new one starts 12:30)
+                else
+                {
+                    throw new ValidationException(
+                        $"Klient har allerede en booking"
+                        + $"({clientOverlap.SessionTimeSlot.From:HH:mm}-{clientOverlap.SessionTimeSlot.To:HH:mm}) "
+                        + $"der overlapper med nuværende booking");
+                }
             }
 
             var staffOverlap = existingStaffSessions
@@ -141,10 +167,15 @@ namespace FysioEnterprise.Domain.Entities
 
             if (staffOverlap is not null)
             {
-                throw new DomainException(
-                    $"Staff already has a session "
+                if (staffOverlap.SessionTimeSlot.To == sessionTimeSlot.From || staffOverlap.SessionTimeSlot.From == sessionTimeSlot.To)
+                { } //Override to allow a session to end and start a new at the same time (As an example EndTime of previous session is 12:30, new one starts 12:30)
+                else
+                {
+                    throw new ValidationException(
+                    $"Denne medarbejder har allerede en booking"
                     + $"({staffOverlap.SessionTimeSlot.From:HH:mm}-{staffOverlap.SessionTimeSlot.To:HH:mm}) "
-                    + $"that overlaps with current booking");
+                    + $"som overlapper med en eksisterende booking");
+                }
             }
 
             var roomOverlap = existingRoomSessions
@@ -154,11 +185,18 @@ namespace FysioEnterprise.Domain.Entities
 
             if (roomOverlap is not null)
             {
-                throw new DomainException(
-                    $"Room is currently occupied by a different session "
+                if (roomOverlap.SessionTimeSlot.To == sessionTimeSlot.From || roomOverlap.SessionTimeSlot.From == sessionTimeSlot.To)
+                { } //Override to allow a session to end and start a new at the same time (As an example EndTime of previous session is 12:30, new one starts 12:30)
+                else
+                {
+                    throw new ValidationException(
+                    $"Dette rum er optaget af en anden booking "
                     + $"({roomOverlap.SessionTimeSlot.From:HH:mm}-{roomOverlap.SessionTimeSlot.To:HH:mm}) "
-                    + $"this overlaps with current booking");
+                    + $"hvilket lavet et booking overlap");
+                }
             }
+
+
         }
 
     }

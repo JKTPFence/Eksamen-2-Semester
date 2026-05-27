@@ -91,12 +91,13 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
             return session.Value;
         }
 
-        public async Task<List<Session>> GetCompletedSessionsInRangeAsync(DateTime from, DateTime to)
+        public async Task<List<Session>> GetSessionsInRangeAsync(DateTime from, DateTime to)
         {
             return await _context.Sessions
                 .AsNoTracking()
-                .Where(s => s.SessionStatus == SessionStatusEnum.Completed
-                        && s.SessionTimeSlot.To >= from && s.SessionTimeSlot.From <= to)
+                .Where(s =>
+                s.SessionTimeSlot.To >= from &&
+                s.SessionTimeSlot.From <= to)
                 .ToListAsync();
         }
     }

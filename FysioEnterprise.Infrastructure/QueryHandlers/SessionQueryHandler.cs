@@ -1,5 +1,4 @@
-﻿using FysioEnterprise.Domain.Entities;
-using FysioEnterprise.Domain.Enums;
+﻿using FysioEnterprise.Domain.Enums;
 using FysioEnterprise.Facade.DTOs;
 using FysioEnterprise.Infrastructure.Database;
 using FysioEnterprise.Facade.Queries;
@@ -197,5 +196,7 @@ namespace FysioEnterprise.Infrastructure.QueryHandlers
                 ))
                 .ToListAsync();
         }
+
+
     }
 }

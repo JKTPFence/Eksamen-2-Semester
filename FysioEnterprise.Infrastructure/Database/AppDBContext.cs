@@ -40,6 +40,8 @@ namespace FysioEnterprise.Infrastructure.Database
             await SaveChangesAsync();
         }
 
+
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
 
@@ -65,7 +67,13 @@ namespace FysioEnterprise.Infrastructure.Database
 
             modelBuilder.Entity<Entity.Client>(entity =>
             {
-                entity.OwnsOne(c => c.ClientLoyaltyLevel);
+                entity.OwnsOne(c => c.ClientLoyaltyLevel, ll =>
+                {
+                    ll.Property(l => l.LoyaltyLevelName)
+                      .IsRequired();
+                    ll.Property(l => l.LoyaltyLevelDiscountPercentage)
+                      .IsRequired();
+                });
                 entity.HasIndex(c => c.ClientEmail).IsUnique();
             });
 

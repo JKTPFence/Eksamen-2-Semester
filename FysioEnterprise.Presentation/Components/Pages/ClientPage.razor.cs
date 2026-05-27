@@ -6,8 +6,6 @@ using FysioEnterprise.Facade.UseCase.ClientUseCase;
 using FysioEnterprise.Presentation.Service;
 using Microsoft.AspNetCore.Components;
 using static FysioEnterprise.Facade.RequestModels.ClientRequests;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using Microsoft.AspNetCore.Authorization;
 
 namespace FysioEnterprise.Presentation.Components.Pages
 {
@@ -33,6 +31,7 @@ namespace FysioEnterprise.Presentation.Components.Pages
             public string ClientAddress { get; set; } = "";
             public string? ClientNote { get; set; }
             public Guid ClientPrefferedStaffID { get; set; } = Guid.Empty;
+            public LoyaltyLevel ClientLoyaltyLevel { get; set; } = LoyaltyLevel.None;
         }
 
         private List<ClientDTO> clients = new();
@@ -47,23 +46,68 @@ namespace FysioEnterprise.Presentation.Components.Pages
         private bool isEditMode = false;
         private string errorMessage = "";
         private bool showError = false;
+        private bool _loading = false;
+        private string _loadingMessage = "Henter data...";
+        private const int MaxRetries = 3;
 
-        protected override async Task OnInitializedAsync()
+        protected override async Task OnAfterRenderAsync(bool firstRender)
         {
-            await LoadStaff();
-            await LoadClients();
+            if (firstRender)
+            {
+                await Context.LoadFromStorageAsync();
+                await LoadData();
+                StateHasChanged();
+            }
         }
 
-        private async Task LoadClients()
+        protected override Task OnInitializedAsync() => Task.CompletedTask;
+
+        private async Task LoadData(int attempt = 1)
+        {
+            if (_loading && attempt == 1) return;
+
+            _loading = true;
+            _loadingMessage = attempt > 1 ? "Synkroniserer med databasen..." : "Henter data...";
+            StateHasChanged();
+            try
+            {
+                clients = await ClientQueries.GetAllClientsAsync();
+                FilterClients();
+                _staff = await SimpleQueries.GetAllStaffByClinicAsync(Context.ClinicId);
+                _loading = false;
+            }
+            catch (Exception ex) when (ex.Message.Contains("second operation was started"))
+            {
+                System.Diagnostics.Debug.WriteLine($"[DB Collision Caught] Attempt {attempt} failed. Retrying...");
+
+                if (attempt < MaxRetries)
+                {
+                    await Task.Delay(500);
+
+                    await LoadData(attempt + 1);
+                }
+                else
+                {
+                    System.Diagnostics.Debug.WriteLine("[DB Collision] Maximum retries reached. Context is permanently locked.");
+                }
+            }
+            finally
+            {
+                if (attempt == 1 || !_loading)
+                {
+                    _loading = false;
+                    StateHasChanged();
+                }
+            }
+        }
+
+        private async Task UpdateData()
         {
             clients = await ClientQueries.GetAllClientsAsync();
             FilterClients();
-        }
-
-        private async Task LoadStaff()
-        {
             _staff = await SimpleQueries.GetAllStaffByClinicAsync(Context.ClinicId);
         }
+
 
         private void FilterClients()
         {
@@ -110,7 +154,8 @@ namespace FysioEnterprise.Presentation.Components.Pages
                 ClientBirthDate = client.ClientBirthDate,
                 ClientAddress = client.ClientAddress,
                 ClientPrefferedStaffID = client.ClientPrefferedStaffID,
-                ClientNote = client.ClientNote
+                ClientNote = client.ClientNote,
+                ClientLoyaltyLevel = client.ClientLoyaltyLevel
             };
             isEditMode = true;
             showModal = true;
@@ -155,8 +200,7 @@ namespace FysioEnterprise.Presentation.Components.Pages
                 }
 
                 await Task.Delay(50);
-                await LoadStaff();
-                await LoadClients();
+                await UpdateData();
                 CloseModal();
             }
             catch (Exception ex)
@@ -189,7 +233,7 @@ namespace FysioEnterprise.Presentation.Components.Pages
                 {
                     var deleteRequest = new DeleteClientRequest(clientToDelete.ClientID);
                     await DeleteClientUseCase.DeleteClientAsync(deleteRequest);
-                    await LoadClients();
+                    await UpdateData();
                     CloseDeleteConfirm();
                 }
                 catch (Exception ex)

@@ -17,7 +17,7 @@ namespace FysioEnterprise.Domain.ValueObjects
         public OpeningHours(DayOfWeek day, TimeOnly from, TimeOnly to)
         {
             if (to <= from && (Day is not DayOfWeek.Sunday && Day is not DayOfWeek.Saturday))
-                throw new DomainException($"Opening hours cannot end before they start");
+                throw new DomainException($"Åbningstider må ikke slutte før de starter");
             Day = day;
             From = from;
             To = to;

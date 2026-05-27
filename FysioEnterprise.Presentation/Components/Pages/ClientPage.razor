@@ -5,195 +5,223 @@
 @using Radzen.Blazor
 
 <section class="booking-page">
-    <header class="booking-header">
-        <h1 class="booking-title">Klienter</h1>
-    </header>
+	<header class="booking-header">
+		<h1 class="booking-title">Klienter</h1>
+	</header>
 
-    <header class="booking-toolbar">
-        <nav class="toolbar-left" aria-label="Klient handlinger" style="min-width: auto; flex: 1; justify-content: flex-start;">
-            <button class="btn-primary" @onclick="OpenCreateModal">
-                <RadzenIcon Icon="person_add" />
-                Opret klient
-            </button>
+	<header class="booking-toolbar">
+		<nav class="toolbar-left" aria-label="Klient handlinger" style="min-width: auto; flex: 1; justify-content: flex-start;">
+			<button class="btn-primary" @onclick="OpenCreateModal">
+				<RadzenIcon Icon="person_add" />
+				Opret klient
+			</button>
 
-            <label class="search-wrapper" aria-label="Søg i klienter" style="margin-left: 4px;">
-                <RadzenIcon Icon="search" class="search-icon" />
-                <input type="search"
-                       class="client-search"
-                       placeholder="Søg på navn, email eller telefon..."
-                       value="@searchTerm"
-                       @oninput="OnSearchChanged" />
-                @if (!string.IsNullOrEmpty(searchTerm))
-                {
-                    <button class="search-clear" @onclick='() => { searchTerm = string.Empty; FilterClients(); }' aria-label="Ryd søgning">
-                        <RadzenIcon Icon="close" />
-                    </button>
-                }
-            </label>
-        </nav>
-    </header>
+			<label class="search-wrapper" aria-label="Søg i klienter" style="margin-left: 4px;">
+				<RadzenIcon Icon="search" class="search-icon" />
+				<input type="search"
+					   class="client-search"
+					   placeholder="Søg på navn, email eller telefon..."
+					   value="@searchTerm"
+					   @oninput="OnSearchChanged" />
+				@if (!string.IsNullOrEmpty(searchTerm))
+				{
+					<button class="search-clear" @onclick='() => { searchTerm = string.Empty; FilterClients(); }' aria-label="Ryd søgning">
+						<RadzenIcon Icon="close" />
+					</button>
+				}
+			</label>
+		</nav>
+	</header>
 
-    <article class="client-content-wrap">
-        <div class="table-container">
-            @if (filteredClients == null)
-            {
-                <div style="padding: 2rem; text-align: center;">
-                    <p style="color: var(--color-text-muted);">Indlæser klienter...</p>
-                </div>
-            }
-            else if (filteredClients.Count == 0)
-            {
-                <div style="padding: 3rem; text-align: center; color: var(--color-text-muted);">
-                    <RadzenIcon Icon="search_off" Style="font-size: 48px; margin-bottom: 1rem; opacity: 0.5;" />
-                    <p>Ingen klienter fundet.</p>
-                </div>
-            }
-            else
-            {
-                <table class="client-table">
-                    <thead>
-                        <tr>
-                            <th>Navn</th>
-                            <th>Email</th>
-                            <th>Telefon</th>
-                            <th>Adresse</th>
-                            <th>Fødselsdato</th>
-                            <th>Note</th>
-                            <th>Foretrukket personale</th>
-                            <th style="text-align: right;">Handlinger</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var client in filteredClients)
-                        {
-                            <tr>
-                                <td style="font-weight: 600;">@client.ClientFirstName @client.ClientLastName</td>
-                                <td>@client.ClientEmail</td>
-                                <td>@client.ClientPhoneNumber</td>
-                                <td>@client.ClientAddress</td>
-                                <td>@client.ClientBirthDate.ToString("dd. MMM yyyy", DanishCulture)</td>
-                                <td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="@client.ClientNote">
-                                    @client.ClientNote
-                                </td>
-                                <td>
-                                    @{
-                                        var staff = _staff.FirstOrDefault(s => s.StaffID == client.ClientPrefferedStaffID);
-                                        if (staff != null)
-                                        {
-                                            <span>@staff.StaffFirstName @staff.StaffLastName</span>
-                                        }
-                                        else
-                                        {
-                                            <span style="color: var(--color-text-muted); font-style: italic;">Ikke valgt</span>
-                                        }
-                                    }
-                                </td>
-                                <td style="text-align: right; white-space: nowrap;">
-                                    <button class="btn-action btn-edit" @onclick="() => OpenEditModal(client)" title="Rediger">
-                                        <RadzenIcon Icon="edit" Style="font-size: 16px;" />
-                                        Rediger
-                                    </button>
-                                    <button class="btn-action btn-delete" @onclick="() => OpenDeleteConfirm(client)" title="Slet">
-                                        <RadzenIcon Icon="delete" Style="font-size: 16px;" />
-                                        Slet
-                                    </button>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            }
-        </div>
-    </article>
+	@if (_loading == true)
+	{
+		<div class="loading-container">
+			<div class="loading-pulse-ring"></div>
+			<p class="loading-text">@_loadingMessage</p>
+		</div>
+	}
+	else
+	{
+		<article class="client-content-wrap">
+			<div class="table-container">
+				@if (filteredClients == null)
+				{
+					<div style="padding: 2rem; text-align: center;">
+						<p style="color: var(--color-text-muted);">Indlæser klienter...</p>
+					</div>
+				}
+				else if (filteredClients.Count == 0)
+				{
+					<div style="padding: 3rem; text-align: center; color: var(--color-text-muted);">
+						<RadzenIcon Icon="search_off" Style="font-size: 48px; margin-bottom: 1rem; opacity: 0.5;" />
+						<p>Ingen klienter fundet.</p>
+					</div>
+				}
+				else
+				{
+					<table class="client-table">
+						<thead>
+							<tr>
+								<th>Navn</th>
+								<th>Email</th>
+								<th>Telefon</th>
+								<th>Adresse</th>
+								<th>Fødselsdato</th>
+								<th>Note</th>
+								<th>Foretrukket personale</th>
+								<th style="text-align: right;">Handlinger</th>
+							</tr>
+						</thead>
+						<tbody>
+							@foreach (var client in filteredClients)
+							{
+								<tr>
+									<td style="font-weight: 600;">@client.ClientFirstName @client.ClientLastName</td>
+									<td>@client.ClientEmail</td>
+									<td>@client.ClientPhoneNumber</td>
+									<td>@client.ClientAddress</td>
+									<td>@client.ClientBirthDate.ToString("dd. MMM yyyy", DanishCulture)</td>
+									<td style="max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="@client.ClientNote">
+										@client.ClientNote
+									</td>
+									<td>
+										@{
+											var staff = _staff.FirstOrDefault(s => s.StaffID == client.ClientPrefferedStaffID);
+											if (staff != null)
+											{
+												<span>@staff.StaffFirstName @staff.StaffLastName</span>
+											}
+											else
+											{
+												<span style="color: var(--color-text-muted); font-style: italic;">Ikke valgt</span>
+											}
+										}
+									</td>
+									<td style="text-align: right; white-space: nowrap;">
+										<button class="btn-action btn-edit" @onclick="() => OpenEditModal(client)" title="Rediger">
+											<RadzenIcon Icon="edit" Style="font-size: 16px;" />
+											Rediger
+										</button>
+										<button class="btn-action btn-delete" @onclick="() => OpenDeleteConfirm(client)" title="Slet">
+											<RadzenIcon Icon="delete" Style="font-size: 16px;" />
+											Slet
+										</button>
+									</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				}
+			</div>
+		</article>
+	}
 </section>
+@if (showModal)
+{
+	<section class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+		<article class="modal-box">
+			<header class="modal-header">
+				<h5 id="modal-title">@(isEditMode ? "Rediger Klient" : "Opret ny Klient")</h5>
+				<button type="button" class="btn-close" @onclick="CloseModal" aria-label="Luk"></button>
+			</header>
 
-<dialog class="@(showModal ? "show d-block" : "")" style="background-color: @(showModal ? "rgba(0,0,0,0.5)" : "")">
-	<form method="dialog">
-		<header>
-			<h5>@(isEditMode ? "Rediger Klient" : "Opret ny Klient")</h5>
-			<button type="button" class="btn-close" @onclick="CloseModal"></button>
-		</header>
-		<section>
 			@if (showError && !string.IsNullOrEmpty(errorMessage))
 			{
-				<output class="alert alert-danger alert-dismissible fade show" role="alert">
+				<output class="modal-error" role="alert">
 					@errorMessage
-					<button type="button" class="btn-close" @onclick="() => showError = false"></button>
+					<button type="button" @onclick="() => showError = false" aria-label="Luk fejl">✕</button>
 				</output>
 			}
+
 			<EditForm Model="currentClient" OnValidSubmit="SaveClient">
 				<DataAnnotationsValidator />
 				<ValidationSummary />
 
-				<fieldset class="mb-3">
-					<label for="name" class="form-label">Navn *</label>
-					<InputText id="name" class="form-control" @bind-Value="currentClient.ClientFirstName" />
-					<ValidationMessage For="() => currentClient.ClientFirstName" />
-				</fieldset>
+				<section class="modal-body">
+					<fieldset class="field-group">
+						<label for="name">Fornavn *</label>
+						<InputText id="name" class="form-control" @bind-Value="currentClient.ClientFirstName" />
+						<ValidationMessage For="() => currentClient.ClientFirstName" />
+					</fieldset>
 
-				<fieldset class="mb-3">
-					<label for="lastname" class="form-label">Efternavn</label>
-					<InputText id="lastname" class="form-control" @bind-Value="currentClient.ClientLastName" />
-				</fieldset>
+					<fieldset class="field-group">
+						<label for="lastname">Efternavn</label>
+						<InputText id="lastname" class="form-control" @bind-Value="currentClient.ClientLastName" />
+					</fieldset>
 
-				<fieldset class="mb-3">
-					<label for="email" class="form-label">Email *</label>
-					<InputText id="email" class="form-control" type="email" @bind-Value="currentClient.ClientEmail" />
-					<ValidationMessage For="() => currentClient.ClientEmail" />
-				</fieldset>
+					<fieldset class="field-group">
+						<label for="email">Email *</label>
+						<InputText id="email" class="form-control" type="email" @bind-Value="currentClient.ClientEmail" />
+						<ValidationMessage For="() => currentClient.ClientEmail" />
+					</fieldset>
 
-				<fieldset class="mb-3">
-					<label for="phone" class="form-label">Telefonnummer</label>
-					<InputText id="phone" class="form-control" @bind-Value="currentClient.ClientPhoneNumber" />
-				</fieldset>
+					<fieldset class="field-group">
+						<label for="phone">Telefonnummer</label>
+						<InputText id="phone" class="form-control" @bind-Value="currentClient.ClientPhoneNumber" />
+					</fieldset>
 
-				<fieldset class="mb-3">
-					<label for="address" class="form-label">Adresse</label>
-					<InputText id="address" class="form-control" @bind-Value="currentClient.ClientAddress" />
-				</fieldset>
+					<fieldset class="field-group">
+						<label for="address">Adresse</label>
+						<InputText id="address" class="form-control" @bind-Value="currentClient.ClientAddress" />
+					</fieldset>
 
-				<fieldset class="mb-3">
-					<label for="birthdate" class="form-label">Fødselsdato</label>
-					<InputDate id="birthdate" class="form-control" @bind-Value="currentClient.ClientBirthDate" />
-				</fieldset>
+					<fieldset class="field-group">
+						<label for="birthdate">Fødselsdato</label>
+						<InputDate id="birthdate" class="form-control" @bind-Value="currentClient.ClientBirthDate" />
+					</fieldset>
 
-				<fieldset class="mb-3">
-					<label for="note" class="form-label">Note</label>
-					<InputTextArea id="note" class="form-control" @bind-Value="currentClient.ClientNote" />
-				</fieldset>
+					<fieldset class="field-group">
+						<label for="note">Note</label>
+						<InputTextArea id="note" class="form-control" @bind-Value="currentClient.ClientNote" />
+					</fieldset>
 
-				<fieldset class="mb-3">
-					<label for="staff" class="form-label">Foretrukket personale</label>
-					<InputSelect id="staff" class="form-control" @bind-Value="currentClient.ClientPrefferedStaffID">
-						<option value="@Guid.Empty">-- Vælg personale --</option>
-						@foreach (var staff in _staff)
-						{
-							<option value="@staff.StaffID">@staff.StaffFirstName @staff.StaffLastName</option>
-						}
-					</InputSelect>
-				</fieldset>
+					<fieldset class="field-group">
+						<label for="staff">Foretrukket personale</label>
+						<InputSelect id="staff" class="form-control" @bind-Value="currentClient.ClientPrefferedStaffID">
+							<option value="@Guid.Empty">-- Vælg personale --</option>
+							@foreach (var staff in _staff)
+							{
+								<option value="@staff.StaffID">@staff.StaffFirstName @staff.StaffLastName</option>
+							}
+						</InputSelect>
+					</fieldset>
+				</section>
 
-				<footer>
-					<button type="button" class="btn btn-secondary" @onclick="CloseModal">Annuller</button>
-					<button type="submit" class="btn btn-primary">Gem</button>
+				<footer class="modal-footer">
+					<section class="loyalty-footer-container">
+					<span class="loyalty-badge-display @(currentClient.ClientLoyaltyLevel?.LoyaltyLevelName?.ToLower() ?? "none")">
+						<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+						@(currentClient.ClientLoyaltyLevel?.LoyaltyLevelName ?? "None")
+						<span class="loyalty-discount">(@(currentClient.ClientLoyaltyLevel?.LoyaltyLevelDiscountPercentage ?? 0)% rabat)</span>
+					</span>
+				</section>
+
+					<nav class="modal-action-buttons">
+						<button type="button" class="btn-secondary" @onclick="CloseModal">Annuller</button>
+						<button type="submit" class="btn-primary">Gem</button>
+					</nav>
 				</footer>
 			</EditForm>
-		</section>
-	</form>
-</dialog>
+		</article>
+	</section>
+}
 
-<dialog class="@(showDeleteConfirm ? "show d-block" : "")" style="background-color: @(showDeleteConfirm ? "rgba(0,0,0,0.5)" : "")">
-	<form method="dialog">
-		<header>
-			<h5>Bekræft</h5>
-			<button type="button" class="btn-close" @onclick="CloseDeleteConfirm"></button>
-		</header>
-		<section>
-			<p>Er du sikker på, at du vil slette <strong>@clientToDelete?.ClientFirstName @clientToDelete?.ClientLastName</strong>?</p>
-		</section>
-		<footer>
-			<button type="button" class="btn btn-secondary" @onclick="CloseDeleteConfirm">Annuller</button>
-			<button type="button" class="btn btn-danger" @onclick="DeleteClient">Slet</button>
-		</footer>
-	</form>
-</dialog>
+@if (showDeleteConfirm)
+{
+	<section class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="delete-title">
+		<article class="modal-box modal-box--small">
+			<header class="modal-header">
+				<h5 id="delete-title">Bekræft sletning</h5>
+				<button type="button" class="btn-close" @onclick="CloseDeleteConfirm" aria-label="Luk"></button>
+			</header>
+			<section class="modal-body">
+				<p>Er du sikker på, at du vil slette <strong>@clientToDelete?.ClientFirstName @clientToDelete?.ClientLastName</strong>?</p>
+				<p class="modal-warning">Denne handling kan ikke fortrydes.</p>
+			</section>
+			<footer class="modal-footer">
+				<button type="button" class="btn-secondary" @onclick="CloseDeleteConfirm">Annuller</button>
+				<button type="button" class="btn-danger" @onclick="DeleteClient">Slet</button>
+			</footer>
+		</article>
+	</section>
+}
