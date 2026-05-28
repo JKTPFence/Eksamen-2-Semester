@@ -229,7 +229,7 @@
 				@if (_selectedStaffId != Guid.Empty)
 				{
 					var staff = GetStaffNameWithId(_selectedStaffId);
-					<li><RadzenIcon Icon="medical_services" Style="font-size: 14px;" /> @staff.Value</li>
+					<li><RadzenIcon Icon="medical_services" Style="font-size: 14px;" /> @staff.Value.ToString()</li>
 				}
 
 				@if (_selectedRoomId != Guid.Empty)

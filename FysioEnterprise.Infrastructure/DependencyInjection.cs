@@ -17,7 +17,7 @@ namespace FysioEnterprise.Infrastructure
             IConfiguration configuration)
         {
             services.AddDbContext<AppDBContext>(options => options.UseSqlServer(
-                configuration.GetConnectionString("Default")));
+                configuration.GetConnectionString("DefaultConnection")));
 
             RegisterRepositoriesAndQueries(services);
             return services;
