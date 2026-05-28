@@ -1,5 +1,4 @@
 ﻿using FluentResults;
-using FysioEnterprise.Domain.ValueObjects;
 
 namespace FysioEnterprise.Domain.Service
 {

@@ -8,7 +8,6 @@ using FysioEnterprise.Facade.UseCase.SessionUseCase;
 using FysioEnterprise.UseCase.CommandHandler.ClientCommands;
 using FysioEnterprise.UseCase.CommandHandlers.PromotionCommands;
 using FysioEnterprise.UseCase.CommandHandlers.SessionCommands;
-using FysioEnterprise.UseCase.Service;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FysioEnterprise.UseCase.DependencyInjection

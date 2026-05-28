@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using FysioEnterprise.Domain.ValueObjects;
+﻿using FysioEnterprise.Domain.ValueObjects;
 
 namespace FysioEnterprise.Domain.Service
 {

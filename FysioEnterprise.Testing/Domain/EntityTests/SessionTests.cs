@@ -35,13 +35,23 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
                 clientNote: null,
                 clientPrefferedStaffID: Guid.NewGuid(),
                 clientLoyaltyLevel: LoyaltyLevel.Gold
+
             );
-            var timeSlot = new TimeSlot(s, end ?? s.AddHours(1));
+            var staff = new Staff(
+                "Johan",
+                "Jensen",
+                "johanne@example.com",
+                "Akupunktør",
+                333333,
+                new List<Clinic>()
+                );
+                var timeSlot = new TimeSlot(s, end ?? s.AddHours(1));
+
                 return Session.Create(
-                    client, Guid.NewGuid(), sessionType, Guid.NewGuid(),
+                    client, staff, sessionType, Guid.NewGuid(),
                     timeSlot,
-                    promotion: null, [], [], [], dummyPriceCalculator);
-            }
+                    promotion: null, [], [], [], dummyPriceCalculator, new List<OpeningHours>());
+                }
 
             [Fact]
             public void Create_ValidInputs_ReturnsActiveSession()
@@ -54,7 +64,6 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
             }
 
             [Theory]
-            [InlineData("staffId")]
             [InlineData("roomId")]
             public void Create_EmptyGuid_ThrowsArgumentNullException(string paramName)
             {
@@ -77,17 +86,24 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
                 clientPrefferedStaffID: Guid.NewGuid(),
                 clientLoyaltyLevel: LoyaltyLevel.Gold
             );
+            var staff = new Staff(
+               "Johan",
+               "Jensen",
+               "johanne@example.com",
+               "Akupunktør",
+               333333,
+               new List<Clinic>()
+               );
             var ids = new Dictionary<string, Guid>
                 {
-                    ["staffId"] = Guid.NewGuid(),
                     ["roomId"] = Guid.NewGuid(),
                 };
                 ids[paramName] = Guid.Empty;
 
                 var ex = Assert.Throws<ArgumentNullException>(() => Session.Create(
-                    client, ids["staffId"], sessionType, ids["roomId"],
+                    client, staff, sessionType, ids["roomId"],
                     new TimeSlot(DateTime.UtcNow.AddHours(1), DateTime.UtcNow.AddHours(2)),
-                    null, [], [], [], dummyPriceCalculator));
+                    null, [], [], [], dummyPriceCalculator, new List<OpeningHours>()));
 
                 Assert.Equal(paramName, ex.ParamName);
             }
@@ -118,10 +134,18 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
                 clientPrefferedStaffID: Guid.NewGuid(),
                 clientLoyaltyLevel: LoyaltyLevel.Gold
             );
+            var staff = new Staff(
+              "Johan",
+              "Jensen",
+              "johanne@example.com",
+              "Akupunktør",
+              333333,
+              new List<Clinic>()
+              );
 
             Assert.Throws<DomainException>(() => Session.Create(
-                    client, Guid.NewGuid(), sessionType, Guid.NewGuid(),
-                    timeSlot, null, [], [], [], dummyPriceCalculator));
+                    client, staff, sessionType, Guid.NewGuid(),
+                    timeSlot, null, [], [], [], dummyPriceCalculator, new List<OpeningHours>()));
             }
 
             [Fact]
@@ -146,11 +170,19 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
                 clientPrefferedStaffID: Guid.NewGuid(),
                 clientLoyaltyLevel: LoyaltyLevel.Gold
             );
+            var staff = new Staff(
+             "Johan",
+             "Jensen",
+             "johanne@example.com",
+             "Akupunktør",
+             333333,
+             new List<Clinic>()
+             );
 
             Assert.Throws<DomainException>(() => Session.Create(
-                    client, Guid.NewGuid(), sessionType, Guid.NewGuid(),
+                    client, staff, sessionType, Guid.NewGuid(),
                     new TimeSlot(DateTime.UtcNow.AddMinutes(-1), DateTime.UtcNow.AddHours(1)),
-                    null, [], [], [], dummyPriceCalculator));
+                    null, [], [], [], dummyPriceCalculator, new List<OpeningHours>()));
             }
 
             //Overlap validation tests
@@ -180,10 +212,18 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
                     clientPrefferedStaffID: Guid.NewGuid(),
                     clientLoyaltyLevel: LoyaltyLevel.Gold
                 );
+                var staff = new Staff(
+                 "Johan",
+                 "Jensen",
+                 "johanne@example.com",
+                 "Akupunktør",
+                 333333,
+                 new List<Clinic>()
+                 );
 
             Assert.Throws<DomainException>(() => Session.Create(
-                    client, Guid.NewGuid(), sessionType, Guid.NewGuid(),
-                    timeSlot, null, [existing], [], [], dummyPriceCalculator));
+                    client, staff, sessionType, Guid.NewGuid(),
+                    timeSlot, null, [existing], [], [], dummyPriceCalculator, new List<OpeningHours>()));
             }
 
             [Fact]
@@ -212,10 +252,18 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
                     clientPrefferedStaffID: Guid.NewGuid(),
                     clientLoyaltyLevel: LoyaltyLevel.Gold
                 );
+            var staff = new Staff(
+                 "Johan",
+                 "Jensen",
+                 "johanne@example.com",
+                 "Akupunktør",
+                 333333,
+                 new List<Clinic>()
+                 );
 
             Assert.Throws<DomainException>(() => Session.Create(
-                    client, existing.SessionStaffID, sessionType, Guid.NewGuid(),
-                    timeSlot, null, [], [existing], [], dummyPriceCalculator));
+                    client, staff, sessionType, Guid.NewGuid(),
+                    timeSlot, null, [], [existing], [existing], dummyPriceCalculator, new List<OpeningHours>()));
             }
 
             //Update Session Validation tests
@@ -227,7 +275,7 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
                 var newEnd = newStart.AddHours(1);
                 var timeSlot = new TimeSlot(newStart, newEnd);
 
-            session.UpdateSessionTime(session.Id, timeSlot, [], [], []);
+            session.UpdateSessionTime(session.Id, timeSlot, [], [], [], new List<OpeningHours>());
 
                 Assert.Equal(newStart, session.SessionTimeSlot.From);
                 Assert.Equal(newEnd, session.SessionTimeSlot.To);

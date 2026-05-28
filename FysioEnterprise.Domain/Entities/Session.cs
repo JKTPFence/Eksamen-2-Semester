@@ -10,8 +10,7 @@ namespace FysioEnterprise.Domain.Entities
 {
     public class Session : Aggregateroot
     {
-
-        public Guid SessionClientID { get; private set; }
+        public Guid SessionClientID { get; init; }
         public Guid SessionStaffID { get; private set; }
         public Guid SessionRoomID { get; private set; }
         public Guid SessionInstanceTypeID { get; private set; }
