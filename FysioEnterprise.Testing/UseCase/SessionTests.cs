@@ -1,10 +1,7 @@
 ﻿using FluentResults;
 using FysioEnterprise.Domain.Entities;
-using FysioEnterprise.Domain.Exceptions;
 using FysioEnterprise.Domain.Service;
 using FysioEnterprise.Domain.Service.PricingService;
-using FysioEnterprise.Domain.Service.PricingService.Strategies;
-using FysioEnterprise.Domain.Service.PricingService.Strategies.PricingMethods;
 using FysioEnterprise.Domain.ValueObjects;
 using FysioEnterprise.UseCase.CommandHandlers.SessionCommands;
 using FysioEnterprise.UseCase.IRepositories;
@@ -90,17 +87,24 @@ namespace FysioEnterprise.Testing.UseCase
             return staff;
         }
 
-        private Clinic CreateMockClinic(Guid clinicId)
+        private Clinic CreateMockClinic(Guid clinicId, Guid? roomId = null)
         {
-            var clinic = new Clinic("123 Clinic St", new List<OpeningHours> (), new List<Room>());
-            clinic.GetType().GetProperty("Id")?.SetValue(clinic, clinicId);
-            return clinic;
-        }
+            var roomsList = new List<Room>();
 
-        private Clinic CreateMockClinic(Guid clinicId, Guid roomId)
-        {
-            var clinic = new Clinic("123 Clinic St", new List<OpeningHours>(), new List<Room>());
-            clinic.GetType().GetProperty("Id")?.SetValue(clinic, clinicId);
+            var clinic = new Clinic("123 Clinic St", new List<OpeningHours>(), roomsList);
+
+            typeof(Clinic).GetProperty("Id")?.SetValue(clinic, clinicId);
+
+            if (roomId.HasValue)
+            {
+                var room = new Room(clinic, 2);
+                typeof(Room).GetProperty("Id")?.SetValue(room, roomId.Value);
+
+                roomsList.Add(room);
+            }
+
+            typeof(Clinic).GetProperty("OpeningHours")?.SetValue(clinic, new List<OpeningHours>());
+
             return clinic;
         }
 
@@ -149,12 +153,12 @@ namespace FysioEnterprise.Testing.UseCase
             var roomId = Guid.NewGuid();
             var promotionId = Guid.NewGuid();
             var sessionTypeId = Guid.NewGuid();
-            var timeNow = DateTime.Now;
+            var timeNow = new DateTime(2026, 5, 15, 10, 0, 0);
             var endTime = timeNow.AddHours(1);
 
             var client = CreateMockClient(clientId);
             var staff = CreateMockStaff(staffId);
-            var clinic = CreateMockClinic(clinicId);
+            var clinic = CreateMockClinic(clinicId, roomId);
             var sessionType = CreateMockSessionType(sessionTypeId);
 
             SetupRepositoryMocks(client, staff, clinic, sessionType, null);
@@ -193,12 +197,12 @@ namespace FysioEnterprise.Testing.UseCase
                 EndTime: DateTime.Now.AddDays(1).AddHours(1));
 
             _mockClientRepository.Setup(r => r.GetClientAsync(request.ClientID))
-                .ReturnsAsync(Result.Fail("Client not found"));
+                .ReturnsAsync(Result.Fail("Klienten blev ikke fundet"));
 
             var result = await _handler.CreateSessionAsync(request);
 
             Assert.False(result.IsSuccess);
-            Assert.Contains("Client not found", result.Errors[0].Message);
+            Assert.Contains("Klienten blev ikke fundet", result.Errors[0].Message);
         }
 
         [Fact]
@@ -212,7 +216,7 @@ namespace FysioEnterprise.Testing.UseCase
                 .ReturnsAsync(Result.Ok(client));
 
             _mockStaffRepository.Setup(r => r.GetStaffAsync(staffId))
-                .ReturnsAsync(Result.Fail("Staff not found"));
+                .ReturnsAsync(Result.Fail("Medarbejder blev ikke fundet"));
 
             var request = new CreateSessionRequest(
                 ClientID: clientId,
@@ -228,7 +232,7 @@ namespace FysioEnterprise.Testing.UseCase
             var result = await _handler.CreateSessionAsync(request);
 
             Assert.False(result.IsSuccess);
-            Assert.Contains("Staff not found", result.Errors[0].Message);
+            Assert.Contains("Medarbejder blev ikke fundet", result.Errors[0].Message);
         }
 
         [Fact]
@@ -248,7 +252,7 @@ namespace FysioEnterprise.Testing.UseCase
                 .ReturnsAsync(Result.Ok(staff));
 
             _mockClinicRepository.Setup(r => r.GetClinicAsync(clinicId))
-                .ReturnsAsync(Result.Fail("Clinic not found"));
+                .ReturnsAsync(Result.Fail("Klinik blev ikke fundet"));
 
             var request = new CreateSessionRequest(
                 ClientID: clientId,
@@ -264,7 +268,7 @@ namespace FysioEnterprise.Testing.UseCase
             var result = await _handler.CreateSessionAsync(request);
 
             Assert.False(result.IsSuccess);
-            Assert.Contains("Clinic not found", result.Errors[0].Message);
+            Assert.Contains("Klinik blev ikke fundet", result.Errors[0].Message);
         }
 
         [Fact]
@@ -302,7 +306,7 @@ namespace FysioEnterprise.Testing.UseCase
             var result = await _handler.CreateSessionAsync(request);
 
             Assert.False(result.IsSuccess);
-            Assert.Contains("Room not found", result.Errors[0].Message);
+            Assert.Contains("Rum blev ikke fundet", result.Errors[0].Message);
         }
 
         [Fact]
@@ -328,7 +332,9 @@ namespace FysioEnterprise.Testing.UseCase
                 .ReturnsAsync(Result.Ok(clinic));
 
             _mockSessionTypeRepository.Setup(r => r.GetSessionTypeAsync(sessionTypeId))
-                .ReturnsAsync(Result.Fail("Session type not found"));
+                .ReturnsAsync(Result.Fail("Denne bookingtype blev ikke fundet"));
+
+            _mockSessionRepository.Setup(r => r.GetSessionsByRoomAsync(It.IsAny<Guid>(), It.IsAny<Guid>())).ReturnsAsync(new List<Session>());
 
             var request = new CreateSessionRequest(
                 ClientID: clientId,
@@ -344,7 +350,7 @@ namespace FysioEnterprise.Testing.UseCase
             var result = await _handler.CreateSessionAsync(request);
 
             Assert.False(result.IsSuccess);
-            Assert.Contains("Session type not found", result.Errors[0].Message);
+            Assert.Contains("Denne bookingtype blev ikke fundet", result.Errors[0].Message);
         }
 
         [Fact]
@@ -362,20 +368,25 @@ namespace FysioEnterprise.Testing.UseCase
             var clinic = CreateMockClinic(clinicId, roomId);
             var sessionType = CreateMockSessionType(sessionTypeId);
 
-            _mockClientRepository.Setup(r => r.GetClientAsync(clientId))
+            _mockClientRepository.Setup(r => r.GetClientAsync(It.IsAny<Guid>()))
                 .ReturnsAsync(Result.Ok(client));
 
-            _mockStaffRepository.Setup(r => r.GetStaffAsync(staffId))
+            _mockStaffRepository.Setup(r => r.GetStaffAsync(It.IsAny<Guid>()))
                 .ReturnsAsync(Result.Ok(staff));
 
-            _mockClinicRepository.Setup(r => r.GetClinicAsync(clinicId))
+            _mockClinicRepository.Setup(r => r.GetClinicAsync(It.IsAny<Guid>()))
                 .ReturnsAsync(Result.Ok(clinic));
 
-            _mockSessionTypeRepository.Setup(r => r.GetSessionTypeAsync(sessionTypeId))
+            _mockSessionTypeRepository.Setup(r => r.GetSessionTypeAsync(It.IsAny<Guid>()))
                 .ReturnsAsync(Result.Ok(sessionType));
 
-            _mockPromotionRepository.Setup(r => r.GetPromotionAsync(promotionId))
-                .Throws(new KeyNotFoundException("Promotion not found"));
+            _mockPromotionRepository.Setup(r => r.GetPromotionAsync(It.IsAny<Guid>()))
+                .Throws(new KeyNotFoundException("Ingen kampagne blev fundet"));
+
+            _mockSessionRepository.Setup(r => r.GetSessionsByRoomAsync(It.IsAny<Guid>(), It.IsAny<Guid>())).ReturnsAsync(new List<Session>());
+            _mockSessionRepository.Setup(r => r.GetSessionsByClientAsync(It.IsAny<Guid>())).ReturnsAsync(new List<Session>());
+            _mockSessionRepository.Setup(r => r.GetSessionsByStaffAsync(It.IsAny<Guid>())).ReturnsAsync(new List<Session>());
+            _mockSessionRepository.Setup(r => r.GetSessionsByRoomAsync(It.IsAny<Guid>(), It.IsAny<Guid>())).ReturnsAsync(new List<Session>());
 
             var request = new CreateSessionRequest(
                 ClientID: clientId,
@@ -391,10 +402,10 @@ namespace FysioEnterprise.Testing.UseCase
             var result = await _handler.CreateSessionAsync(request);
 
             Assert.False(result.IsSuccess);
-            Assert.Contains("Promotion not found", result.Errors[0].Message);
+            Assert.Contains("Ingen kampagne blev fundet", result.Errors[0].Message);
         }
 
-        /*[Fact]
+        [Fact]
         public async Task CreateSessionAsync_WithBirthdayDiscount_ShouldMarkBirthdayDiscountAsUsed()
         {
             var clientId = Guid.NewGuid();
@@ -403,21 +414,27 @@ namespace FysioEnterprise.Testing.UseCase
             var roomId = Guid.NewGuid();
             var sessionTypeId = Guid.NewGuid();
             var birthDate = new DateTime(1990, 5, 15);
-            var sessionStartTime = new DateTime(2026, 5, 20); // May (birthday month)
+            var sessionStartTime = new DateTime(2027, 5, 20);
 
             var client = CreateMockClientWithBirthday(clientId, birthDate);
             var staff = CreateMockStaff(staffId);
             var clinic = CreateMockClinic(clinicId, roomId);
             var sessionType = CreateMockSessionType(sessionTypeId);
 
-            SetupRepositoryMocks(client, staff, clinic, sessionType, null);
+            _mockClientRepository.Setup(r => r.GetClientAsync(clientId)).ReturnsAsync(Result.Ok(client));
+            _mockStaffRepository.Setup(r => r.GetStaffAsync(staffId)).ReturnsAsync(Result.Ok(staff));
+            _mockClinicRepository.Setup(r => r.GetClinicAsync(clinicId)).ReturnsAsync(Result.Ok(clinic));
+            _mockSessionTypeRepository.Setup(r => r.GetSessionTypeAsync(sessionTypeId)).ReturnsAsync(Result.Ok(sessionType));
 
-            var mockStrategies = new List<IPricingStrategy> { new Mock<IPricingStrategy>().Object };
-            _mockStrategyFactory.Setup(f => f.BuildStrategies(LoyaltyLevel.None, true, null))
-                .Returns(mockStrategies);
+            _mockSessionRepository.Setup(r => r.GetSessionsByClientAsync(clientId)).ReturnsAsync(new List<Session>());
+            _mockSessionRepository.Setup(r => r.GetSessionsByStaffAsync(staffId)).ReturnsAsync(new List<Session>());
 
-            _mockCalculator.Setup(c => c.Calculate(It.IsAny<decimal>(), mockStrategies))
-                .Returns(Task.FromResult(100m)); // Birthday discounted price
+            _mockSessionRepository.Setup(r => r.GetSessionsByRoomAsync(It.IsAny<Guid>(), It.IsAny<Guid>())).ReturnsAsync(new List<Session>());
+
+            var discountedPrice = new Price(75D);
+
+            _mockStrategyFactory.Setup(f => f.BuildStrategies(It.IsAny<Client>(), It.IsAny<Promotion>(), It.IsAny<SessionType>()))
+                .ReturnsAsync(discountedPrice);
 
             var request = new CreateSessionRequest(
                 ClientID: clientId,
@@ -426,14 +443,14 @@ namespace FysioEnterprise.Testing.UseCase
                 ClinicID: clinicId,
                 SessionRoomID: roomId,
                 SessionInstanceTypeID: sessionTypeId,
-                SessionTotalPrice: 100,
+                SessionTotalPrice: 75,
                 StartTime: sessionStartTime,
                 EndTime: sessionStartTime.AddHours(1));
 
             var result = await _handler.CreateSessionAsync(request);
 
             Assert.True(result.IsSuccess);
-            _mockClientRepository.Verify(r => r.UpdateClientAsync(It.IsAny<Client>()), Times.Once);
-        }*/
+            _mockClientRepository.Verify(r => r.UpdateClientAsync(It.Is<Client>(c => c.Id == clientId)), Times.Once);
+        }
     }
 }

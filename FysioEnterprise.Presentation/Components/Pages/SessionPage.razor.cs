@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Diagnostics.Eventing.Reader;
+using DocumentFormat.OpenXml.Spreadsheet;
 using FluentResults;
 using FysioEnterprise.Domain.Entities;
 using FysioEnterprise.Domain.ValueObjects;
@@ -9,6 +10,7 @@ using FysioEnterprise.Facade.UseCase.SessionUseCase;
 using FysioEnterprise.Presentation.Service;
 using Microsoft.AspNetCore.Components;
 using Radzen;
+using static Azure.Core.HttpHeader;
 using static FysioEnterprise.Facade.RequestModels.SessionRequests;
 
 namespace FysioEnterprise.Presentation.Components.Pages
@@ -80,7 +82,7 @@ namespace FysioEnterprise.Presentation.Components.Pages
 
         private PendingSession? _firstSession = null;
 
-        private static readonly Dictionary<string, List<string>> AllowedComboRules = new()
+        private static readonly Dictionary<string, List<string>> AllowedComboRules = new() //Dictionary that defines what sessiontypes can be combined
         {
             { "Fysioterapi",    new() { "Akupunktur", "Sportsmassage" } },
             { "Genoptræning",   new() { "Fysioterapi", "Sportsmassage", "Kostvejledning førstegang", "Kostvejledning opfølgning" } },
@@ -135,7 +137,7 @@ namespace FysioEnterprise.Presentation.Components.Pages
                 .ToList();
         }
 
-        private async Task ApplyUrlParameters()
+        private async Task ApplyUrlParameters() //Takes the URL parameters and applies them to the form, if they are valid. This allows for pre-filling the form when coming from the calendar page
         {
             if (DateTime.TryParse(Date, out var date) && Hour.HasValue)
             {
@@ -167,7 +169,7 @@ namespace FysioEnterprise.Presentation.Components.Pages
 
             }
 
-            //Til Redigering af bookings
+            //For editing sessions
             if (SessionId.HasValue && SessionId != Guid.Empty)
             {
                 _isEditMode = true;
@@ -294,6 +296,9 @@ namespace FysioEnterprise.Presentation.Components.Pages
             StateHasChanged();
         }
 
+        //Method that needs to handle 3 different "create" scenarios. 1) Creating a single session, 2) Creating a combo booking (which consists of 2 sessions) and 3) Editing an existing session. 
+        //Could have considered splitting this into 3 different methods and used a switch
+        //The method uses the _isComboMode and _comboStep variables to determine which scenario it is handling, and the _firstSession variable to store the details of the first session when creating a combo booking.
         private async Task Submit()
         {
             if (_isLoading) return;

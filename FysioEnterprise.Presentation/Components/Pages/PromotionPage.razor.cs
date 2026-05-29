@@ -47,7 +47,7 @@ namespace FysioEnterprise.Presentation.Components.Pages
             await LoadPromotions();
         }
 
-        private async Task LoadPromotions(int attempt = 1)
+        private async Task LoadPromotions(int attempt = 1) //Self-healing loading loop to prevent 2 queries being called twice
         {
             if (_loading && attempt == 1) return;
 

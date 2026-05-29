@@ -16,8 +16,9 @@ namespace FysioEnterprise.Domain.ValueObjects
             LoyaltyLevelName = loyaltyLevelName;
             LoyaltyLevelDiscountPercentage = loyaltyLevelDiscountPercentage;
         }
-
-        public static LoyaltyLevel None => new LoyaltyLevel("None", 0m);
+        
+        // Hardcoded loyalty levels, as the requirements specify a static 3 *(4 if counting None)* levels
+        public static LoyaltyLevel None => new LoyaltyLevel("None", 0m); 
         public static LoyaltyLevel Bronze => new LoyaltyLevel("Bronze", 5m);
         public static LoyaltyLevel Silver => new LoyaltyLevel("Silver", 10m);
         public static LoyaltyLevel Gold => new LoyaltyLevel("Gold", 15m);
@@ -30,7 +31,7 @@ namespace FysioEnterprise.Domain.ValueObjects
             _ => None
         };
 
-        public static LoyaltyLevel CalculateFromSpend(double totalSpendInLast12Months) => totalSpendInLast12Months switch
+        public static LoyaltyLevel CalculateFromSpend(double totalSpendInLast12Months) => totalSpendInLast12Months switch //Calculate loyalty level based on total spend in the last 12 months
         {
             > 25000D => Gold,
 

@@ -2,6 +2,8 @@
 @inject NotificationHelper Notification
 @implements IDisposable
 
+@*Notification child component has been made a child component since it's used on many different pages*@
+@*It uses the Notificationhelper to store the actual message and status*@
 @if (_isVisible)
 {
     <aside class="notification @(Notification.IsSuccess ? "success" : "error")">
@@ -28,8 +30,8 @@
         }
     }
 
-    private async void StartAutoDismissTimer()
-    {
+    private async void StartAutoDismissTimer() @*Removes notification after a period of time*@
+    { 
         _timerCts?.Cancel();
         _timerCts?.Dispose();
         _timerCts = new System.Threading.CancellationTokenSource();

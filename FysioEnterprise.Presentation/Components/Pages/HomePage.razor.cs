@@ -31,7 +31,7 @@ namespace FysioEnterprise.Presentation.Components.Pages
             _clinics = fetchedClinics.OrderBy(c => c.ClinicAddress).ToList();
         }
 
-        private async Task OnClinicChanged(ChangeEventArgs e)
+        private async Task OnClinicChanged(ChangeEventArgs e)  // When the clinic selection changes, we need to fetch the staff for that clinic and filter out the receptionists
         {
             var value = e.Value?.ToString();
             try

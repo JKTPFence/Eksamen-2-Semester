@@ -78,7 +78,9 @@ namespace FysioEnterprise.Domain.Entities
                 sessionType).Result;
             var basePrice = newSession.priceTotal;
 
-            var authType = AuthorisationTypeExtensions.FromRoleString(staff.StaffAuthorisationType);
+            //After calculating the base price with the pricing strategy, we apply the staff multiplier and the outside of opening hours multiplier if applicable.
+            //This is done after the pricing strategy to ensure that the multipliers are applied to the final price after all discounts and promotions have been applied.
+            var authType = AuthorisationTypeExtensions.FromRoleString(staff.StaffAuthorisationType); 
             double staffMultiplier = authType.GetPriceMultiplier();
             var firstCalculatedPrice = new Price(basePrice.Value * staffMultiplier);
 
@@ -139,7 +141,7 @@ namespace FysioEnterprise.Domain.Entities
             IEnumerable<Session> existingStaffSessions,
             IEnumerable<Session> existingRoomSessions,
             Guid? currentSessionId = null
-            )
+            ) //Validation method to check if the new or updated session overlaps with any existing sessions for the client, staff, or room. It checks across all clinics
         {
             var clientOverlap = existingClientSessions
             .Where(c => c.Id != currentSessionId)

@@ -16,29 +16,41 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
         //Create client
         private static Client BuildClient(
             string firstName = "Johanne",
-            string lastName = "Testing",
+            string lastName = "Jensen",
             string email = "johanne@example.com",
             string phone = "71362851",
             string address = "Valløesgade 37, 2. th, 7100 Vejle",
             Guid? staff = null)    
         {
+            var expectedStaffId = Guid.NewGuid();
             return Client.Create(
                 firstName, lastName, email, phone,
                 new DateOnly(1990, 6, 15), address,
                 clientNote: null,
-                clientPrefferedStaffID: BuildStaff(),
+                clientPrefferedStaffID: expectedStaffId,
                 clientLoyaltyLevel: LoyaltyLevel.Bronze);
         }
 
         [Fact]
         public void Create_ValidInputs_ReturnsClient()
         {
+            var expectedStaffId = Guid.NewGuid();
             var staff = BuildStaff();
-            var client = BuildClient(staff: Guid.NewGuid());
+            var client = Client.Create(
+            "Johanne",
+            "Jensen",
+            "johanne@example.com",
+            "71362851",
+            new DateOnly(1995, 5, 15),
+            "Valløesgade 37, 2. th, 7100 Vejle",
+            clientNote: null,
+            clientPrefferedStaffID: expectedStaffId,
+            clientLoyaltyLevel: LoyaltyLevel.Gold
+        );
 
-            Assert.NotEqual(Guid.Empty, client.Id);
-            Assert.Equal("Jane", client.ClientFirstName);
-            Assert.Equal(staff, client.ClientPrefferedStaffID);
+            Assert.Equal(expectedStaffId, client.ClientPrefferedStaffID);
+            Assert.Equal("Johanne", client.ClientFirstName);
+            Assert.Equal("Jensen", client.ClientLastName);
         }
 
         [Theory]
@@ -49,7 +61,7 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
         public void Create_EmptyRequiredField_ThrowsDomainException(
             string _, string firstName, string email, string phone, string address)
         {
-            Assert.Throws<DomainException>(() =>
+            Assert.Throws<UserInvalidInputException>(() =>
                 Client.Create(firstName, null, email, phone,
                     new DateOnly(1990, 1, 1), address,
                     null, BuildStaff(), LoyaltyLevel.Bronze));
@@ -68,11 +80,14 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
         }
 
         [Fact]
-        public void UpdateStaff_NullStaff_ThrowsDomainException()
+        public void UpdateStaff_EmptyGuid_ThrowsDomainException()
         {
-            var client = BuildClient();
+            var client = Client.Create("Johanne", "Jensen", "johanne@example.com", "71362851",
+                new DateOnly(1995, 5, 15), "Valløesgade 37, 2. th, 7100 Vejle", null, Guid.NewGuid(), LoyaltyLevel.Gold);
 
-            Assert.Throws<DomainException>(() => client.UpdateStaff(Guid.NewGuid()));
+            var ex = Assert.Throws<NotFoundException>(() => client.UpdateStaff(Guid.Empty));
+
+            Assert.Contains("Ingen medarbejder kunne findes", ex.Message);
         }
 
         //Note test
@@ -121,8 +136,10 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
         {
             var client = BuildClient();
 
-            Assert.Throws<DomainException>(() =>
-                client.MarkBirthdayDiscountUsed(new DateOnly(DateTime.Now.Year, 3, 1)));
+            var ex = Assert.Throws<ValidationException>(() =>
+                client.MarkBirthdayDiscountUsed(new DateOnly(2026, 9, 1)));
+
+            Assert.Contains("Kan ikke bruge en et fødselsdagstilbud uden for fødselsdagsmåneden.", ex.Message);
         }
 
         [Fact]
@@ -132,7 +149,7 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
             var birthdayDate = new DateOnly(DateTime.Now.Year, 6, 1);
             client.MarkBirthdayDiscountUsed(birthdayDate);
 
-            Assert.Throws<DomainException>(() =>
+            Assert.Throws<UserInvalidInputException>(() =>
                 client.MarkBirthdayDiscountUsed(birthdayDate));
         }
     }

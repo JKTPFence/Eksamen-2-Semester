@@ -2,7 +2,7 @@
 
 namespace FysioEnterprise.Presentation.Service
 {
-    public class LogInContext
+    public class LogInContext // Manages the login state of the user, including clinic and staff information, and persists it in session storage for a better user experience.
     {
         private readonly ProtectedSessionStorage _storage;
 
@@ -65,7 +65,7 @@ namespace FysioEnterprise.Presentation.Service
             OnChange?.Invoke();
         }
 
-        public async Task ClearAsync()
+        public async Task ClearAsync() //Removes the login information from both the context and session storage (essentially logout)
         {
             ClinicId = Guid.Empty;
             ClinicName = string.Empty;

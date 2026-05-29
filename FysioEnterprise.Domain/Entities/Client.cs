@@ -112,7 +112,7 @@ namespace FysioEnterprise.Domain.Entities
         public void UpdateStaff(Guid clientpreferredStaffID)
         {
             if (clientpreferredStaffID == Guid.Empty)
-                throw new NotFoundException($"No staff member with this ID could be found");
+                throw new NotFoundException("Ingen medarbejder kunne findes");
 
             ClientPrefferedStaffID = clientpreferredStaffID;
         }

@@ -80,7 +80,7 @@
     }
     else
     {
-        @if (View is "week" or "day")
+        @if (View is "week" or "day") @*Sessions loading in Colour, Size, Time, Icon -> for week/day layout*@
         {
             <article class="calendar-wrap" aria-label="Uge kalender">
                 <table class="calendar-table">
@@ -227,7 +227,7 @@
             </article>
             @if (SelectedViewSession != null)
     {
-        <section class="modal-overlay" @onclick="CloseSessionDetails">
+        <section class="modal-overlay" @onclick="CloseSessionDetails"> @*Popup card when pressing on an existing session*@
             <article class="session-details-card" @onclick:stopPropagation="true">
                 <header class="card-header">
                     <h3>Booking Detaljer</h3>
@@ -298,7 +298,7 @@
 
 
             <footer class="card-actions-footer">
-                @if (_loadingButtonClick == false)
+                @if (_loadingButtonClick == false) @*Buttons for popup card*@
                    {
                     <button class="action-btn btn-update" @onclick="HandleUpdate">
                         <RadzenIcon Icon="edit" /> Rediger
@@ -335,7 +335,7 @@
     }
         }
 
-        @if (View == "month")
+        @if (View == "month") @*Monthview for session that also allow a user to go to "Day"*@
         {
             <article class="month-wrap" aria-label="Måneds kalender">
                 <table class="month-table">

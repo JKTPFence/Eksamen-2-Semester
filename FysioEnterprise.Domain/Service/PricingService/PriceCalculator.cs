@@ -19,6 +19,7 @@ namespace FysioEnterprise.Domain.Service.PricingService
         {
             Price bestDiscount = new Price(0);
 
+            // Use Parallel.ForEach to calculate discounts concurrently, forces a race condition on bestDiscount, so we need to lock it -> only the best discount will be applied
             Parallel.ForEach(_strategies, s =>
             {
                 var discount = s.calculatePrice(client, promotion, sessionType);

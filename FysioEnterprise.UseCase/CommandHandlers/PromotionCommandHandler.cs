@@ -52,19 +52,19 @@ namespace FysioEnterprise.UseCase.CommandHandlers.PromotionCommands
         public async Task<Result> UpdatePromotionAsync(UpdatePromotionRequest request)
         {
             if (request == null)
-                return Result.Fail("Request cannot be null.");
+                return Result.Fail("For at lave en kampagne skal der være indhold");
             if (request.PromotionID == Guid.Empty)
-                return Result.Fail("Promotion ID cannot be empty.");
+                return Result.Fail("Ingen kampagne er fundet med dette ID");
             if (request.Name == null)
-                return Result.Fail("Promotion name cannot be null.");
+                return Result.Fail("En kampagne skal have et navn");
             if (request.DiscountPercentage <= 0)
-                return Result.Fail("Discount percentage must be greater than zero.");
+                return Result.Fail("En kampagne skal have en rabatprocent");
            
             var validationResult = TimeValidationService.ValidateTime(
                            request.Name,
                            request.StartDate,
                            request.EndDate,
-                           DateTime.Now);
+                           _timeNow.Now());
             if (validationResult.IsFailed)
                 return validationResult;
 

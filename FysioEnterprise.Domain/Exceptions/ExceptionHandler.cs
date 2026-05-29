@@ -1,6 +1,6 @@
 ﻿namespace FysioEnterprise.Domain.Exceptions
 {
-
+    // Base exception for domain-related errors
     public class DomainException(string message) : Exception(message);
 
     public sealed class NotFoundException(string message) : DomainException(message);

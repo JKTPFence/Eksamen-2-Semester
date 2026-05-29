@@ -153,10 +153,14 @@ namespace FysioEnterprise.UseCase.CommandHandler.ClientCommands
             {
                 client.UpdateClientNote(request.Note);
                 var updateResult = await _clientRepository.UpdateClientAsync(client);
+
+                if (updateResult.IsFailed)
+                {
+                    return Result.Fail("An unexpected system error occurred.");
+                }
             }
             catch (Exception ex) // Catch-all for any other unexpected exceptions (typically SQL or Infrastructure exceptions)
             {
-                System.Diagnostics.Debug.WriteLine($"Infrastructure Failure: {ex.Message}");
                 return Result.Fail("An unexpected system error occurred." + ex.Message);
             }
 

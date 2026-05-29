@@ -10,7 +10,7 @@ namespace FysioEnterprise.Domain.ValueObjects
 
         public StaffClinicAssignment() { } // Empty constructor for EF Core
 
-        public StaffClinicAssignment(Guid staffId, Guid clinicId)
+        public StaffClinicAssignment(Guid staffId, Guid clinicId) //Handles the many to many relationship between staff and clinic
         {
             StaffId = staffId;
             ClinicId = clinicId;

@@ -30,12 +30,22 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
         }
 
         [Fact]
-        public void Create_EmptyName_ThrowsDomainException() =>
-            Assert.Throws<DomainException>(() => BuildPromotion(name: ""));
+        public void Create_EmptyName_ThrowsDomainException()
+        {
+            var ex = Assert.Throws<UserInvalidInputException>(() =>
+                BuildPromotion("", 10, DateTime.Now.AddDays(1), DateTime.Now.AddDays(10)));
+
+            Assert.Contains("En kampagne skal have et navn", ex.Message);
+        }
 
         [Fact]
-        public void Create_ZeroDiscount_ThrowsDomainException() =>
-            Assert.Throws<DomainException>(() => BuildPromotion(discount: 0));
+        public void Create_ZeroDiscount_ThrowsDomainException()
+        {
+            var ex = Assert.Throws<UserInvalidInputException>(() =>
+                BuildPromotion("Hello kampagne", discount: 0, DateTime.Now.AddDays(1), DateTime.Now.AddDays(10)));
+
+            Assert.Contains("En kampagne skal have en rabatprocent", ex.Message);
+        }
 
         [Fact]
         public void IsActive_WithinDateRange_ReturnsTrue()

@@ -60,7 +60,7 @@ namespace FysioEnterprise.Presentation.Components.Pages
             }
         }
 
-        protected override Task OnInitializedAsync() => Task.CompletedTask;
+        protected override Task OnInitializedAsync() => Task.CompletedTask; //Self-healing loading loop to prevent 2 queries being called twice
 
         private async Task LoadData(int attempt = 1)
         {

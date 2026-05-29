@@ -21,13 +21,13 @@ namespace FysioEnterprise.Domain.Entities
         {
             Id = Guid.NewGuid();
             if (string.IsNullOrWhiteSpace(promotionName))
-                throw new UserInvalidInputException($"En kampagne skal have et navn");
+                throw new UserInvalidInputException("En kampagne skal have et navn");
             PromotionName = promotionName;
             if (promotionDiscountPercent <= 0)
-                throw new UserInvalidInputException($"En kampagne skal have en rabatprocent {promotionDiscountPercent}");
+                throw new UserInvalidInputException("En kampagne skal have en rabatprocent");
             PromotionDiscountPercent = promotionDiscountPercent;
                 if (promotionStartTime >= promotionEndTime)
-                    throw new UserInvalidInputException($"En kampagne skal have en starttid der er før sin sluttid {promotionStartTime} - {promotionEndTime}");
+                    throw new UserInvalidInputException("En kampagne skal have en starttid der er før sin sluttid");
             PromotionStartTime = promotionStartTime;
             PromotionEndTime = promotionEndTime;
         }

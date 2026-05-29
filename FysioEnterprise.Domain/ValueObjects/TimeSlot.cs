@@ -9,7 +9,7 @@ namespace FysioEnterprise.Domain.ValueObjects
 
         private TimeSlot() { } // Empty Constructor for EF Core
 
-        public TimeSlot(DateTime from, DateTime to)
+        public TimeSlot(DateTime from, DateTime to) //Handles a period of time, used for sessions
         {
             if (to <= from)
                 throw new DomainException("Til tiden må ikke være før fra tiden");

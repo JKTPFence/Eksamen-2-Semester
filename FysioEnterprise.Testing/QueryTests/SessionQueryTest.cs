@@ -21,28 +21,58 @@ namespace FysioEnterprise.Testing.QueryHandlerTests
             return context;
         }
 
+        private static SessionType CreateMockSessionType(Guid? sessionTypeId = null)
+        {
+            var sessionType = (SessionType)Activator.CreateInstance(typeof(SessionType), nonPublic: true)!;
+
+            typeof(SessionType).GetProperty("Id")?
+                .SetValue(sessionType, sessionTypeId ?? Guid.NewGuid());
+
+            typeof(SessionType).GetProperty(nameof(SessionType.SessionTypeName))!
+                .SetValue(sessionType, "Standard Session");
+
+            typeof(SessionType).GetProperty(nameof(SessionType.SessionTypePrice))!
+                .SetValue(sessionType, new Price(500));
+
+            typeof(SessionType).GetProperty(nameof(SessionType.SessionTypeTimeSpan))!
+                .SetValue(sessionType, TimeOnly.FromTimeSpan(TimeSpan.FromHours(1)));
+
+            typeof(SessionType).GetProperty(nameof(SessionType.SessionTypeMaxAmount))!
+                .SetValue(sessionType, 4);
+
+            typeof(SessionType).GetProperty(nameof(SessionType.AllowedAuthorisationNumbers))!
+                .SetValue(sessionType, new List<int>());
+
+            return sessionType;
+        }
+
         [Fact]
         public async Task GetAllActiveSessionsByClientIdAsync_ReturnsOnlyActiveSessions()
         {
             //Arrange
             var context = GetInMemoryContext();
-            var client = new Client();
-            var staff = new Staff();
-            var dummyPricingFactory = new SeedPricingFactory();
-            var sessionType = (SessionType)Activator.CreateInstance(
-             typeof(SessionType),
-             nonPublic: true)!;
+            var client = Client.Create("Johanne",
+                "Jensen",
+                "johanne@example.com",
+                "71362851",
+                new DateOnly(1995, 5, 15),
+                "Valløesgade 37, 2. th, 7100 Vejle",
+                clientNote: null,
+                clientPrefferedStaffID: Guid.NewGuid(),
+                clientLoyaltyLevel: LoyaltyLevel.Gold);
+                var staff = new Staff(
+                        "Johan",
+                        "Jensen",
+                        "71362851",
+                        "Akupunktør",
+                        333333,
+                        new List<Clinic>());
 
-            typeof(SessionType).GetProperty(nameof(SessionType.SessionTypeName))!
-                .SetValue(sessionType, "Test Type");
-            typeof(SessionType).GetProperty(nameof(SessionType.SessionTypePrice))!
-                .SetValue(sessionType, new Price(500));
-            typeof(SessionType).GetProperty(nameof(SessionType.SessionTypeTimeSpan))!
-                .SetValue(sessionType, TimeOnly.FromTimeSpan(TimeSpan.FromHours(1)));
-            typeof(SessionType).GetProperty(nameof(SessionType.SessionTypeMaxAmount))!
-                .SetValue(sessionType, 4);
-            typeof(SessionType).GetProperty(nameof(SessionType.AllowedAuthorisationNumbers))!
-                .SetValue(sessionType, new List<int>());
+            typeof(Staff).GetProperty("Id")?
+                .SetValue(staff, Guid.NewGuid());
+
+            var dummyPricingFactory = new SeedPricingFactory();
+            var sessionType = CreateMockSessionType();
             var roomId = Guid.NewGuid();
             var sessionTimeSlot1 = new TimeSlot(DateTime.UtcNow.AddDays(1), DateTime.UtcNow.AddDays(1).AddHours(1));
             var sessionTimeSlot2 = new TimeSlot(DateTime.UtcNow.AddDays(2), DateTime.UtcNow.AddDays(2).AddHours(1));
@@ -71,23 +101,28 @@ namespace FysioEnterprise.Testing.QueryHandlerTests
         {
             //Arrange
             var context = GetInMemoryContext();
-            var client = new Client();
-            var dummyPricingFactory = new SeedPricingFactory();
-            var sessionType = (SessionType)Activator.CreateInstance(
-             typeof(SessionType),
-             nonPublic: true)!;
+            var client = Client.Create("Johanne",
+                "Jensen",
+                "johanne@example.com",
+                "71362851",
+                new DateOnly(1995, 5, 15),
+                "Valløesgade 37, 2. th, 7100 Vejle",
+                clientNote: null,
+                clientPrefferedStaffID: Guid.NewGuid(),
+                clientLoyaltyLevel: LoyaltyLevel.Gold);
+            var staff = new Staff(
+                    "Johan",
+                    "Jensen",
+                    "71362851",
+                    "Akupunktør",
+                    333333,
+                    new List<Clinic>());
 
-            typeof(SessionType).GetProperty(nameof(SessionType.SessionTypeName))!
-                .SetValue(sessionType, "Test Type");
-            typeof(SessionType).GetProperty(nameof(SessionType.SessionTypePrice))!
-                .SetValue(sessionType, new Price(500));
-            typeof(SessionType).GetProperty(nameof(SessionType.SessionTypeTimeSpan))!
-                .SetValue(sessionType, TimeOnly.FromTimeSpan(TimeSpan.FromHours(1)));
-            typeof(SessionType).GetProperty(nameof(SessionType.SessionTypeMaxAmount))!
-                .SetValue(sessionType, 4);
-            typeof(SessionType).GetProperty(nameof(SessionType.AllowedAuthorisationNumbers))!
-                .SetValue(sessionType, new List<int>());
-            var staff = new Staff();
+            typeof(Staff).GetProperty("Id")?
+                .SetValue(staff, Guid.NewGuid());
+
+            var dummyPricingFactory = new SeedPricingFactory();
+            var sessionType = CreateMockSessionType();
             var roomId = Guid.NewGuid();
 
             var sessionTimeSlot1 = new TimeSlot(DateTime.UtcNow.AddDays(1), DateTime.UtcNow.AddDays(1).AddHours(1));

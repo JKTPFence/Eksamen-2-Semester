@@ -2,7 +2,7 @@
 
 namespace FysioEnterprise.Presentation.Service.Helpers
 {
-    public class NotificationHelper
+    public class NotificationHelper //Stores information about the current notification, such as the message, whether it is a success or error message and whether it is visible.
     {
         public string? Message { get; private set; }
         public bool IsSuccess { get; private set; }
