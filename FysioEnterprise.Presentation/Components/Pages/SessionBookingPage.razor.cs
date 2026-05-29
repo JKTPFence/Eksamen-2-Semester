@@ -53,11 +53,6 @@ public partial class SessionBookingPage : ComponentBase
     private double TimeToPixels(DateTime time)
     => (time.Hour * 60 + time.Minute) * SlotHeight / 15.0;
 
-    private static readonly string[] StaffColors =
-        ["teal", "coral", "purple", "blue", "amber", "rose", "lime"];
-
-    private static readonly int[] Hours = Enumerable.Range(0, 24).ToArray();
-
     private string _searchQuery = string.Empty;
     private string SearchQuery
     {
@@ -88,7 +83,7 @@ public partial class SessionBookingPage : ComponentBase
             return Enumerable.Range(0, 42).Select(i => startDay.AddDays(i)).ToList();
         }
     }
-    private void ToggleCancelledSessions()
+    private void ToggleCancelledSessions() //Remove all sessions marked as "Cancelled"
     {
         HideCancelled = !HideCancelled;
     }
@@ -125,7 +120,7 @@ public partial class SessionBookingPage : ComponentBase
         return totalMinuteCount;
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    protected override async Task OnAfterRenderAsync(bool firstRender) //Firstrender forces a JavaScript interop to scroll to the clinics opening hour
     {
         if (firstRender)
         {
@@ -195,7 +190,7 @@ public partial class SessionBookingPage : ComponentBase
             _isDataLoaded = true;
 
         }
-        catch (InvalidOperationException ex) when (ex.Message.Contains("second operation was started"))
+        catch (InvalidOperationException ex) when (ex.Message.Contains("second operation was started")) //Foces a retry if the error is caused by a DB collision
         {
             System.Diagnostics.Debug.WriteLine($"[DB Collision Caught] Attempt {attempt} failed. Retrying...");
 
@@ -233,7 +228,7 @@ public partial class SessionBookingPage : ComponentBase
         return staffType;
     }
 
-    private string GetDynamicColorClass(SessionDTO session)
+    private string GetDynamicColorClass(SessionDTO session) //Generates a consistent color class based on the staff member's name (used for SessionCards background colour)
     {
         string stableIdentifier = $"{session.StaffFirstName} {session.StaffLastname}";
 
@@ -347,7 +342,7 @@ public partial class SessionBookingPage : ComponentBase
                 endMonthName = char.ToUpper(endMonthName[0]) + endMonthName.Substring(1);
             }
 
-            return $"{monthName} {monday.Day} – {endMonthName} {sunday.Day}, {sunday.Year}";
+            return $"{monday.Day} , {monthName} – {sunday.Day} , {endMonthName} , {sunday.Year}";
         }
         return $"{monday.Day} - {sunday.Day} , {monthName} , {monday.Year}";
     }
@@ -360,6 +355,8 @@ public partial class SessionBookingPage : ComponentBase
         return date.AddDays(-diff).Date;
     }
 
+    //Method forces the sessions to be arranged in columns based on their time overlap, so they can be rendered in a calendar view without visual overlap.
+    //Also calculates how many total columns are needed for each session to determine their width
     private List<(SessionDTO Session, int Col, int TotalCols)> CalculateColumns(
     List<SessionDTO> sessions)
     {
@@ -461,6 +458,8 @@ public partial class SessionBookingPage : ComponentBase
         Nav.NavigateTo($"/createsession?sessionId={SelectedViewSession.SessionID}");
     }
 
+    // 3 repeating sessions that all do the same thing but with different use cases, could be refactored into one method with an enum parameter for the action type, but left as is for readability and separation of concerns
+    // First method - Sets a session status to "Completed"
     private async Task HandleComplete()
     {
         _loadingButtonClick = true;
@@ -492,6 +491,7 @@ public partial class SessionBookingPage : ComponentBase
         StateHasChanged();
     }
 
+    // Second method - Sets a session status to "NoShow"
     private async Task HandleNoShow()
     {
         _loadingButtonClick = true;
@@ -523,6 +523,7 @@ public partial class SessionBookingPage : ComponentBase
         StateHasChanged();
     }
 
+    // Third method - Sets a session status to "Cancelled"
     private async Task HandleCancel()
     {
         _loadingButtonClick = true;
@@ -557,18 +558,6 @@ public partial class SessionBookingPage : ComponentBase
     {
         SelectedCell = null;
         SelectedSessionTypeId = Guid.Empty;
-    }
-
-    private bool IsCoupledComboSession(SessionDTO currentSession, List<SessionDTO> allVisibleSessions)
-    {
-        if (currentSession == null || allVisibleSessions == null) return false;
-
-        return allVisibleSessions.Any(other =>
-            other.ClientID != currentSession.ClientID &&
-            other.SessionID == currentSession.SessionID &&
-            (other.timeSlot.To == currentSession.timeSlot.From ||
-             other.timeSlot.From == currentSession.timeSlot.To)
-        );
     }
 
 }

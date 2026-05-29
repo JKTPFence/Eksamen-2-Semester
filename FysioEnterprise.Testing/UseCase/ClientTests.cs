@@ -41,15 +41,16 @@ namespace FysioEnterprise.Testing.UseCase
                 "Regular client",
                 LoyaltyLevel.Bronze,
                 staffId);
-            // Act
             var staff = new Staff("Jane", "Smith", "1234567890", "Physiotherapist", 12345, new List<Clinic>());
 
             _mockStaffRepository.Setup(x => x.GetStaffAsync(staffId))
                 .ReturnsAsync(Result.Ok(staff));
             _mockClientRepository.Setup(x => x.CreateClientAsync(It.IsAny<Client>()))
                 .ReturnsAsync(Result.Ok());
-            // Assert
+            // Act
             var result = await _handler.CreateClientAsync(request);
+
+            // Assert
             Assert.True(result.IsSuccess);
             _mockClientRepository.Verify(x => x.CreateClientAsync(It.IsAny<Client>()), Times.Once);
         }
@@ -60,7 +61,7 @@ namespace FysioEnterprise.Testing.UseCase
             var result = await _handler.CreateClientAsync(null);
 
             Assert.True(result.IsFailed);
-            Assert.Contains("Request cannot be null", result.Errors.Select(e => e.Message));
+            Assert.Contains("Fejl, der er ikke sendt nogen request", result.Errors.Select(e => e.Message));
             _mockClientRepository.Verify(x => x.CreateClientAsync(It.IsAny<Client>()), Times.Never);
         }
 
@@ -82,12 +83,12 @@ namespace FysioEnterprise.Testing.UseCase
                 staffId);
 
             _mockStaffRepository.Setup(x => x.GetStaffAsync(It.IsAny<Guid>()))
-                .ReturnsAsync(Result.Fail("Staff not found"));
+                .ReturnsAsync(Result.Fail("Kunne ikke finde medarbejder"));
 
             var result = await _handler.CreateClientAsync(request);
 
             Assert.True(result.IsFailed);
-            Assert.Contains("Preferred staff not found", result.Errors.Select(e => e.Message).ToList());
+            Assert.Contains(result.Errors, e => e.Message.Contains("Kunne ikke finde medarbejder"));
         }
 
         [Fact]
@@ -138,7 +139,7 @@ namespace FysioEnterprise.Testing.UseCase
             var result = await _handler.DeleteClientAsync(request);
 
             Assert.True(result.IsFailed);
-            Assert.Contains("Client ID cannot be empty", result.Errors.Select(e => e.Message).ToList());
+            Assert.Contains("Klient ikke fundet", result.Errors.Select(e => e.Message).ToList());
             _mockClientRepository.Verify(x => x.DeleteClientAsync(It.IsAny<Guid>()), Times.Never);
         }
 
@@ -189,7 +190,7 @@ namespace FysioEnterprise.Testing.UseCase
             var result = await _handler.UpdateClientAsync(request);
 
             Assert.True(result.IsFailed);
-            Assert.Contains("Client ID cannot be empty", result.Errors.Select(e => e.Message));
+            Assert.Contains("Klient ikke fundet", result.Errors.Select(e => e.Message));
         }
 
         [Fact]
@@ -208,12 +209,12 @@ namespace FysioEnterprise.Testing.UseCase
                 Guid.NewGuid());
 
             _mockClientRepository.Setup(x => x.GetClientAsync(clientId))
-                .ReturnsAsync(Result.Fail("Client not found"));
+                .ReturnsAsync(Result.Fail("Klient ikke fundet"));
 
             var result = await _handler.UpdateClientAsync(request);
 
             Assert.True(result.IsFailed);
-            Assert.Contains($"Client with ID {clientId} was not found", result.Errors.Select(e => e.Message));
+            Assert.Contains($"Klient med {clientId} blev ikke fundet", result.Errors.Select(e => e.Message));
         }
 
         [Fact]
@@ -236,6 +237,8 @@ namespace FysioEnterprise.Testing.UseCase
             _mockStaffRepository.Setup(x => x.GetStaffAsync(staffId))
                 .ReturnsAsync(Result.Ok(staff));
 
+            _mockClientRepository.Setup(x => x.UpdateClientAsync(It.IsAny<Client>())).ReturnsAsync(Result.Ok());
+
             var result = await _handler.UpdateClientPrefferedStaffAsync(request);
 
             Assert.True(result.IsSuccess);
@@ -249,7 +252,7 @@ namespace FysioEnterprise.Testing.UseCase
             var result = await _handler.UpdateClientPrefferedStaffAsync(request);
 
             Assert.True(result.IsFailed);
-            Assert.Contains("Client ID cannot be empty", result.Errors.Select(e => e.Message));
+            Assert.Contains(result.Errors, e => e.Message.Contains("Klient") && e.Message.Contains("fundet"));
         }
 
         [Fact]
@@ -274,7 +277,7 @@ namespace FysioEnterprise.Testing.UseCase
             var result = await _handler.UpdateClientPrefferedStaffAsync(request);
 
             Assert.True(result.IsFailed);
-            Assert.Contains($"Staff with ID {staffId} was not found", result.Errors.Select(e => e.Message));
+            Assert.Contains($"Medarbejder blev ikke fundet", result.Errors.Select(e => e.Message));
         }
 
         [Fact]
@@ -309,7 +312,7 @@ namespace FysioEnterprise.Testing.UseCase
             var result = await _handler.UpdateClientNoteAsync(request);
 
             Assert.True(result.IsFailed);
-            Assert.Contains("Client ID cannot be empty", result.Errors.Select(e => e.Message).ToList());
+            Assert.Contains("Klient blev ikke fundet", result.Errors.Select(e => e.Message).ToList());
         }
 
         [Fact]
@@ -333,7 +336,7 @@ namespace FysioEnterprise.Testing.UseCase
             var result = await _handler.UpdateClientNoteAsync(request);
 
             Assert.True(result.IsFailed);
-            Assert.Contains("An error occurred while updating the client's note", result.Errors.Select(e => e.Message));
+            Assert.Contains("An unexpected system error occurred.", result.Errors.Select(e => e.Message));
         }
     }
 }

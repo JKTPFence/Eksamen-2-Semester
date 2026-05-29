@@ -70,7 +70,7 @@
 		}
 
 		
-		@*Klient*@
+		@*Client*@
 		<section class="form-field">
 			<label class="field-label">
 				<span class="step-nr">1</span>
@@ -89,7 +89,7 @@
 			</select>
 		</section>
 
-		@*Starttid*@
+		@*Start time*@
 		<section class="form-field">
 			<label class="field-label">
 				<span class="step-nr">2</span>
@@ -102,7 +102,7 @@
 				   disabled="@(_isComboMode && _comboStep == 2)" />
 		</section>
 
-		@*Sluttid*@
+		@*End time*@
 		@if (_endTime.HasValue)
 		{
 			<section class="form-field">
@@ -123,7 +123,7 @@
 			</section>
 		}
 
-		@*Behandslingstype*@
+		@*Sessiontype*@
 		<section class="form-field">
 			<label class="field-label">
 				<span class="step-nr">3</span>
@@ -145,7 +145,7 @@
 			</section>
 		</section>
 
-		@*Behandler*@
+		@*Staff*@
 		<section class="form-field">
 			<label class="field-label">
 				<span class="step-nr">4</span>
@@ -170,7 +170,7 @@
 		</section>
 
 
-		@*Rum*@
+		@*Room*@
 		<section class="form-field">
 			<label class="field-label">
 				<span class="step-nr">5</span>
@@ -209,7 +209,7 @@
 			</select>
 		</section>
 
-		@*Bookings oversigt*@
+		@*Session form*@
 		<aside class="summary">
 			<p class="summary-title">Booking oversigt</p>
 			<ul class="summary-list">
@@ -255,7 +255,7 @@
 			</ul>
 		</aside>
 
-		@*Knapper*@
+		@*Buttons*@
 		<footer class="action-footer">
 			<button class="submit-button" @onclick="Cancel">
 				Annuller

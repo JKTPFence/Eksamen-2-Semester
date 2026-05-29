@@ -11,7 +11,6 @@ namespace FysioEnterprise.Infrastructure
 {
     public static class InfrastructureServiceCollectionExtensions
     {
-        //ConnectionString brug af blazor fra appsettings.json
         public static IServiceCollection AddInfrastructureServices(
             this IServiceCollection services,
             IConfiguration configuration)

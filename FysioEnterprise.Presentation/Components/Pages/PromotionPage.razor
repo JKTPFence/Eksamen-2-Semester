@@ -108,7 +108,7 @@
     }
 </section>
 
-@if (showModal)
+@if (showModal) @*Popup card (Modal) with inputfields for promotion information*@
 {
     <section class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <article class="modal-box">
@@ -164,7 +164,7 @@
     </section>
 }
 
-@if (showDeleteConfirm)
+@if (showDeleteConfirm) @*Small Popup card to delete promotion with warning*@
 {
     <section class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="delete-title">
         <article class="modal-box modal-box--small">

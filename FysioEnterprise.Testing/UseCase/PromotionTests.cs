@@ -1,13 +1,10 @@
 ﻿using FluentResults;
 using FysioEnterprise.Domain.Entities;
-using FysioEnterprise.Domain.Exceptions;
 using FysioEnterprise.Domain.Service;
+using FysioEnterprise.Infrastructure.Database.Repository;
 using FysioEnterprise.UseCase.CommandHandlers.PromotionCommands;
 using FysioEnterprise.UseCase.IRepositories;
 using Moq;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using Xunit;
 using static FysioEnterprise.Facade.RequestModels.PromotionRequests;
 
@@ -37,7 +34,7 @@ namespace FysioEnterprise.UnitTests.UseCase.CommandHandlers
 
             // Assert
             Assert.True(result.IsFailed);
-            Assert.Contains("Request cannot be null", result.Errors[0].Message);
+            Assert.Contains("For at lave en kampagne skal der være indhold", result.Errors[0].Message);
         }
 
         [Fact]
@@ -60,26 +57,26 @@ namespace FysioEnterprise.UnitTests.UseCase.CommandHandlers
             var result = await _handler.CreatePromotionAsync(request);
 
             Assert.True(result.IsFailed);
-            Assert.Contains("already exists", result.Errors[0].Message);
+            Assert.Contains("Der findes en anden kampagne med det samme ID", result.Errors[0].Message);
         }
 
         [Fact]
         public async Task CreatePromotionAsync_WithValidRequest_ReturnsSuccess()
         {
             var promotionId = Guid.NewGuid();
-            var startDate = DateTime.Now.AddDays(1);
-            var endDate = DateTime.Now.AddDays(30);
+            var startDate = DateTime.Now.AddDays(60);
+            var endDate = DateTime.Now.AddDays(90);
 
             var request = new CreatePromotionRequest(
                 promotionId,
                 "Summer Sale",
-                20,
+                20M,
                 startDate,
                 endDate
             );
 
             _mockPromotionRepository.Setup(x => x.GetPromotionAsync(promotionId))
-                .ReturnsAsync((Promotion)null);
+                .ReturnsAsync(Result.Fail<Promotion>("Ingen kampagne er blevet fundet"));
 
             _mockPromotionRepository.Setup(x => x.CreatePromotionAsync(It.IsAny<Promotion>()))
                 .ReturnsAsync(Result.Ok());
@@ -109,7 +106,7 @@ namespace FysioEnterprise.UnitTests.UseCase.CommandHandlers
             );
 
             _mockPromotionRepository.Setup(x => x.GetPromotionAsync(promotionId))
-                .ReturnsAsync((Promotion)null);
+                .ReturnsAsync(Result.Ok<Promotion>(null!));
 
             _mockTimeNow.Setup(x => x.Now())
                 .Returns(DateTime.Now);
@@ -128,7 +125,7 @@ namespace FysioEnterprise.UnitTests.UseCase.CommandHandlers
             var result = await _handler.UpdatePromotionAsync(request);
 
             Assert.True(result.IsFailed);
-            Assert.Contains("Request cannot be null", result.Errors[0].Message);
+            Assert.Contains("For at lave en kampagne skal der være indhold", result.Errors[0].Message);
         }
 
         [Fact]
@@ -145,7 +142,7 @@ namespace FysioEnterprise.UnitTests.UseCase.CommandHandlers
             var result = await _handler.UpdatePromotionAsync(request);
 
             Assert.True(result.IsFailed);
-            Assert.Contains("Promotion ID cannot be empty", result.Errors[0].Message);
+            Assert.Contains("Ingen kampagne er fundet med dette ID", result.Errors[0].Message);
         }
 
         [Fact]
@@ -162,7 +159,7 @@ namespace FysioEnterprise.UnitTests.UseCase.CommandHandlers
             var result = await _handler.UpdatePromotionAsync(request);
 
             Assert.True(result.IsFailed);
-            Assert.Contains("Promotion name cannot be null", result.Errors[0].Message);
+            Assert.Contains("En kampagne skal have et navn", result.Errors[0].Message);
         }
 
         [Fact]
@@ -179,19 +176,19 @@ namespace FysioEnterprise.UnitTests.UseCase.CommandHandlers
             var result = await _handler.UpdatePromotionAsync(request);
 
             Assert.True(result.IsFailed);
-            Assert.Contains("must be greater than zero", result.Errors[0].Message);
+            Assert.Contains("En kampagne skal have en rabatprocent", result.Errors[0].Message);
         }
 
         [Fact]
         public async Task UpdatePromotionAsync_WithNonExistentPromotion_ReturnsFail()
         {
-            var promotionId = Guid.NewGuid();
+            var promotionId = Guid.Empty;
             var request = new UpdatePromotionRequest(
                 promotionId,
                 "Summer Sale",
                 20,
-                DateTime.Now.AddDays(1),
-                DateTime.Now.AddDays(30)
+                DateTime.Now.AddDays(60),
+                DateTime.Now.AddDays(90)
             );
 
             _mockPromotionRepository.Setup(x => x.GetPromotionAsync(promotionId))
@@ -203,7 +200,7 @@ namespace FysioEnterprise.UnitTests.UseCase.CommandHandlers
             var result = await _handler.UpdatePromotionAsync(request);
 
             Assert.True(result.IsFailed);
-            Assert.Contains("Promotion not found", result.Errors[0].Message);
+            Assert.Contains("Ingen kampagne er fundet med dette ID", result.Errors[0].Message);
         }
 
         [Fact]
@@ -245,7 +242,7 @@ namespace FysioEnterprise.UnitTests.UseCase.CommandHandlers
             var result = await _handler.DeletePromotionAsync(request);
 
             Assert.True(result.IsFailed);
-            Assert.Contains("Command cannot be null", result.Errors[0].Message);
+            Assert.Contains("For at slette en kampagne, skal vi have oplysningerne på hvilken der skal slettes", result.Errors[0].Message);
         }
 
         [Fact]
@@ -258,7 +255,7 @@ namespace FysioEnterprise.UnitTests.UseCase.CommandHandlers
             var result = await _handler.DeletePromotionAsync(request);
 
             Assert.True(result.IsFailed);
-            Assert.Contains("Promotion ID cannot be empty", result.Errors[0].Message);
+            Assert.Contains("Fejl i inputtet af kampagneoplysningerne", result.Errors[0].Message);
         }
 
         [Fact]
@@ -269,13 +266,13 @@ namespace FysioEnterprise.UnitTests.UseCase.CommandHandlers
                 promotionId
             );
 
-            _mockPromotionRepository.Setup(x => x.GetPromotionAsync(promotionId))
-                .ReturnsAsync((Promotion)null);
+            _mockPromotionRepository.Setup(x => x.GetPromotionAsync(request.PromotionID))
+                .ReturnsAsync(Result.Fail<Promotion>("Ingen kampagne er blevet fundet"));
 
             var result = await _handler.DeletePromotionAsync(request);
 
             Assert.True(result.IsFailed);
-            Assert.Contains("Promotion not found", result.Errors[0].Message);
+            Assert.Contains("Ingen kampagne er blevet fundet", result.Errors[0].Message);
         }
 
         [Fact]

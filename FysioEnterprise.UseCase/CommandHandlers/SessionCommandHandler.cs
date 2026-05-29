@@ -70,9 +70,12 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
             {
                 promotionResult = await _promotionRepository.GetPromotionAsync(request.PromotionID);
                 if (promotionResult.IsFailed)
-                    return Result.Fail("Ingen kampagne blev fundet");
+                    return Result.Fail("Ingen kampagne er blevet fundet");
             }
 
+            await _sessionLock.WaitAsync();
+            try
+            {
             var existingClientSessions = await _sessionRepository.GetSessionsByClientAsync(request.ClientID);
             var existingStaffSessions = await _sessionRepository.GetSessionsByStaffAsync(request.StaffID);
             var existingRoomSessions = await _sessionRepository.GetSessionsByRoomAsync(request.ClinicID, request.SessionRoomID);
@@ -84,9 +87,6 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
             .Sum(s => s.priceTotal.Value);
             clientResult.Value.EvaluateLoyaltyStatus(totalSpend);
 
-            await _sessionLock.WaitAsync();
-            try
-            {
                 bool birthdayEligible = clientResult.Value.IsBirthdayMonth(
                 DateOnly.FromDateTime(request.StartTime))
                 && !clientResult.Value.HasUsedBirthdayDiscountThisYear;
@@ -146,14 +146,14 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
             if (request.ClientID != session.SessionClientID)
                 return Result.Fail("Denne booking høre ikke til denne klient");
 
+            await _sessionLock.WaitAsync();
+            try
+            {
             var existingClientSessions = await _sessionRepository.GetSessionsByClientAsync(request.ClientID);
             var existingStaffSessions = await _sessionRepository.GetSessionsByStaffAsync(request.StaffID);
             var existingRoomSessions = await _sessionRepository.GetSessionsByRoomAsync(request.ClinicID, request.SessionRoomID);
             var timeSlot = new TimeSlot(request.StartTime, request.EndTime);
 
-            await _sessionLock.WaitAsync();
-            try
-            {
                 session.UpdateSessionTime(
                   request.SessionID,
                   timeSlot,

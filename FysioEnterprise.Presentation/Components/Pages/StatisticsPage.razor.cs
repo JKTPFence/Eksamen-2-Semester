@@ -186,15 +186,6 @@ public partial class StatisticsPage : ComponentBase
         UpdateExportRangeToCurrentView();
         StateHasChanged();
     }
-
-    private async Task GoToThisYear()
-    {
-        CurrentDate = DateTime.Today;
-        View = "year";
-        await LoadData();
-        UpdateExportRangeToCurrentView();
-        StateHasChanged();
-    }
     private (DateTime From, DateTime To) GetCurrentRange() => View switch
     {
         "year" => (new DateTime(CurrentDate.Year, 1, 1), new DateTime(CurrentDate.Year, 12, 31)),
@@ -211,7 +202,7 @@ public partial class StatisticsPage : ComponentBase
         _ => GetWeekRangeLabel()
     };
 
-    private string GetWeekRangeLabel()
+    private string GetWeekRangeLabel() //Formats the week range as "1-7 Jan, 2024" or "28 Jan - 3 Feb, 2024" if it spans two months
     {
         var monday = GetMonday(CurrentDate);
         var sunday = monday.AddDays(6);
@@ -230,7 +221,7 @@ public partial class StatisticsPage : ComponentBase
                 endMonthName = char.ToUpper(endMonthName[0]) + endMonthName.Substring(1);
             }
 
-            return $"{monthName} {monday.Day} – {endMonthName} {sunday.Day}, {sunday.Year}";
+            return $"{monday.Day} , {monthName} – {sunday.Day} , {endMonthName} , {sunday.Year}";
         }
         return $"{monday.Day} - {sunday.Day} , {monthName} , {monday.Year}";
     }
@@ -240,7 +231,6 @@ public partial class StatisticsPage : ComponentBase
         "month" => "pr. uge",
         _ => "pr. dag"
     };
-
 
     private static DateTime GetMonday(DateTime date)
     {

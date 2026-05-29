@@ -28,7 +28,7 @@ namespace FysioEnterprise.Domain.Entities
             StaffAuthorisationNumber = staffAuthorisationNumber;
         }
 
-        public void AssignToClinic(Guid clinicId)
+        public void AssignToClinic(Guid clinicId) //Assigns a staff member to a clinic, via the ValueObject StaffClinicAssignment
         {
             var assignment = new StaffClinicAssignment(Id, clinicId);
 
@@ -38,7 +38,7 @@ namespace FysioEnterprise.Domain.Entities
             _clinicAssignments.Add(assignment);
         }
 
-        public void RemoveFromClinic(Guid clinicId)
+        public void RemoveFromClinic(Guid clinicId) //Currently unused, but can be used in the future if we want to remove a staff member from a clinic
         {
             var assignment = new StaffClinicAssignment(Id, clinicId);
             _clinicAssignments.Remove(assignment);

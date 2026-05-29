@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using FysioEnterprise.Domain.Entities;
+﻿using FysioEnterprise.Domain.Entities;
 using FysioEnterprise.Domain.Exceptions;
 using FysioEnterprise.Domain.Service.PricingService;
 using FysioEnterprise.Domain.Service.PricingService.Strategies;
@@ -65,7 +63,7 @@ namespace FysioEnterprise.Domain.Tests
         [Fact]
         public async Task Calculate_BirthdayBeatLoyalty_AppliesBirthdayDiscount()
         {
-            var birthday = new DateOnly(1995, DateTime.Today.Month, 1);
+            var birthday = new DateOnly(1995, 5, 1);
             var (client, sessionType) = CreateBaseDomainContext(LoyaltyLevel.Bronze, birthday);
 
             var calculator = new PriceCalculator(new List<IPricingStrategy>
@@ -124,7 +122,7 @@ namespace FysioEnterprise.Domain.Tests
         {
             var (client, sessionType) = CreateBaseDomainContext(LoyaltyLevel.None);
 
-            Assert.Throws<DomainException>(() =>
+            Assert.Throws<UserInvalidInputException>(() =>
                 Promotion.Create("Gratis Ting", 0m, DateTime.UtcNow.AddDays(-1), DateTime.UtcNow.AddDays(1))
             );
         }

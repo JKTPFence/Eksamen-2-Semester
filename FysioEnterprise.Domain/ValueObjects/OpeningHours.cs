@@ -14,7 +14,7 @@ namespace FysioEnterprise.Domain.ValueObjects
 
         private OpeningHours() { } // EF Core
 
-        public OpeningHours(DayOfWeek day, TimeOnly from, TimeOnly to)
+        public OpeningHours(DayOfWeek day, TimeOnly from, TimeOnly to) //Used for creating opening hours for a clinic, TimeSlot + DayOfWeek.
         {
             if (to <= from && (Day is not DayOfWeek.Sunday && Day is not DayOfWeek.Saturday))
                 throw new DomainException($"Åbningstider må ikke slutte før de starter");

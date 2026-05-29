@@ -6,7 +6,7 @@
 @implements IDisposable
 @inject NavigationManager NavManager
 
-<header class="site-header">
+<header class="site-header"> @*Main navigationbar with Logo*@
     <nav class="topbar" aria-label="Applikation header">
         <NavLink href="/" class="brand-link" Match="NavLinkMatch.All">
             <img src="/images/FysioFuncLogo.jpg" alt="FysioFunc Logo" class="logo-image" />
@@ -14,7 +14,7 @@
 
         <span class="spacer"></span>
 
-        @if (Context.IsLoggedIn)
+        @if (Context.IsLoggedIn) @*Logout button with current clinic address. Only visible after logging in, to prevent confusion*@
         {
             <aside class="top-right">
                 <details class="profile-dropdown">
@@ -42,7 +42,7 @@
     </nav>
 </header>
 
-@if (Context.IsLoggedIn)
+@if (Context.IsLoggedIn) @*Second navigationbar only visible after logging in since it stores all the paths to move around the website*@
 {
     <div class="subnav-container">
         <nav class="subnav-bar" aria-label="Side navigation">

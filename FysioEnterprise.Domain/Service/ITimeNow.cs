@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace FysioEnterprise.Domain.Service
+﻿namespace FysioEnterprise.Domain.Service
 {
         public interface ITimeNow
         {
