@@ -1,6 +1,7 @@
 ﻿using FluentResults;
 using FysioEnterprise.Domain.Entities;
 using FysioEnterprise.Domain.Service;
+using FysioEnterprise.Infrastructure.Database.Repository;
 using FysioEnterprise.UseCase.CommandHandlers.PromotionCommands;
 using FysioEnterprise.UseCase.IRepositories;
 using Moq;
@@ -75,7 +76,7 @@ namespace FysioEnterprise.UnitTests.UseCase.CommandHandlers
             );
 
             _mockPromotionRepository.Setup(x => x.GetPromotionAsync(promotionId))
-                .ReturnsAsync(Result.Ok<Promotion>(null!));
+                .ReturnsAsync(Result.Fail<Promotion>("Ingen kampagne er blevet fundet"));
 
             _mockPromotionRepository.Setup(x => x.CreatePromotionAsync(It.IsAny<Promotion>()))
                 .ReturnsAsync(Result.Ok());
@@ -266,12 +267,12 @@ namespace FysioEnterprise.UnitTests.UseCase.CommandHandlers
             );
 
             _mockPromotionRepository.Setup(x => x.GetPromotionAsync(request.PromotionID))
-                .ReturnsAsync((Promotion)null);
+                .ReturnsAsync(Result.Fail<Promotion>("Ingen kampagne er blevet fundet"));
 
             var result = await _handler.DeletePromotionAsync(request);
 
             Assert.True(result.IsFailed);
-            Assert.Contains("Ingen kampagne fundet", result.Errors[0].Message);
+            Assert.Contains("Ingen kampagne er blevet fundet", result.Errors[0].Message);
         }
 
         [Fact]

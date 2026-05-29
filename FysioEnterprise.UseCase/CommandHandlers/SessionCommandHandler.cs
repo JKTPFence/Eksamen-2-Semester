@@ -70,7 +70,7 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
             {
                 promotionResult = await _promotionRepository.GetPromotionAsync(request.PromotionID);
                 if (promotionResult.IsFailed)
-                    return Result.Fail("Ingen kampagne blev fundet");
+                    return Result.Fail("Ingen kampagne er blevet fundet");
             }
 
             await _sessionLock.WaitAsync();

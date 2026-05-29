@@ -1,10 +1,11 @@
-﻿using FysioEnterprise.UseCase.IRepositories;
-using FysioEnterprise.Domain.Entities;
+﻿using System.Diagnostics;
 using FluentResults;
-using FysioEnterprise.Facade.UseCase.PromotionUseCase;
-using static FysioEnterprise.Facade.RequestModels.PromotionRequests;
-using FysioEnterprise.Domain.Service;
+using FysioEnterprise.Domain.Entities;
 using FysioEnterprise.Domain.Exceptions;
+using FysioEnterprise.Domain.Service;
+using FysioEnterprise.Facade.UseCase.PromotionUseCase;
+using FysioEnterprise.UseCase.IRepositories;
+using static FysioEnterprise.Facade.RequestModels.PromotionRequests;
 namespace FysioEnterprise.UseCase.CommandHandlers.PromotionCommands
 {
     public class PromotionCommandHandler : ICreatePromotionUseCase, IUpdatePromotionUseCase, IDeletePromotionUseCase
@@ -69,7 +70,7 @@ namespace FysioEnterprise.UseCase.CommandHandlers.PromotionCommands
                 return validationResult;
 
             var promotion = await _promotionRepository.GetPromotionAsync(request.PromotionID);
-            if (promotion == null)
+            if (promotion.IsFailed)
                 return Result.Fail("Ingen kampagne er blevet fundet");
 
             try
@@ -107,8 +108,12 @@ namespace FysioEnterprise.UseCase.CommandHandlers.PromotionCommands
                 return Result.Fail("Fejl i inputtet af kampagneoplysningerne");
                 
             var promotion = await _promotionRepository.GetPromotionAsync(request.PromotionID);
-            if(promotion == null)
-                return Result.Fail("Ingen kampagne fundet");
+            if(promotion.IsFailed)
+            {
+                var result = Result.Fail("Ingen kampagne er blevet fundet");
+                Debug.WriteLine($"Returning: {result.Errors[0].Message}");
+                return result;
+            }
 
             await _promotionRepository.DeletePromotionAsync(request.PromotionID);
             return Result.Ok();
