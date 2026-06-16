@@ -100,6 +100,7 @@ namespace FysioEnterprise.Infrastructure.Database.Repository
                     .SetProperty(x => x.SessionTimeSlot.From, session.SessionTimeSlot.From)
                     .SetProperty(x => x.SessionTimeSlot.To, session.SessionTimeSlot.To)
                     .SetProperty(x => x.priceTotal.Value, session.priceTotal.Value)
+                    .SetProperty(x => x.SessionStatus, session.SessionStatus)
                 );
         }
         public async Task SaveChangesAsync()
