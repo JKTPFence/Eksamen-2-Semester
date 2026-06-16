@@ -517,6 +517,42 @@ span.session-type {
     border-left-color: #30b060;
 }
 
+.staff-color-7 {
+    background: #f5b8b8;
+    color: #5c0a0a;
+    border-left-color: #d43a3a;
+}
+
+.staff-color-8 {
+    background: #e8d0f0;
+    color: #401050;
+    border-left-color: #a050c0;
+}
+
+.staff-color-9 {
+    background: #b5ecef;
+    color: #0b454d;
+    border-left-color: #2ca2b0;
+}
+
+.staff-color-10 {
+    background: #f7e9a8;
+    color: #4d4002;
+    border-left-color: #cbb121;
+}
+
+.staff-color-11 {
+    background: #ffd5b8;
+    color: #612700;
+    border-left-color: #e66b1c;
+}
+
+.staff-color-12 {
+    background: #dcdcdc;
+    color: #333333;
+    border-left-color: #888888;
+}
+
 aside.cell-popup {
     position: absolute;
     left: 4px;

@@ -40,6 +40,7 @@ namespace FysioEnterprise.UseCase.DependencyInjection
             services.AddScoped<IPricingStrategy, BirthdayPricingStrategy>();
             services.AddScoped<IPricingStrategy, PromotionPricingStrategy>();
             services.AddScoped<ITimeNow, CurrentDateTime>();
+            services.AddSingleton<SemaphoreSlim>(_ => new SemaphoreSlim(1, 1));
 
             return services;
         }

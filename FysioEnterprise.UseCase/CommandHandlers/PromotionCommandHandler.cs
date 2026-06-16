@@ -39,8 +39,8 @@ namespace FysioEnterprise.UseCase.CommandHandlers.PromotionCommands
             {
                 return ex switch
                 {
-                    UserInvalidInputException => Result.Fail("Et input var ikke korrekt" + ex.Message),
-                    ValidationException => Result.Fail("Der er sket en valideringsfejl" + ex.Message),
+                    UserInvalidInputException => Result.Fail("Et input var ikke korrekt. " + ex.Message),
+                    ValidationException => Result.Fail("Der er sket en valideringsfejl. " + ex.Message),
                     _ => Result.Fail("Der er sket en uforventet fejl " + ex.Message) // Fallback catch-all for base DomainException
                 };
             }
@@ -87,8 +87,8 @@ namespace FysioEnterprise.UseCase.CommandHandlers.PromotionCommands
             {
                 return ex switch
                 {
-                    UserInvalidInputException => Result.Fail("Et input var ikke korrekt" + ex.Message),
-                    ValidationException => Result.Fail("Der er sket en valideringsfejl" + ex.Message),
+                    UserInvalidInputException => Result.Fail("Et input var ikke korrekt. " + ex.Message),
+                    ValidationException => Result.Fail("Der er sket en valideringsfejl. " + ex.Message),
                     _ => Result.Fail("Der er sket en uforventet fejl " + ex.Message) // Fallback catch-all for base DomainException
                 };
             }

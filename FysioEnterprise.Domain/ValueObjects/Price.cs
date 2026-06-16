@@ -4,7 +4,7 @@ namespace FysioEnterprise.Domain.ValueObjects
 {
     public record Price
     {
-        public double Value { get; init; }
+        public double Value { get; private set; }
         private Price() // Empty constructor for EF Core
         {
 

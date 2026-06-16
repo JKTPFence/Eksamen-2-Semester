@@ -47,6 +47,7 @@ namespace FysioEnterprise.Infrastructure.Database
 
             modelBuilder.Entity<Session>(entity =>
             {
+                entity.HasKey(s => s.Id);
 
                 entity.Property(s => s.SessionStatus)
                     .HasConversion<string>();
