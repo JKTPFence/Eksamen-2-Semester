@@ -17,9 +17,10 @@
     <PackageReference Include="Radzen.Blazor" Version="10.4.3" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\FysioEnterprise.UseCase\FysioEnterprise.UseCase.csproj" />
-    <ProjectReference Include="..\FysioEnterprise.Infrastructure\FysioEnterprise.Infrastructure.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\FysioEnterprise.Facade\FysioEnterprise.Facade.csproj" />
+		<ProjectReference Include="..\FysioEnterprise.Infrastructure\FysioEnterprise.Infrastructure.csproj" />
+		<ProjectReference Include="..\FysioEnterprise.UseCase\FysioEnterprise.UseCase.csproj" />
+	</ItemGroup>
 
 </Project>

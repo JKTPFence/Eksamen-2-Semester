@@ -1,5 +1,4 @@
-﻿using System.Drawing;
-using System.Globalization;
+﻿using System.Globalization;
 using ClosedXML.Excel;
 using FysioEnterprise.Domain.Enums;
 using FysioEnterprise.Facade.DTOs;

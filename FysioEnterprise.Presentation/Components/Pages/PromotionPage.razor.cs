@@ -1,6 +1,4 @@
 using System.Globalization;
-using DocumentFormat.OpenXml.InkML;
-using FysioEnterprise.Domain.Entities;
 using FysioEnterprise.Facade.DTOs;
 using FysioEnterprise.Facade.Queries;
 using FysioEnterprise.Facade.UseCase.PromotionUseCase;

@@ -1,16 +1,10 @@
-﻿using System.Collections;
-using System.Diagnostics.Eventing.Reader;
-using DocumentFormat.OpenXml.Spreadsheet;
-using FluentResults;
-using FysioEnterprise.Domain.Entities;
-using FysioEnterprise.Domain.ValueObjects;
+﻿using FluentResults;
 using FysioEnterprise.Facade.DTOs;
 using FysioEnterprise.Facade.Queries;
 using FysioEnterprise.Facade.UseCase.SessionUseCase;
 using FysioEnterprise.Presentation.Service;
 using Microsoft.AspNetCore.Components;
 using Radzen;
-using static Azure.Core.HttpHeader;
 using static FysioEnterprise.Facade.RequestModels.SessionRequests;
 
 namespace FysioEnterprise.Presentation.Components.Pages

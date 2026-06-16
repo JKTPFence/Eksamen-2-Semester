@@ -1,5 +1,4 @@
-﻿using DocumentFormat.OpenXml.Presentation;
-using FysioEnterprise.Facade.DTOs;
+﻿using FysioEnterprise.Facade.DTOs;
 using FysioEnterprise.Facade.Queries;
 using FysioEnterprise.Facade.UseCase.SessionUseCase;
 using FysioEnterprise.Presentation.Service;
