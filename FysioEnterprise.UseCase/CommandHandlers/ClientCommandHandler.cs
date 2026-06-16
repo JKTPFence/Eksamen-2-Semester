@@ -45,10 +45,10 @@ namespace FysioEnterprise.UseCase.CommandHandler.ClientCommands
             {
                 return ex switch
                 {
-                    NotFoundException => Result.Fail("Der var nogle oplysninger der ikke kunne blive fundet" + ex.Message),
-                    UserInvalidInputException => Result.Fail("Et input var ikke korrekt" + ex.Message),
-                    ValidationException => Result.Fail("Der er sket en valideringsfejl" + ex.Message),
-                    _ => Result.Fail("Der er sket en uforventet fejl " + ex.Message) // Fallback catch-all for base DomainException
+                    NotFoundException => Result.Fail("Der var nogle oplysninger der ikke kunne blive fundet. " + ex.Message),
+                    UserInvalidInputException => Result.Fail("Et input var ikke korrekt. " + ex.Message),
+                    ValidationException => Result.Fail("Der er sket en valideringsfejl. " + ex.Message),
+                    _ => Result.Fail("Der er sket en uforventet fejl. " + ex.Message) // Fallback catch-all for base DomainException
                 };
             }
             catch (Exception ex) // Catch-all for any other unexpected exceptions (typically SQL or Infrastructure exceptions)
@@ -128,7 +128,7 @@ namespace FysioEnterprise.UseCase.CommandHandler.ClientCommands
             {
                 return ex switch
                 {
-                    NotFoundException => Result.Fail("Der var nogle oplysninger der ikke kunne blive fundet" + ex.Message),
+                    NotFoundException => Result.Fail("Der var nogle oplysninger der ikke kunne blive fundet " + ex.Message),
                     _ => Result.Fail("Der er sket en uforventet fejl " + ex.Message) // Fallback catch-all for base DomainException
                 };
             }

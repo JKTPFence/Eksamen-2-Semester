@@ -4,13 +4,14 @@ namespace FysioEnterprise.Domain.ValueObjects
 {
     public class TimeSlot : ValueObject
     {
-        public DateTime From { get; init; }
-        public DateTime To { get; init; }
+        public DateTime From { get; private set; }
+        public DateTime To { get; private set; }
 
         private TimeSlot() { } // Empty Constructor for EF Core
 
         public TimeSlot(DateTime from, DateTime to) //Handles a period of time, used for sessions
         {
+
             if (to <= from)
                 throw new DomainException("Til tiden må ikke være før fra tiden");
 

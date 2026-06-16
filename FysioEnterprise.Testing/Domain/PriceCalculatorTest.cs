@@ -1,15 +1,18 @@
-﻿using FysioEnterprise.Domain.Entities;
+﻿using System.Diagnostics;
+using FysioEnterprise.Domain.Entities;
 using FysioEnterprise.Domain.Exceptions;
 using FysioEnterprise.Domain.Service.PricingService;
 using FysioEnterprise.Domain.Service.PricingService.Strategies;
 using FysioEnterprise.Domain.Service.PricingService.Strategies.PricingMethods;
 using FysioEnterprise.Domain.ValueObjects;
 using Xunit;
+using Xunit.Abstractions;
 namespace FysioEnterprise.Domain.Tests
 {
     public class PriceCalculatorTests
     {
         private static readonly Price BasePriceValue = new Price(100D);
+        private readonly ITestOutputHelper _output;
 
         private (Client client, SessionType sessionType) CreateBaseDomainContext(
             LoyaltyLevel loyaltyLevel,
@@ -28,7 +31,7 @@ namespace FysioEnterprise.Domain.Tests
                 "Jensen",
                 "johanne@example.com",
                 "71362851",
-                birthDate ?? new DateOnly(1995, 5, 15),
+                birthDate ?? new DateOnly(1995, 6, 15),
                 "Valløesgade 37, 2. th, 7100 Vejle",
                 clientNote: null,
                 clientPrefferedStaffID: Guid.NewGuid(),
@@ -63,7 +66,7 @@ namespace FysioEnterprise.Domain.Tests
         [Fact]
         public async Task Calculate_BirthdayBeatLoyalty_AppliesBirthdayDiscount()
         {
-            var birthday = new DateOnly(1995, 5, 1);
+            var birthday = new DateOnly(1995, 6, 1);
             var (client, sessionType) = CreateBaseDomainContext(LoyaltyLevel.Bronze, birthday);
 
             var calculator = new PriceCalculator(new List<IPricingStrategy>

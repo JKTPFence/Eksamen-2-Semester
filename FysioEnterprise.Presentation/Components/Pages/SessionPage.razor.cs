@@ -349,6 +349,8 @@ namespace FysioEnterprise.Presentation.Components.Pages
                         _selectedStaffId,
                         _selectedClinicId,
                         _selectedRoomId,
+                        _selectedPromotionId,
+                        _selectedSessionTypeId,
                         _startTime!.Value,
                         _endTime!.Value);
 
@@ -364,6 +366,7 @@ namespace FysioEnterprise.Presentation.Components.Pages
                     {
                         Notification.ShowError(result1.Errors.FirstOrDefault()?.Message ?? "Opdatering af session mislykkedes");
                     }
+                    return;
                 }
                 if (_isComboMode && _comboStep == 2 && _firstSession is not null)
                 {

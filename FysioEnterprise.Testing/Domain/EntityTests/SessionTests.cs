@@ -227,12 +227,41 @@ namespace FysioEnterprise.Testing.Domain.EntityTests
             [Fact]
             public void UpdateSessionTime_ValidTimes_UpdatesSession()
             {
-                var session = BuildSession();
-                var newStart = DateTime.UtcNow.AddHours(3);
+            var dummyPriceCalculator = new SeedPricingFactory();
+            var session = BuildSession();
+            var sessionType = new SessionType(
+                "Standard Session",
+                new Price(100),
+                4,
+                TimeOnly.FromTimeSpan(TimeSpan.FromHours(1)),
+                new List<int>()
+                );
+            var client = Client.Create(
+                "Johanne",
+                "Jensen",
+                "johanne@example.com",
+                "71362851",
+                new DateOnly(1995, 5, 15),
+                "Valløesgade 37, 2. th, 7100 Vejle",
+                clientNote: null,
+                clientPrefferedStaffID: Guid.NewGuid(),
+                clientLoyaltyLevel: LoyaltyLevel.Gold
+
+            );
+            var staff = new Staff(
+                 "Johan",
+                 "Jensen",
+                 "johanne@example.com",
+                 "Akupunktør",
+                 333333,
+                 new List<Clinic>()
+                 );
+            var newStart = DateTime.UtcNow.AddHours(3);
                 var newEnd = newStart.AddHours(1);
                 var timeSlot = new TimeSlot(newStart, newEnd);
 
-            session.UpdateSessionTime(session.Id, timeSlot, [], [], [], new List<OpeningHours>());
+            session.UpdateSession(client, staff, sessionType, Guid.NewGuid(),
+                    timeSlot, null, [], [], [], dummyPriceCalculator, new List<OpeningHours>());
 
                 Assert.Equal(newStart, session.SessionTimeSlot.From);
                 Assert.Equal(newEnd, session.SessionTimeSlot.To);

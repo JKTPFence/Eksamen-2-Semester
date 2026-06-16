@@ -1,4 +1,5 @@
-﻿using FluentResults;
+﻿using System.Diagnostics;
+using FluentResults;
 using FysioEnterprise.Domain.Entities;
 using FysioEnterprise.Domain.Enums;
 using FysioEnterprise.Domain.Exceptions;
@@ -114,8 +115,8 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
                 {
                     return ex switch
                     {
-                        UserInvalidInputException => Result.Fail("Et input var ikke korrekt" + ex.Message),
-                        ValidationException => Result.Fail("Der er sket en valideringsfejl" + ex.Message),
+                        UserInvalidInputException => Result.Fail("Et input var ikke korrekt. " + ex.Message),
+                        ValidationException => Result.Fail("Der er sket en valideringsfejl. " + ex.Message),
                         _ => Result.Fail("Der er sket en uforventet fejl " + ex.Message) // Fallback catch-all for base DomainException
                     };
                 }
@@ -139,29 +140,59 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
                 return Result.Fail("Bookingen blev ikke fundet");
 
             var clinicResult = await _clinicRepository.GetClinicAsync(request.ClinicID);
-            if (clinicResult.IsFailed) return Result.Fail("Klinik blev ikke fundet");
+            if (clinicResult.IsFailed) 
+                return Result.Fail("Klinik blev ikke fundet");
+
+            var clientResult = await _clientRepository.GetClientAsync(request.ClientID);
+            if (clientResult.IsFailed)
+                return Result.Fail("Klienten blev ikke fundet");
+
+            var staffResult = await _staffRepository.GetStaffAsync(request.StaffID);
+            if (staffResult.IsFailed)
+                return Result.Fail("Medarbejder blev ikke fundet");
+
+            var roomResult = clinicResult.Value.GetRoom(request.SessionRoomID);
+            if (roomResult.IsFailed) 
+                return Result.Fail("Rum blev ikke fundet");
+
+            var sessionTypeResult = await _sessionTypeRepository.GetSessionTypeAsync(request.SessionInstanceTypeID);
+            if (sessionTypeResult.IsFailed)
+                return Result.Fail("Denne bookingtype blev ikke fundet");
 
             var session = sessionResult.Value;
 
             if (request.ClientID != session.SessionClientID)
                 return Result.Fail("Denne booking høre ikke til denne klient");
 
+            Result<Promotion>? promotionResult = null;
+
+            if (request.PromotionID != Guid.Empty)
+            {
+                promotionResult = await _promotionRepository.GetPromotionAsync(request.PromotionID);
+                if (promotionResult.IsFailed)
+                    return Result.Fail("Ingen kampagne er blevet fundet");
+            }
+
             await _sessionLock.WaitAsync();
             try
             {
-            var existingClientSessions = await _sessionRepository.GetSessionsByClientAsync(request.ClientID);
-            var existingStaffSessions = await _sessionRepository.GetSessionsByStaffAsync(request.StaffID);
-            var existingRoomSessions = await _sessionRepository.GetSessionsByRoomAsync(request.ClinicID, request.SessionRoomID);
-            var timeSlot = new TimeSlot(request.StartTime, request.EndTime);
+            var existingClientSessions = await _sessionRepository.GetSessionsByClientAsync(request.ClientID, excludeSessionId: request.SessionID);
+            var existingStaffSessions = await _sessionRepository.GetSessionsByStaffAsync(request.StaffID, excludeSessionId: request.SessionID);
+            var existingRoomSessions = await _sessionRepository.GetSessionsByRoomAsync(request.ClinicID, request.SessionRoomID, excludeSessionId: request.SessionID);
 
-                session.UpdateSessionTime(
-                  request.SessionID,
-                  timeSlot,
-                  existingClientSessions.Where(s => s.Id != session.Id),
-                  existingStaffSessions.Where(s => s.Id != session.Id),
-                  existingRoomSessions.Where(s => s.Id != session.Id),
-                  clinicResult.Value.ClinicOpeningHours
-                  );
+                session.UpdateSession(
+                    clientResult.Value,
+                    staffResult.Value,
+                    sessionTypeResult.Value,
+                    request.SessionRoomID,
+                    new TimeSlot(request.StartTime, request.EndTime),
+                    promotionResult?.Value,
+                    existingClientSessions,
+                    existingStaffSessions,
+                    existingRoomSessions,
+                    _pricingStrategyFactory,
+                    clinicResult.Value.ClinicOpeningHours
+                );
 
                 await _sessionRepository.UpdateSessionAsync(session);
                 return Result.Ok();
@@ -171,9 +202,9 @@ namespace FysioEnterprise.UseCase.CommandHandlers.SessionCommands
             {
                 return ex switch
                 {
-                    UserInvalidInputException => Result.Fail("Et input var ikke korrekt" + ex.Message),
-                    ValidationException => Result.Fail("Der er sket en valideringsfejl" + ex.Message),
-                    _ => Result.Fail("Der er sket en uforventet fejl " + ex.Message) // Fallback catch-all for base DomainException
+                    UserInvalidInputException => Result.Fail("Et input var ikke korrekt. " + ex.Message),
+                    ValidationException => Result.Fail("Der er sket en valideringsfejl. " + ex.Message),
+                    _ => Result.Fail("Der er sket en uforventet fejl. " + ex.Message) // Fallback catch-all for base DomainException
                 };
             }
             catch (Exception ex) // Catch-all for any other unexpected exceptions (typically SQL or Infrastructure exceptions)

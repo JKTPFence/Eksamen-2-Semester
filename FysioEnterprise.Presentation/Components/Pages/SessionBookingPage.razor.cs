@@ -230,7 +230,7 @@ public partial class SessionBookingPage : ComponentBase
 
     private string GetDynamicColorClass(SessionDTO session) //Generates a consistent color class based on the staff member's name (used for SessionCards background colour)
     {
-        string stableIdentifier = $"{session.StaffFirstName} {session.StaffLastname}";
+        string stableIdentifier = session.StaffID.ToString();
 
         if (string.IsNullOrWhiteSpace(stableIdentifier)) return "staff-color-0";
 
@@ -240,7 +240,7 @@ public partial class SessionBookingPage : ComponentBase
             hash = ((hash << 5) + hash) + c;
         }
 
-        int colorIndex = Math.Abs(hash) % 7;
+        int colorIndex = Math.Abs(hash) % 13;
         return $"staff-color-{colorIndex}";
     }
 
